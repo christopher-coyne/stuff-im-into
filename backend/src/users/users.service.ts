@@ -20,6 +20,8 @@ export class UsersService {
     const { search, sortBy = UserSortBy.MOST_POPULAR } = query;
     const orderBy = this.getOrderBy(sortBy);
 
+    console.log('search ', search);
+
     const users = await this.prisma.user.findMany({
       where: search
         ? {

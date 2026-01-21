@@ -30,6 +30,7 @@ export class UsersController {
   async findAll(
     @Query() query: GetUsersQueryDto,
   ): Promise<StandardResponse<UserResponseDto[]>> {
+    console.log('test...')
     const users = await this.usersService.findAll(query);
     return StandardResponse.ok(users);
   }

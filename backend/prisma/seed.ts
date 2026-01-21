@@ -57,6 +57,56 @@ async function main() {
         role: UserRole.ADMIN,
       },
     }),
+    prisma.user.create({
+      data: {
+        id: '55555555-5555-5555-5555-555555555555',
+        username: 'techie_sam',
+        bio: 'Software engineer by day, gamer by night. Building cool stuff.',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=techie',
+        theme: Theme.OCEAN,
+        role: UserRole.USER,
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: '66666666-6666-6666-6666-666666666666',
+        username: 'foodie_adventures',
+        bio: 'Exploring the world one meal at a time. Restaurant reviews and home cooking tips.',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=foodie',
+        theme: Theme.EMBER,
+        role: UserRole.USER,
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: '77777777-7777-7777-7777-777777777777',
+        username: 'artsy_alex',
+        bio: 'Digital artist and gallery hopper. Sharing my favorite visual experiences.',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=artsy',
+        theme: Theme.ROSE,
+        role: UserRole.USER,
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: '88888888-8888-8888-8888-888888888888',
+        username: 'fitness_freak',
+        bio: 'Personal trainer sharing workout routines and wellness tips.',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fitness',
+        theme: Theme.FOREST,
+        role: UserRole.USER,
+      },
+    }),
+    prisma.user.create({
+      data: {
+        id: '99999999-9999-9999-9999-999999999999',
+        username: 'travel_tales',
+        bio: 'Wanderlust enthusiast. 30 countries and counting.',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=travel',
+        theme: Theme.VIOLET,
+        role: UserRole.USER,
+      },
+    }),
   ]);
 
   console.log(`Created ${users.length} users`);

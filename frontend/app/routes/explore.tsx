@@ -5,8 +5,26 @@ import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "~/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { useDebounce } from "~/hooks/use-debounce";
 import { Api } from "~/lib/api/api";
 import type { UserResponseDto } from "~/lib/api/api";
+
+const PAGE_SIZE = 5;
 
 const api = new Api({ baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000" });
 
@@ -96,18 +114,36 @@ function UserCard({ user }: { user: UserResponseDto }) {
 
 export default function ExplorePage() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [sortBy, setSortBy] = useState<SortOption>("most_popular");
+  const [page, setPage] = useState(1);
+
+  // Reset page when search or sort changes
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (value: SortOption) => {
+    setSortBy(value);
+    setPage(1);
+  };
 
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ["users", search, sortBy],
+    queryKey: ["users", debouncedSearch, sortBy, page],
     queryFn: async () => {
       const response = await api.users.usersControllerFindAll({
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         sortBy,
+        page,
+        limit: PAGE_SIZE,
       });
       return response.data.data;
     },
   });
+
+  const hasNextPage = users.length === PAGE_SIZE;
+  const hasPrevPage = page > 1;
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,23 +169,24 @@ export default function ExplorePage() {
               type="text"
               placeholder="Search users..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10"
             />
           </div>
 
           {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="bg-background border border-input rounded-md px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <Select value={sortBy} onValueChange={(value) => handleSortChange(value as SortOption)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* User List */}
@@ -164,6 +201,29 @@ export default function ExplorePage() {
             users.map((user) => <UserCard key={user.id} user={user} />)
           )}
         </div>
+
+        {/* Pagination */}
+        {!isLoading && users.length > 0 && (hasPrevPage || hasNextPage) && (
+          <Pagination className="mt-8">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={!hasPrevPage}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink isActive>{page}</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!hasNextPage}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
     </div>
   );
