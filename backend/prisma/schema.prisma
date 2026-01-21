@@ -1,3 +1,5 @@
+// Stuffiminto — Prisma Schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,11 +9,204 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum Theme {
+  DEFAULT
+  EMBER
+  OCEAN
+  FOREST
+  VIOLET
+  ROSE
+  MINIMAL
+}
+
+enum MediaType {
+  VIDEO
+  SPOTIFY
+  IMAGE
+  TEXT
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// =============================================================================
+// USERS
+// =============================================================================
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String   @id // Supabase Auth UUID
+  username  String   @unique
+  bio       String?
+  avatarUrl String?
+  theme     Theme    @default(DEFAULT)
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tabs            Tab[]
+  reviews         Review[]
+  categories      Category[]
+  bookmarkedUsers UserBookmark[] @relation("BookmarkOwner")
+  bookmarkedBy    UserBookmark[] @relation("BookmarkedUser")
+  reviewBookmarks ReviewBookmark[]
 
   @@map("users")
+}
+
+// =============================================================================
+// TABS (Media type groupings: Movies, Books, etc.)
+// =============================================================================
+
+model Tab {
+  id        String   @id @default(uuid())
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  reviews Review[]
+
+  @@map("tabs")
+}
+
+// =============================================================================
+// REVIEWS
+// =============================================================================
+
+model Review {
+  id          String    @id @default(uuid())
+  title       String
+  description String?   // Markdown content
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Draft/Publish logic:
+  // - null = draft (not visible publicly, only to owner)
+  // - timestamp = published (visible publicly, edits are instant after this)
+  publishedAt DateTime?
+
+  // Media representation
+  mediaType   MediaType
+  mediaUrl    String?
+  mediaConfig Json?     // Type-specific config (e.g., { startTime: 30 } for videos)
+
+  // Meta fields (user-defined key/value pairs like "Director: Denis Villeneuve")
+  metaFields Json?     // Array of { label: string, value: string }
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  tab    Tab    @relation(fields: [tabId], references: [id], onDelete: Cascade)
+  tabId  String
+
+  // Categories (many-to-many)
+  categories ReviewCategory[]
+
+  // Related reviews (one-directional, user's own reviews only)
+  relatedReviews RelatedReview[] @relation("SourceReview")
+  relatedFrom    RelatedReview[] @relation("TargetReview")
+
+  // Bookmarks
+  bookmarkedBy ReviewBookmark[]
+
+  @@map("reviews")
+}
+
+// =============================================================================
+// CATEGORIES (Global tags: Sci-Fi, Favorite, etc.)
+// =============================================================================
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  reviews ReviewCategory[]
+
+  @@unique([userId, name]) // Category names unique per user
+  @@map("categories")
+}
+
+// Junction table: Review <-> Category
+model ReviewCategory {
+  review     Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId   String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+
+  @@id([reviewId, categoryId])
+  @@map("review_categories")
+}
+
+// =============================================================================
+// RELATED REVIEWS (One-directional links between user's own reviews)
+// =============================================================================
+
+model RelatedReview {
+  id        String @id @default(uuid())
+  sortOrder Int    @default(0)
+
+  // Source review (the one displaying the "related" section)
+  source   Review @relation("SourceReview", fields: [sourceId], references: [id], onDelete: Cascade)
+  sourceId String
+
+  // Target review (the one being linked to)
+  target   Review @relation("TargetReview", fields: [targetId], references: [id], onDelete: Cascade)
+  targetId String
+
+  @@unique([sourceId, targetId]) // Can't link same review twice
+  @@map("related_reviews")
+}
+
+// =============================================================================
+// BOOKMARKS
+// =============================================================================
+
+// User bookmarking another user's profile
+model UserBookmark {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // The user who created the bookmark
+  owner   User   @relation("BookmarkOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  // The user being bookmarked
+  bookmarkedUser   User   @relation("BookmarkedUser", fields: [bookmarkedUserId], references: [id], onDelete: Cascade)
+  bookmarkedUserId String
+
+  @@unique([ownerId, bookmarkedUserId]) // Can't bookmark same user twice
+  @@map("user_bookmarks")
+}
+
+// User bookmarking a review
+model ReviewBookmark {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // The user who created the bookmark
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  // The review being bookmarked
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId String
+
+  @@unique([ownerId, reviewId]) // Can't bookmark same review twice
+  @@map("review_bookmarks")
 }

@@ -5,12 +5,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Request } from 'express';
 import { PrismaService } from '../prisma';
 import { SupabaseService } from './supabase.service';
 
 export interface AuthenticatedRequest extends Request {
-  user: User;
+  supabaseUser: SupabaseUser;
+  user: User | null;
 }
 
 @Injectable()
@@ -35,20 +37,15 @@ export class SupabaseAuthGuard implements CanActivate {
     try {
       const supabaseUser = await this.supabaseService.verifyToken(token);
 
-      if (!supabaseUser?.email) {
+      if (!supabaseUser) {
         throw new UnauthorizedException('Invalid user');
       }
 
-      const user = await this.prisma.user.upsert({
+      request.supabaseUser = supabaseUser;
+      request.user = await this.prisma.user.findUnique({
         where: { id: supabaseUser.id },
-        update: { email: supabaseUser.email },
-        create: {
-          id: supabaseUser.id,
-          email: supabaseUser.email,
-        },
       });
 
-      request.user = user;
       return true;
     } catch {
       throw new UnauthorizedException('Invalid token');
