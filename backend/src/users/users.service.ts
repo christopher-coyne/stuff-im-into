@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma';
 import {
   GetUsersQueryDto,
@@ -12,8 +17,7 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(query: GetUsersQueryDto): Promise<UserResponseDto[]> {
-    const { search, sortBy = UserSortBy.MOST_POPULAR, limit = 20, offset = 0 } = query;
-
+    const { search, sortBy = UserSortBy.MOST_POPULAR } = query;
     const orderBy = this.getOrderBy(sortBy);
 
     const users = await this.prisma.user.findMany({
@@ -40,8 +44,8 @@ export class UsersService {
         },
       },
       orderBy,
-      take: Number(limit),
-      skip: Number(offset),
+      skip: query.skip,
+      take: query.take,
     });
 
     return users.map((user) => ({
@@ -93,6 +97,27 @@ export class UsersService {
       bookmarkCount: user._count.bookmarkedBy,
       tabNames: user.tabs.map((tab) => tab.name),
     };
+  }
+
+  async getCurrentUser(user: User | null): Promise<UserResponseDto> {
+    if (!user) {
+      throw new ForbiddenException(
+        'Profile not set up - complete onboarding first',
+      );
+    }
+    return this.findById(user.id);
+  }
+
+  async updateCurrentUser(
+    user: User | null,
+    dto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    if (!user) {
+      throw new ForbiddenException(
+        'Profile not set up - complete onboarding first',
+      );
+    }
+    return this.update(user.id, dto);
   }
 
   async findById(id: string): Promise<UserResponseDto> {

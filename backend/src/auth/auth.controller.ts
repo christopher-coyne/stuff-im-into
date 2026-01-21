@@ -11,16 +11,18 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiStandardResponse, StandardResponse } from '../dto';
 import { PrismaService } from '../prisma';
 import { SupabaseAuthGuard, SupabaseService } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
-import { AuthDto, OnboardingDto } from './auth.dto';
+import {
+  AuthDto,
+  AuthResponseDto,
+  MeResponseDto,
+  OnboardingDto,
+  UserProfileDto,
+} from './auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -32,8 +34,8 @@ export class AuthController {
 
   @Post('signup')
   @ApiOperation({ summary: 'Create a new account' })
-  @ApiResponse({ status: 201, description: 'Account created successfully' })
-  async signUp(@Body() dto: AuthDto) {
+  @ApiStandardResponse(AuthResponseDto, 201)
+  async signUp(@Body() dto: AuthDto): Promise<StandardResponse<AuthResponseDto>> {
     const { data, error } = await this.supabaseService
       .getClient()
       .auth.signUp({ email: dto.email, password: dto.password });
@@ -42,17 +44,17 @@ export class AuthController {
       throw new UnauthorizedException(error.message);
     }
 
-    return {
+    return StandardResponse.created({
       accessToken: data.session?.access_token,
-      user: data.user,
-    };
+      user: data.user ?? undefined,
+    });
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({ status: 200, description: 'Login successful' })
-  async login(@Body() dto: AuthDto) {
+  @ApiStandardResponse(AuthResponseDto)
+  async login(@Body() dto: AuthDto): Promise<StandardResponse<AuthResponseDto>> {
     const { data, error } = await this.supabaseService
       .getClient()
       .auth.signInWithPassword({ email: dto.email, password: dto.password });
@@ -61,21 +63,21 @@ export class AuthController {
       throw new UnauthorizedException(error.message);
     }
 
-    return {
+    return StandardResponse.ok({
       accessToken: data.session?.access_token,
-      user: data.user,
-    };
+      user: data.user ?? undefined,
+    });
   }
 
   @Post('onboarding')
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Complete profile setup after signup' })
-  @ApiResponse({ status: 201, description: 'Profile created successfully' })
+  @ApiStandardResponse(UserProfileDto, 201)
   async onboarding(
     @Req() req: AuthenticatedRequest,
     @Body() dto: OnboardingDto,
-  ) {
+  ): Promise<StandardResponse<UserProfileDto>> {
     if (req.user) {
       throw new BadRequestException('Profile already exists');
     }
@@ -96,18 +98,18 @@ export class AuthController {
       },
     });
 
-    return user;
+    return StandardResponse.created(user);
   }
 
   @Get('me')
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Current user profile' })
-  me(@Req() req: AuthenticatedRequest) {
-    return {
+  @ApiStandardResponse(MeResponseDto)
+  me(@Req() req: AuthenticatedRequest): StandardResponse<MeResponseDto> {
+    return StandardResponse.ok({
       supabaseUser: req.supabaseUser,
       user: req.user,
-    };
+    });
   }
 }

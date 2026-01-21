@@ -8,19 +8,15 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+  ApiStandardArrayResponse,
+  ApiStandardResponse,
+  StandardResponse,
+} from '../dto';
 import { SupabaseAuthGuard } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
-import {
-  GetUsersQueryDto,
-  UpdateUserDto,
-  UserResponseDto,
-} from './users.dto';
+import { GetUsersQueryDto, UpdateUserDto, UserResponseDto } from './users.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
@@ -30,42 +26,46 @@ export class UsersController {
 
   @Get()
   @ApiOperation({ summary: 'Get all users (for explore page)' })
-  @ApiResponse({ status: 200, type: [UserResponseDto] })
-  findAll(@Query() query: GetUsersQueryDto): Promise<UserResponseDto[]> {
-    return this.usersService.findAll(query);
+  @ApiStandardArrayResponse(UserResponseDto)
+  async findAll(
+    @Query() query: GetUsersQueryDto,
+  ): Promise<StandardResponse<UserResponseDto[]>> {
+    const users = await this.usersService.findAll(query);
+    return StandardResponse.ok(users);
   }
 
   @Get('me')
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, type: UserResponseDto })
-  getMe(@Req() req: AuthenticatedRequest): Promise<UserResponseDto> {
-    if (!req.user) {
-      throw new Error('User not found - complete onboarding first');
-    }
-    return this.usersService.findById(req.user.id);
+  @ApiStandardResponse(UserResponseDto)
+  async getMe(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<StandardResponse<UserResponseDto>> {
+    const user = await this.usersService.getCurrentUser(req.user);
+    return StandardResponse.ok(user);
   }
 
   @Patch('me')
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user profile' })
-  @ApiResponse({ status: 200, type: UserResponseDto })
-  updateMe(
+  @ApiStandardResponse(UserResponseDto)
+  async updateMe(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateUserDto,
-  ): Promise<UserResponseDto> {
-    if (!req.user) {
-      throw new Error('User not found - complete onboarding first');
-    }
-    return this.usersService.update(req.user.id, dto);
+  ): Promise<StandardResponse<UserResponseDto>> {
+    const user = await this.usersService.updateCurrentUser(req.user, dto);
+    return StandardResponse.ok(user);
   }
 
   @Get(':username')
   @ApiOperation({ summary: 'Get user by username' })
-  @ApiResponse({ status: 200, type: UserResponseDto })
-  findByUsername(@Param('username') username: string): Promise<UserResponseDto> {
-    return this.usersService.findByUsername(username);
+  @ApiStandardResponse(UserResponseDto)
+  async findByUsername(
+    @Param('username') username: string,
+  ): Promise<StandardResponse<UserResponseDto>> {
+    const user = await this.usersService.findByUsername(username);
+    return StandardResponse.ok(user);
   }
 }

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Theme, UserRole } from '@prisma/client';
+import { PaginationDto } from '../dto';
 
 export enum UserSortBy {
   MOST_POPULAR = 'most_popular',
@@ -8,18 +9,12 @@ export enum UserSortBy {
   MOST_REVIEWS = 'most_reviews',
 }
 
-export class GetUsersQueryDto {
+export class GetUsersQueryDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Search by username' })
   search?: string;
 
   @ApiPropertyOptional({ enum: UserSortBy, default: UserSortBy.MOST_POPULAR })
   sortBy?: UserSortBy;
-
-  @ApiPropertyOptional({ default: 20 })
-  limit?: number;
-
-  @ApiPropertyOptional({ default: 0 })
-  offset?: number;
 }
 
 export class UserResponseDto {
