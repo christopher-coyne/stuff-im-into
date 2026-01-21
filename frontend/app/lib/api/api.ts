@@ -60,6 +60,12 @@ export interface MeResponseDto {
   user?: UserProfileDto;
 }
 
+export interface TabDto {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
+
 export interface UserResponseDto {
   id: string;
   username: string;
@@ -78,7 +84,7 @@ export interface UserResponseDto {
   createdAt: string;
   reviewCount: number;
   bookmarkCount: number;
-  tabNames: string[];
+  tabs: TabDto[];
 }
 
 export interface UpdateUserDto {
@@ -93,6 +99,34 @@ export interface UpdateUserDto {
     | "VIOLET"
     | "ROSE"
     | "MINIMAL";
+}
+
+export interface CategoryDto {
+  id: string;
+  name: string;
+}
+
+export interface ReviewListItemDto {
+  id: string;
+  title: string;
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  mediaUrl?: object;
+  mediaConfig?: object;
+  /** @format date-time */
+  publishedAt: string;
+  categories: CategoryDto[];
+}
+
+export interface PaginationMetaDto {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedReviewsDto {
+  items: ReviewListItemDto[];
+  meta: PaginationMetaDto;
 }
 
 import type {
@@ -521,6 +555,79 @@ export class Api<
       >({
         path: `/users/${username}`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
+  tabs = {
+    /**
+     * No description
+     *
+     * @tags Tabs
+     * @name TabsControllerFindCategoriesForTab
+     * @summary Get categories used in a specific tab
+     * @request GET:/tabs/{tabId}/categories
+     */
+    tabsControllerFindCategoriesForTab: (
+      tabId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: CategoryDto[];
+        },
+        any
+      >({
+        path: `/tabs/${tabId}/categories`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Tabs
+     * @name TabsControllerFindReviewsForTab
+     * @summary Get paginated reviews for a specific tab
+     * @request GET:/tabs/{tabId}/reviews
+     */
+    tabsControllerFindReviewsForTab: (
+      tabId: string,
+      query?: {
+        /**
+         * Page number
+         * @default 1
+         * @example 1
+         */
+        page?: number;
+        /**
+         * Number of items per page
+         * @min 1
+         * @default 10
+         * @example 10
+         */
+        limit?: number;
+        /** Search by title */
+        search?: string;
+        /** Filter by category ID */
+        categoryId?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: PaginatedReviewsDto;
+        },
+        any
+      >({
+        path: `/tabs/${tabId}/reviews`,
+        method: "GET",
+        query: query,
         format: "json",
         ...params,
       }),

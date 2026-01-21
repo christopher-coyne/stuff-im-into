@@ -21,12 +21,10 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { useDebounce } from "~/hooks/use-debounce";
-import { Api } from "~/lib/api/api";
+import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
 
 const PAGE_SIZE = 5;
-
-const api = new Api({ baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000" });
 
 type SortOption = "most_popular" | "recently_active" | "newest" | "most_reviews";
 
@@ -56,7 +54,7 @@ function UserCard({ user }: { user: UserResponseDto }) {
   });
 
   return (
-    <Link to={`/@${user.username}`} className="block">
+    <Link to={`/${user.username}`} className="block">
       <Card className="p-4 hover:border-zinc-700 transition-colors">
         <div className="flex gap-4">
           {/* Avatar */}
@@ -90,16 +88,16 @@ function UserCard({ user }: { user: UserResponseDto }) {
                 <Heart className="h-4 w-4" />
                 <span>{user.bookmarkCount}</span>
               </div>
-              {user.tabNames.length > 0 && (
+              {user.tabs.length > 0 && (
                 <div className="flex gap-1.5 flex-wrap justify-end">
-                  {user.tabNames.slice(0, 3).map((tab) => (
-                    <Badge key={tab} variant="secondary">
-                      {tab}
+                  {user.tabs.slice(0, 3).map((tab) => (
+                    <Badge key={tab.id} variant="secondary">
+                      {tab.name}
                     </Badge>
                   ))}
-                  {user.tabNames.length > 3 && (
+                  {user.tabs.length > 3 && (
                     <span className="text-xs text-muted-foreground">
-                      +{user.tabNames.length - 3}
+                      +{user.tabs.length - 3}
                     </span>
                   )}
                 </div>
