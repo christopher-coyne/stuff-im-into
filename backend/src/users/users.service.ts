@@ -20,8 +20,6 @@ export class UsersService {
     const { search, sortBy = UserSortBy.MOST_POPULAR } = query;
     const orderBy = this.getOrderBy(sortBy);
 
-    console.log('search ', search);
-
     const users = await this.prisma.user.findMany({
       where: search
         ? {
@@ -41,7 +39,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { name: true },
+          select: { id: true, name: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -60,7 +58,7 @@ export class UsersService {
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
-      tabNames: user.tabs.map((tab) => tab.name),
+      tabs: user.tabs,
     }));
   }
 
@@ -77,7 +75,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { name: true },
+          select: { id: true, name: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -97,7 +95,7 @@ export class UsersService {
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
-      tabNames: user.tabs.map((tab) => tab.name),
+      tabs: user.tabs,
     };
   }
 
@@ -135,7 +133,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { name: true },
+          select: { id: true, name: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -155,7 +153,7 @@ export class UsersService {
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
-      tabNames: user.tabs.map((tab) => tab.name),
+      tabs: user.tabs,
     };
   }
 
@@ -173,7 +171,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { name: true },
+          select: { id: true, name: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -189,7 +187,7 @@ export class UsersService {
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
-      tabNames: user.tabs.map((tab) => tab.name),
+      tabs: user.tabs,
     };
   }
 
