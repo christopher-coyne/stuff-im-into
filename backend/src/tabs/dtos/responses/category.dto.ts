@@ -6,4 +6,7 @@ export class CategoryDto {
 
   @ApiProperty()
   name: string;
+
+  @ApiProperty()
+  slug: string;
 }

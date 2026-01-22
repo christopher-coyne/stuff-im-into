@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
 import type { CategoryDto, PaginatedReviewsDto } from "~/lib/api/api";
-import type { Route } from "./+types/$username.$tabId";
+import type { Route } from "./+types/$username.$tab";
 
 // Theme gradient colors for header background
 const themeGradients: Record<string, string> = {
@@ -22,10 +22,10 @@ const themeGradients: Record<string, string> = {
 };
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { username, tabId } = params;
+  const { username, tab: tabSlug } = params;
   const url = new URL(request.url);
   const search = url.searchParams.get("search") || undefined;
-  const categoryId = url.searchParams.get("category") || undefined;
+  const categorySlug = url.searchParams.get("category") || undefined;
 
   if (!username) {
     throw new Response("Username is required", { status: 400 });
@@ -38,12 +38,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Response("User not found", { status: 404 });
   }
 
-  // Determine current tab - use provided tabId or default to first tab
-  const currentTab = tabId
-    ? user.tabs.find((tab) => tab.id === tabId)
+  // Determine current tab - use provided tab slug or default to first tab
+  const currentTab = tabSlug
+    ? user.tabs.find((tab) => tab.slug === tabSlug)
     : user.tabs[0];
 
-  if (tabId && !currentTab) {
+  if (tabSlug && !currentTab) {
     throw new Response("Tab not found", { status: 404 });
   }
 
@@ -57,10 +57,22 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (currentTab) {
     const [categoriesResponse, reviewsResponse] = await Promise.all([
       api.tabs.tabsControllerFindCategoriesForTab(currentTab.id),
-      api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId }),
+      api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search }),
     ]);
     categories = categoriesResponse.data.data || [];
-    reviews = reviewsResponse.data.data || reviews;
+
+    // If category slug is provided, find the category ID
+    const categoryId = categorySlug
+      ? categories.find((c) => c.slug === categorySlug)?.id
+      : undefined;
+
+    // Re-fetch reviews with category filter if needed
+    if (categoryId) {
+      const filteredResponse = await api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId });
+      reviews = filteredResponse.data.data || reviews;
+    } else {
+      reviews = reviewsResponse.data.data || reviews;
+    }
   }
 
   return { user, currentTab: currentTab || null, categories, reviews };
@@ -168,7 +180,7 @@ export default function MediaListPage() {
               {user.tabs.map((tab) => (
                 <Link
                   key={tab.id}
-                  to={`/${user.username}/${tab.id}`}
+                  to={`/${user.username}/${tab.slug}`}
                   className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
                     currentTab?.id === tab.id
                       ? "border-primary text-foreground"
@@ -207,7 +219,7 @@ export default function MediaListPage() {
                   <SelectContent>
                     <SelectItem value="all">All categories</SelectItem>
                     {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                      <SelectItem key={category.id} value={category.slug}>
                         {category.name}
                       </SelectItem>
                     ))}

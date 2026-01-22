@@ -2,6 +2,14 @@ import { PrismaClient, Theme, MediaType, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Generate URL-friendly slug from name
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 async function main() {
   console.log('Seeding database...');
 
@@ -131,7 +139,9 @@ async function main() {
   ];
 
   const categories = await Promise.all(
-    categoriesData.map((cat) => prisma.category.create({ data: cat })),
+    categoriesData.map((cat) =>
+      prisma.category.create({ data: { ...cat, slug: slugify(cat.name) } }),
+    ),
   );
 
   console.log(`Created ${categories.length} categories`);
@@ -153,7 +163,9 @@ async function main() {
   ];
 
   const tabs = await Promise.all(
-    tabsData.map((tab) => prisma.tab.create({ data: tab })),
+    tabsData.map((tab) =>
+      prisma.tab.create({ data: { ...tab, slug: slugify(tab.name) } }),
+    ),
   );
 
   console.log(`Created ${tabs.length} tabs`);

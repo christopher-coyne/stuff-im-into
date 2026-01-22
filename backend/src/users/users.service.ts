@@ -39,7 +39,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -75,7 +75,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -133,7 +133,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -171,7 +171,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
       },

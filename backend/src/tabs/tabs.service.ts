@@ -30,7 +30,7 @@ export class TabsService {
           },
         },
       },
-      select: { id: true, name: true },
+      select: { id: true, name: true, slug: true },
       orderBy: { name: 'asc' },
     });
 
@@ -79,7 +79,7 @@ export class TabsService {
           categories: {
             include: {
               category: {
-                select: { id: true, name: true },
+                select: { id: true, name: true, slug: true },
               },
             },
           },
@@ -98,9 +98,14 @@ export class TabsService {
         mediaUrl: review.mediaUrl,
         mediaConfig: review.mediaConfig as object | null,
         publishedAt: review.publishedAt!,
-        categories: review.categories.map((rc) => ({
-          id: rc.category.id,
-          name: rc.category.name,
+        categories: (
+          review.categories as Array<{
+            category: { id: string; name: string; slug: string };
+          }>
+        ).map(({ category }) => ({
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
         })),
       })),
       meta: {

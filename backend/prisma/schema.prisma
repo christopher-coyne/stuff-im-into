@@ -67,6 +67,7 @@ model User {
 model Tab {
   id        String   @id @default(uuid())
   name      String
+  slug      String   // URL-friendly version of name (auto-generated)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -76,6 +77,7 @@ model Tab {
   userId  String
   reviews Review[]
 
+  @@unique([userId, slug]) // Tab slugs unique per user
   @@map("tabs")
 }
 
@@ -130,6 +132,7 @@ model Review {
 model Category {
   id        String   @id @default(uuid())
   name      String
+  slug      String   // URL-friendly version of name (auto-generated)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -138,7 +141,7 @@ model Category {
   userId  String
   reviews ReviewCategory[]
 
-  @@unique([userId, name]) // Category names unique per user
+  @@unique([userId, slug]) // Category slugs unique per user
   @@map("categories")
 }
 

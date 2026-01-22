@@ -63,6 +63,7 @@ export interface MeResponseDto {
 export interface TabDto {
   id: string;
   name: string;
+  slug: string;
   sortOrder: number;
 }
 
@@ -104,6 +105,7 @@ export interface UpdateUserDto {
 export interface CategoryDto {
   id: string;
   name: string;
+  slug: string;
 }
 
 export interface ReviewListItemDto {

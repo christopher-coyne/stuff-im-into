@@ -1,0 +1,138 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Category, MediaType, Review, Tab, Theme, User } from '@prisma/client';
+
+export class ReviewUserDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  username: string;
+
+  @ApiPropertyOptional()
+  avatarUrl: string | null;
+
+  @ApiProperty({ enum: Theme })
+  theme: Theme;
+}
+
+export class ReviewTabDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  slug: string;
+}
+
+export class ReviewCategoryDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  slug: string;
+}
+
+export class RelatedReviewDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiPropertyOptional()
+  mediaUrl: string | null;
+}
+
+export class MetaFieldDto {
+  @ApiProperty()
+  label: string;
+
+  @ApiProperty()
+  value: string;
+}
+
+export class ReviewDetailDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiPropertyOptional()
+  description: string | null;
+
+  @ApiProperty({ enum: MediaType })
+  mediaType: MediaType;
+
+  @ApiPropertyOptional()
+  mediaUrl: string | null;
+
+  @ApiPropertyOptional({ type: Object })
+  mediaConfig: object | null;
+
+  @ApiPropertyOptional({ type: [MetaFieldDto] })
+  metaFields: MetaFieldDto[] | null;
+
+  @ApiProperty()
+  publishedAt: Date;
+
+  @ApiProperty({ type: ReviewUserDto })
+  user: ReviewUserDto;
+
+  @ApiProperty({ type: ReviewTabDto })
+  tab: ReviewTabDto;
+
+  @ApiProperty({ type: [ReviewCategoryDto] })
+  categories: ReviewCategoryDto[];
+
+  @ApiProperty({ type: [RelatedReviewDto] })
+  relatedReviews: RelatedReviewDto[];
+
+  constructor(
+    review: Review & {
+      user: User;
+      tab: Tab;
+      categories: { category: Category }[];
+      relatedReviews: { target: Review }[];
+    },
+  ) {
+    Object.assign(this, {
+      id: review.id,
+      title: review.title,
+      description: review.description,
+      mediaType: review.mediaType,
+      mediaUrl: review.mediaUrl,
+      mediaConfig: review.mediaConfig,
+      metaFields: review.metaFields,
+      publishedAt: review.publishedAt,
+      user: {
+        id: review.user.id,
+        username: review.user.username,
+        avatarUrl: review.user.avatarUrl,
+        theme: review.user.theme,
+      },
+      tab: {
+        id: review.tab.id,
+        name: review.tab.name,
+        slug: review.tab.slug,
+      },
+      categories: review.categories.map(({ category }) => ({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+      })),
+      relatedReviews: review.relatedReviews
+        .filter(({ target }) => target.publishedAt !== null)
+        .map(({ target }) => ({
+          id: target.id,
+          title: target.title,
+          mediaUrl: target.mediaUrl,
+        })),
+    });
+  }
+}

@@ -8,5 +8,8 @@ export class TabDto {
   name: string;
 
   @ApiProperty()
+  slug: string;
+
+  @ApiProperty()
   sortOrder: number;
 }
