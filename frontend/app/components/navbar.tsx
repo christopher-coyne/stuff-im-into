@@ -2,6 +2,8 @@ import { Moon, Sun, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "~/lib/auth-context";
+import { LoginModal } from "./auth/login-modal";
+import { SignupModal } from "./auth/signup-modal";
 import { Button } from "./ui/button";
 
 type Theme = "dark" | "light";
@@ -44,6 +46,14 @@ const themeGradients: Record<string, string> = {
 
 export function Navbar() {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [signupModalOpen, setSignupModalOpen] = useState(false);
+
+  const openLogin = () => setLoginModalOpen(true);
+  const openSignup = () => setSignupModalOpen(true);
+
+  const switchToSignup = () => setSignupModalOpen(true);
+  const switchToLogin = () => setLoginModalOpen(true);
 
   const gradient = user?.theme
     ? themeGradients[user.theme] || themeGradients.DEFAULT
@@ -69,7 +79,7 @@ export function Navbar() {
               <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
             ) : isAuthenticated && user ? (
               <Link
-                to="/settings/profile"
+                to={`/${user.username}`}
                 className="flex items-center gap-2 p-1 rounded-lg hover:bg-accent transition-colors"
               >
                 <div
@@ -86,19 +96,39 @@ export function Navbar() {
                   )}
                 </div>
               </Link>
+            ) : isAuthenticated ? (
+              <Link
+                to="/onboarding"
+                className="flex items-center gap-2 p-1 rounded-lg hover:bg-accent transition-colors"
+              >
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </Link>
             ) : (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/login">Sign in</Link>
+                <Button variant="ghost" size="sm" onClick={openLogin}>
+                  Sign in
                 </Button>
-                <Button size="sm" asChild>
-                  <Link to="/signup">Sign up</Link>
+                <Button size="sm" onClick={openSignup}>
+                  Sign up
                 </Button>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      <LoginModal
+        open={loginModalOpen}
+        onOpenChange={setLoginModalOpen}
+        onSwitchToSignup={switchToSignup}
+      />
+      <SignupModal
+        open={signupModalOpen}
+        onOpenChange={setSignupModalOpen}
+        onSwitchToLogin={switchToLogin}
+      />
     </nav>
   );
 }

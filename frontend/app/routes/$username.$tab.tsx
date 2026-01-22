@@ -125,9 +125,9 @@ export default function MediaListPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className={`bg-gradient-to-br ${gradient} px-6 py-8`}>
-        <div className="max-w-4xl mx-auto">
+      <div className="max-w-3xl mx-auto px-6 pt-6">
+        {/* Header */}
+        <header className={`bg-gradient-to-br ${gradient} px-6 py-8 rounded-t-xl`}>
           <div className="flex items-center gap-6">
             {/* Profile Picture */}
             <div className="h-20 w-20 rounded-full bg-white/20 flex-shrink-0 overflow-hidden">
@@ -169,14 +169,12 @@ export default function MediaListPage() {
               {String(user.bio)}
             </div>
           )}
-        </div>
-      </header>
+        </header>
 
-      {/* Tabs */}
-      {user.tabs.length > 0 && (
-        <nav className="border-b">
-          <div className="max-w-4xl mx-auto px-6">
-            <div className="flex gap-1">
+        {/* Tabs */}
+        {user.tabs.length > 0 && (
+          <nav className="border-b border-x border-border">
+            <div className="flex gap-1 px-2">
               {user.tabs.map((tab) => (
                 <Link
                   key={tab.id}
@@ -191,12 +189,11 @@ export default function MediaListPage() {
                 </Link>
               ))}
             </div>
-          </div>
-        </nav>
-      )}
+          </nav>
+        )}
 
-      {/* Main content area */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
+        {/* Main content area */}
+        <main className="py-8">
         {currentTab ? (
           <div>
             {/* Search and Filter */}
@@ -234,7 +231,8 @@ export default function MediaListPage() {
         ) : (
           <p className="text-muted-foreground">No tabs yet</p>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -131,6 +131,59 @@ export interface PaginatedReviewsDto {
   meta: PaginationMetaDto;
 }
 
+export interface MetaFieldDto {
+  label: string;
+  value: string;
+}
+
+export interface ReviewUserDto {
+  id: string;
+  username: string;
+  avatarUrl?: object;
+  theme:
+    | "DEFAULT"
+    | "EMBER"
+    | "OCEAN"
+    | "FOREST"
+    | "VIOLET"
+    | "ROSE"
+    | "MINIMAL";
+}
+
+export interface ReviewTabDto {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface ReviewCategoryDto {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface RelatedReviewDto {
+  id: string;
+  title: string;
+  mediaUrl?: object;
+}
+
+export interface ReviewDetailDto {
+  id: string;
+  title: string;
+  description?: object;
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  mediaUrl?: object;
+  mediaConfig?: object;
+  metaFields?: MetaFieldDto[];
+  /** @format date-time */
+  publishedAt: string;
+  user: ReviewUserDto;
+  tab: ReviewTabDto;
+  categories: ReviewCategoryDto[];
+  relatedReviews: RelatedReviewDto[];
+}
+
 import type {
   AxiosInstance,
   AxiosRequestConfig,
@@ -630,6 +683,30 @@ export class Api<
         path: `/tabs/${tabId}/reviews`,
         method: "GET",
         query: query,
+        format: "json",
+        ...params,
+      }),
+  };
+  reviews = {
+    /**
+     * No description
+     *
+     * @tags Reviews
+     * @name ReviewsControllerFindById
+     * @summary Get a single review by ID
+     * @request GET:/reviews/{id}
+     */
+    reviewsControllerFindById: (id: string, params: RequestParams = {}) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: ReviewDetailDto;
+        },
+        any
+      >({
+        path: `/reviews/${id}`,
+        method: "GET",
         format: "json",
         ...params,
       }),

@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import type { ReviewListItemDto } from "~/lib/api/api";
 
 interface ReviewsGridProps {
@@ -12,7 +13,7 @@ export function ReviewsGrid({ reviews }: ReviewsGridProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
       {reviews.map((review) => (
-        <div key={review.id} className="group">
+        <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}
           <div className="aspect-[2/3] rounded-lg overflow-hidden bg-muted mb-2">
             <img
@@ -33,7 +34,7 @@ export function ReviewsGrid({ reviews }: ReviewsGridProps) {
               ))}
             </div>
           )}
-        </div>
+        </Link>
       ))}
     </div>
   );
