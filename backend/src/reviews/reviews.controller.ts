@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiStandardResponse, StandardResponse } from '../dto';
-import { SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
+import { OptionalAuthGuard, SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
 import { CreateReviewDto, ReviewDetailDto, UpdateReviewDto } from './dtos';
 import { ReviewsService } from './reviews.service';
 
@@ -27,12 +27,15 @@ export class ReviewsController {
   }
 
   @Get(':id')
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a single review by ID' })
   @ApiStandardResponse(ReviewDetailDto)
   async findById(
     @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<ReviewDetailDto>> {
-    const review = await this.reviewsService.findById(id);
+    const review = await this.reviewsService.findById(id, req.user?.id);
     return StandardResponse.ok(review);
   }
 

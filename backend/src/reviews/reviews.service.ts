@@ -7,7 +7,7 @@ import { CreateReviewDto, ReviewDetailDto, UpdateReviewDto } from './dtos';
 export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<ReviewDetailDto> {
+  async findById(id: string, userId?: string): Promise<ReviewDetailDto> {
     const review = await this.prisma.review.findUnique({
       where: { id },
       include: {
@@ -27,7 +27,21 @@ export class ReviewsService {
       throw new NotFoundException('Review not found');
     }
 
-    return new ReviewDetailDto(review);
+    // Check if the user has bookmarked this review
+    let isBookmarked = false;
+    if (userId) {
+      const bookmark = await this.prisma.reviewBookmark.findUnique({
+        where: {
+          ownerId_reviewId: {
+            ownerId: userId,
+            reviewId: id,
+          },
+        },
+      });
+      isBookmarked = !!bookmark;
+    }
+
+    return new ReviewDetailDto(review, isBookmarked);
   }
 
   async create(user: User, dto: CreateReviewDto): Promise<ReviewDetailDto> {
@@ -99,7 +113,7 @@ export class ReviewsService {
       },
     });
 
-    return new ReviewDetailDto(review);
+    return new ReviewDetailDto(review, false);
   }
 
   async update(
@@ -186,6 +200,6 @@ export class ReviewsService {
       },
     });
 
-    return new ReviewDetailDto(updatedReview);
+    return new ReviewDetailDto(updatedReview, false);
   }
 }

@@ -93,6 +93,9 @@ export class ReviewDetailDto {
   @ApiProperty({ type: [RelatedReviewDto] })
   relatedReviews: RelatedReviewDto[];
 
+  @ApiProperty({ description: 'Whether the current user has bookmarked this review' })
+  isBookmarked: boolean;
+
   constructor(
     review: Review & {
       user: User;
@@ -100,6 +103,7 @@ export class ReviewDetailDto {
       categories: { category: Category }[];
       relatedReviews: { target: Review }[];
     },
+    isBookmarked: boolean = false,
   ) {
     Object.assign(this, {
       id: review.id,
@@ -133,6 +137,7 @@ export class ReviewDetailDto {
           title: target.title,
           mediaUrl: target.mediaUrl,
         })),
+      isBookmarked,
     });
   }
 }

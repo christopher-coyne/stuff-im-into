@@ -1,4 +1,14 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiStandardArrayResponse, StandardResponse } from '../dto';
 import { SupabaseAuthGuard } from '../supabase';
@@ -31,5 +41,27 @@ export class BookmarksController {
   ): Promise<StandardResponse<BookmarkedUserDto[]>> {
     const bookmarks = await this.bookmarksService.getUserBookmarks(req.user);
     return StandardResponse.ok(bookmarks);
+  }
+
+  @Post('reviews/:reviewId')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Bookmark a review' })
+  async bookmarkReview(
+    @Req() req: AuthenticatedRequest,
+    @Param('reviewId') reviewId: string,
+  ): Promise<StandardResponse<null>> {
+    await this.bookmarksService.bookmarkReview(req.user, reviewId);
+    return StandardResponse.created(null);
+  }
+
+  @Delete('reviews/:reviewId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remove a review bookmark' })
+  async unbookmarkReview(
+    @Req() req: AuthenticatedRequest,
+    @Param('reviewId') reviewId: string,
+  ): Promise<StandardResponse<null>> {
+    await this.bookmarksService.unbookmarkReview(req.user, reviewId);
+    return StandardResponse.ok(null);
   }
 }

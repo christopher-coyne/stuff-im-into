@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
 
       if (response.data.data) {
-        setUser(response.data.data as UserProfileDto);
+        setUser(response.data.data as unknown as UserProfileDto);
       }
       return {};
     } catch (error: unknown) {

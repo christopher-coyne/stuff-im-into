@@ -5,7 +5,7 @@ import {
   ApiStandardResponse,
   StandardResponse,
 } from '../dto';
-import { SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
+import { OptionalAuthGuard, SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
 import { CategoryDto, CreateCategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto } from './dtos';
 import { TabsService } from './tabs.service';
 
@@ -74,13 +74,16 @@ export class TabsController {
   }
 
   @Get(':tabId/reviews')
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get paginated reviews for a specific tab' })
   @ApiStandardResponse(PaginatedReviewsDto)
   async findReviewsForTab(
     @Param('tabId') tabId: string,
     @Query() query: GetReviewsQueryDto,
+    @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<PaginatedReviewsDto>> {
-    const result = await this.tabsService.findReviewsForTab(tabId, query);
+    const result = await this.tabsService.findReviewsForTab(tabId, query, req.user?.id);
     return StandardResponse.ok(result);
   }
 }

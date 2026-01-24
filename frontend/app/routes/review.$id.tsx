@@ -1,12 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Bookmark, Calendar, ChevronRight, Clock, Pencil, Share2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, ChevronRight, Clock, Pencil, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useLoaderData, useRevalidator } from "react-router";
 import { ReviewForm, type ReviewFormData } from "~/components/reviews";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
-import type { UpdateReviewDto } from "~/lib/api/api";
+import type { ReviewListItemDto, UpdateReviewDto } from "~/lib/api/api";
 import { getReviewGradient, getTagColor } from "~/lib/theme";
 import type { Route } from "./+types/review.$id";
 
@@ -40,7 +40,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 
   // Fetch other reviews from the same categories
-  const categoryReviews: Record<string, { name: string; reviews: typeof review[] }> = {};
+  const categoryReviews: Record<string, { name: string; reviews: ReviewListItemDto[] }> = {};
 
   if (review.categories.length > 0) {
     const categoryFetches = review.categories.map(async (category) => {
@@ -88,8 +88,58 @@ export default function ReviewDetailPage() {
   const { user: loggedInUser, session } = useAuth();
   const revalidator = useRevalidator();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [optimisticBookmarked, setOptimisticBookmarked] = useState<boolean | null>(null);
 
   const isOwner = loggedInUser?.id === review.user.id;
+  const isBookmarked = optimisticBookmarked ?? review.isBookmarked;
+
+  // Fetch bookmark status client-side when session is available
+  // (loader runs server-side without auth, so we need to check client-side)
+  useEffect(() => {
+    if (session && optimisticBookmarked === null) {
+      api.reviews
+        .reviewsControllerFindById(review.id, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        .then((response) => {
+          if (response.data.data?.isBookmarked !== undefined) {
+            setOptimisticBookmarked(response.data.data.isBookmarked);
+          }
+        })
+        .catch(() => {
+          // Ignore errors - bookmark status is not critical
+        });
+    }
+  }, [session, review.id, optimisticBookmarked]);
+
+  // Bookmark mutation
+  const bookmarkMutation = useMutation({
+    mutationFn: async () => {
+      if (!session) throw new Error("Not authenticated");
+      if (isBookmarked) {
+        await api.bookmarks.bookmarksControllerUnbookmarkReview(review.id, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+      } else {
+        await api.bookmarks.bookmarksControllerBookmarkReview(review.id, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+      }
+    },
+    onMutate: () => {
+      // Optimistic update
+      setOptimisticBookmarked(!isBookmarked);
+    },
+    onError: () => {
+      // Revert on error
+      setOptimisticBookmarked(null);
+    },
+    onSuccess: () => {
+      // Revalidate to get fresh data from server
+      revalidator.revalidate();
+      setOptimisticBookmarked(null);
+    },
+  });
 
   const updateReviewMutation = useMutation({
     mutationFn: async (data: UpdateReviewDto) => {
@@ -237,8 +287,23 @@ export default function ReviewDetailPage() {
               <span>{calculateReadTime(review.description as unknown as string)}</span>
             </div>
             <div className="text-border">|</div>
-            <button className="hover:text-foreground transition-colors">
-              <Bookmark className="h-5 w-5" />
+            <button
+              onClick={() => {
+                if (session) {
+                  bookmarkMutation.mutate();
+                }
+              }}
+              disabled={!session || bookmarkMutation.isPending}
+              className={`hover:text-foreground transition-colors ${
+                isBookmarked ? "text-amber-500" : ""
+              } ${!session ? "opacity-50 cursor-not-allowed" : ""}`}
+              title={session ? (isBookmarked ? "Remove bookmark" : "Bookmark") : "Log in to bookmark"}
+            >
+              {isBookmarked ? (
+                <BookmarkCheck className="h-5 w-5" />
+              ) : (
+                <Bookmark className="h-5 w-5" />
+              )}
             </button>
             <button className="hover:text-foreground transition-colors">
               <Share2 className="h-5 w-5" />

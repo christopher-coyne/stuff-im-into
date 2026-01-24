@@ -23,4 +23,7 @@ export class ReviewListItemDto {
 
   @ApiProperty({ type: [CategoryDto] })
   categories: CategoryDto[];
+
+  @ApiProperty({ description: 'Whether the current user has bookmarked this review' })
+  isBookmarked: boolean;
 }

@@ -150,6 +150,7 @@ export class TabsService {
   async findReviewsForTab(
     tabId: string,
     query: GetReviewsQueryDto,
+    userId?: string,
   ): Promise<PaginatedReviewsDto> {
     const { search, categoryId, page = 1, limit = 10 } = query;
 
@@ -193,6 +194,12 @@ export class TabsService {
               },
             },
           },
+          bookmarkedBy: userId
+            ? {
+                where: { ownerId: userId },
+                select: { id: true },
+              }
+            : false,
         },
         orderBy: { sortOrder: 'asc' },
         skip: query.skip,
@@ -217,6 +224,9 @@ export class TabsService {
           name: category.name,
           slug: category.slug,
         })),
+        isBookmarked: userId
+          ? (review.bookmarkedBy as Array<{ id: string }>)?.length > 0
+          : false,
       })),
       meta: {
         page,

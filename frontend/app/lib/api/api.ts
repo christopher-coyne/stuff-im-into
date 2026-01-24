@@ -156,6 +156,8 @@ export interface ReviewListItemDto {
   /** @format date-time */
   publishedAt: string;
   categories: CategoryDto[];
+  /** Whether the current user has bookmarked this review */
+  isBookmarked: boolean;
 }
 
 export interface PaginationMetaDto {
@@ -221,6 +223,8 @@ export interface ReviewDetailDto {
   tab: ReviewTabDto;
   categories: ReviewCategoryDto[];
   relatedReviews: RelatedReviewDto[];
+  /** Whether the current user has bookmarked this review */
+  isBookmarked: boolean;
 }
 
 export interface MetaFieldInputDto {
@@ -879,6 +883,7 @@ export class Api<
      * @name TabsControllerFindReviewsForTab
      * @summary Get paginated reviews for a specific tab
      * @request GET:/tabs/{tabId}/reviews
+     * @secure
      */
     tabsControllerFindReviewsForTab: (
       tabId: string,
@@ -914,6 +919,7 @@ export class Api<
         path: `/tabs/${tabId}/reviews`,
         method: "GET",
         query: query,
+        secure: true,
         format: "json",
         ...params,
       }),
@@ -956,6 +962,7 @@ export class Api<
      * @name ReviewsControllerFindById
      * @summary Get a single review by ID
      * @request GET:/reviews/{id}
+     * @secure
      */
     reviewsControllerFindById: (id: string, params: RequestParams = {}) =>
       this.request<
@@ -968,6 +975,7 @@ export class Api<
       >({
         path: `/reviews/${id}`,
         method: "GET",
+        secure: true,
         format: "json",
         ...params,
       }),
@@ -1051,6 +1059,46 @@ export class Api<
         method: "GET",
         secure: true,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Bookmarks
+     * @name BookmarksControllerBookmarkReview
+     * @summary Bookmark a review
+     * @request POST:/bookmarks/reviews/{reviewId}
+     * @secure
+     */
+    bookmarksControllerBookmarkReview: (
+      reviewId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/bookmarks/reviews/${reviewId}`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Bookmarks
+     * @name BookmarksControllerUnbookmarkReview
+     * @summary Remove a review bookmark
+     * @request DELETE:/bookmarks/reviews/{reviewId}
+     * @secure
+     */
+    bookmarksControllerUnbookmarkReview: (
+      reviewId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/bookmarks/reviews/${reviewId}`,
+        method: "DELETE",
+        secure: true,
         ...params,
       }),
   };
