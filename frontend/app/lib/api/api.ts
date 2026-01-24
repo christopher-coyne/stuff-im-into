@@ -223,6 +223,67 @@ export interface ReviewDetailDto {
   relatedReviews: RelatedReviewDto[];
 }
 
+export interface MetaFieldInputDto {
+  /**
+   * Label for the meta field
+   * @example "Director"
+   */
+  label: string;
+  /**
+   * Value for the meta field
+   * @example "Denis Villeneuve"
+   */
+  value: string;
+}
+
+export interface CreateReviewDto {
+  /**
+   * Title of the review
+   * @example "Blade Runner 2049"
+   */
+  title: string;
+  /** Tab ID this review belongs to */
+  tabId: string;
+  /** Markdown description/content */
+  description?: string;
+  /**
+   * Type of media
+   * @example "VIDEO"
+   */
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  /** URL of the media */
+  mediaUrl?: string;
+  /** Category IDs to assign to this review */
+  categoryIds?: string[];
+  /** Meta fields (key-value pairs) */
+  metaFields?: MetaFieldInputDto[];
+  /** Whether to publish immediately (default: false) */
+  publish?: boolean;
+}
+
+export interface UpdateReviewDto {
+  /**
+   * Title of the review
+   * @example "Blade Runner 2049"
+   */
+  title?: string;
+  /** Markdown description/content */
+  description?: string;
+  /**
+   * Type of media
+   * @example "VIDEO"
+   */
+  mediaType?: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  /** URL of the media */
+  mediaUrl?: string;
+  /** Category IDs to assign to this review */
+  categoryIds?: string[];
+  /** Meta fields (key-value pairs) */
+  metaFields?: MetaFieldInputDto[];
+  /** Whether to publish immediately (default: false) */
+  publish?: boolean;
+}
+
 export interface BookmarkedReviewUserDto {
   id: string;
   username: string;
@@ -862,6 +923,36 @@ export class Api<
      * No description
      *
      * @tags Reviews
+     * @name ReviewsControllerCreate
+     * @summary Create a new review
+     * @request POST:/reviews
+     * @secure
+     */
+    reviewsControllerCreate: (
+      data: CreateReviewDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 201 */
+          status?: number;
+          data?: ReviewDetailDto;
+        },
+        any
+      >({
+        path: `/reviews`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reviews
      * @name ReviewsControllerFindById
      * @summary Get a single review by ID
      * @request GET:/reviews/{id}
@@ -877,6 +968,37 @@ export class Api<
       >({
         path: `/reviews/${id}`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reviews
+     * @name ReviewsControllerUpdate
+     * @summary Update a review
+     * @request PATCH:/reviews/{id}
+     * @secure
+     */
+    reviewsControllerUpdate: (
+      id: string,
+      data: UpdateReviewDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: ReviewDetailDto;
+        },
+        any
+      >({
+        path: `/reviews/${id}`,
+        method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

@@ -1,6 +1,13 @@
-import { ArrowLeft, Bookmark, Calendar, ChevronRight, Clock, Share2 } from "lucide-react";
-import { Link, useLoaderData } from "react-router";
+import { useMutation } from "@tanstack/react-query";
+import { ArrowLeft, Bookmark, Calendar, ChevronRight, Clock, Pencil, Share2 } from "lucide-react";
+import { useState } from "react";
+import { Link, useLoaderData, useRevalidator } from "react-router";
+import { ReviewForm, type ReviewFormData } from "~/components/reviews";
+import { Button } from "~/components/ui/button";
+import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
+import type { UpdateReviewDto } from "~/lib/api/api";
+import { getReviewGradient, getTagColor } from "~/lib/theme";
 import type { Route } from "./+types/review.$id";
 
 function calculateReadTime(text: string | null | undefined): string {
@@ -17,26 +24,6 @@ function formatDate(dateString: string): string {
     year: "numeric",
   });
 }
-
-const themeGradients: Record<string, string> = {
-  DEFAULT: "from-gray-600/80 to-gray-900",
-  EMBER: "from-amber-700/80 to-stone-900",
-  OCEAN: "from-cyan-700/80 to-slate-900",
-  FOREST: "from-emerald-700/80 to-stone-900",
-  VIOLET: "from-violet-700/80 to-slate-900",
-  ROSE: "from-rose-700/80 to-stone-900",
-  MINIMAL: "from-zinc-600/80 to-zinc-900",
-};
-
-const themeTagColors: Record<string, string> = {
-  DEFAULT: "bg-gray-600 text-gray-100",
-  EMBER: "bg-amber-600 text-amber-100",
-  OCEAN: "bg-cyan-600 text-cyan-100",
-  FOREST: "bg-emerald-600 text-emerald-100",
-  VIOLET: "bg-violet-600 text-violet-100",
-  ROSE: "bg-rose-600 text-rose-100",
-  MINIMAL: "bg-zinc-600 text-zinc-100",
-};
 
 export async function loader({ params }: Route.LoaderArgs) {
   const { id } = params;
@@ -98,15 +85,81 @@ export function meta({ data }: Route.MetaArgs) {
 
 export default function ReviewDetailPage() {
   const { review, categoryReviews } = useLoaderData<typeof loader>();
+  const { user: loggedInUser, session } = useAuth();
+  const revalidator = useRevalidator();
+  const [isEditMode, setIsEditMode] = useState(false);
 
-  const gradient = themeGradients[review.user.theme] || themeGradients.DEFAULT;
-  const tagColor = themeTagColors[review.user.theme] || themeTagColors.DEFAULT;
+  const isOwner = loggedInUser?.id === review.user.id;
 
+  const updateReviewMutation = useMutation({
+    mutationFn: async (data: UpdateReviewDto) => {
+      if (!session) throw new Error("Not authenticated");
+      const response = await api.reviews.reviewsControllerUpdate(review.id, data, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      return response.data.data;
+    },
+    onSuccess: () => {
+      setIsEditMode(false);
+      revalidator.revalidate();
+    },
+  });
+
+  const handleEditSubmit = (data: ReviewFormData) => {
+    const validMetaFields = data.metaFields.filter((f) => f.label.trim() && f.value.trim());
+
+    updateReviewMutation.mutate({
+      title: data.title.trim(),
+      description: data.description.trim() || undefined,
+      mediaType: data.mediaType,
+      mediaUrl: data.mediaUrl.trim() || undefined,
+      categoryIds: data.categoryIds.length > 0 ? data.categoryIds : [],
+      metaFields: validMetaFields.length > 0 ? validMetaFields : [],
+      publish: data.publish,
+    });
+  };
+
+  const gradient = getReviewGradient(review.user.theme);
+  const tagColor = getTagColor(review.user.theme);
+
+  // Edit mode - show the form
+  if (isEditMode && isOwner) {
+    const errorMessage = updateReviewMutation.error
+      ? (updateReviewMutation.error as { response?: { data?: { message?: string } } })
+          ?.response?.data?.message || "Failed to update review"
+      : null;
+
+    return (
+      <ReviewForm
+        user={review.user}
+        initialValues={{
+          title: review.title,
+          tabId: review.tab.id,
+          description: review.description ? String(review.description) : "",
+          mediaType: review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT",
+          mediaUrl: review.mediaUrl ? String(review.mediaUrl) : "",
+          categoryIds: review.categories.map((c) => c.id),
+          metaFields: (review.metaFields || []).map((f) => ({
+            label: f.label,
+            value: f.value,
+          })),
+          publish: !!review.publishedAt,
+        }}
+        onSubmit={handleEditSubmit}
+        isSubmitting={updateReviewMutation.isPending}
+        error={errorMessage}
+        submitLabel="Save Changes"
+        onCancel={() => setIsEditMode(false)}
+      />
+    );
+  }
+
+  // View mode - show the review
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-6">
         {/* Back link */}
-        <div className="pt-6 pb-4">
+        <div className="pt-6 pb-4 flex items-center justify-between">
           <Link
             to={`/${review.user.username}/${review.tab.slug}`}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
@@ -114,6 +167,17 @@ export default function ReviewDetailPage() {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to @{review.user.username}&apos;s list</span>
           </Link>
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditMode(true)}
+              className="gap-2"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Button>
+          )}
         </div>
 
         {/* Header with gradient */}

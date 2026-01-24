@@ -17,18 +17,8 @@ import { useAuth } from "~/lib/auth-context";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
 import type { CategoryDto, PaginatedReviewsDto } from "~/lib/api/api";
+import { getHeaderGradient, themeHeaderGradients } from "~/lib/theme";
 import type { Route } from "./+types/$username.$tab";
-
-// Theme gradient colors for header background
-const themeGradients: Record<string, string> = {
-  DEFAULT: "from-gray-600 to-gray-800",
-  EMBER: "from-amber-600 to-orange-800",
-  OCEAN: "from-cyan-600 to-blue-800",
-  FOREST: "from-emerald-600 to-green-800",
-  VIOLET: "from-violet-600 to-purple-800",
-  ROSE: "from-rose-600 to-pink-800",
-  MINIMAL: "from-zinc-600 to-zinc-800",
-};
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { username, tab: tabSlug } = params;
@@ -286,7 +276,7 @@ export default function MediaListPage() {
     createCategoryMutation.mutate(newCategoryName.trim());
   };
 
-  const gradient = themeGradients[selectedTheme] || themeGradients.DEFAULT;
+  const gradient = getHeaderGradient(selectedTheme);
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
@@ -432,8 +422,8 @@ export default function MediaListPage() {
                   Add Category
                 </Button>
               )}
-              {isEditMode && isOwnProfile && (
-                <Link to="/reviews/add">
+              {isEditMode && isOwnProfile && currentTab && (
+                <Link to={`/reviews/add?tab=${currentTab.id}`}>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Review
@@ -466,7 +456,7 @@ export default function MediaListPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.keys(themeGradients).map((theme) => (
+                    {Object.keys(themeHeaderGradients).map((theme) => (
                       <SelectItem key={theme} value={theme}>
                         {theme.charAt(0) + theme.slice(1).toLowerCase()}
                       </SelectItem>

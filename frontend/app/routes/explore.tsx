@@ -23,6 +23,7 @@ import {
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
+import { getAvatarGradient } from "~/lib/theme";
 
 const PAGE_SIZE = 5;
 
@@ -35,19 +36,8 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "most_reviews", label: "Most reviews" },
 ];
 
-// Theme gradient colors for avatars
-const themeGradients: Record<string, string> = {
-  DEFAULT: "from-gray-400 to-gray-600",
-  EMBER: "from-amber-400 to-orange-600",
-  OCEAN: "from-cyan-400 to-blue-600",
-  FOREST: "from-emerald-400 to-green-600",
-  VIOLET: "from-violet-400 to-purple-600",
-  ROSE: "from-rose-400 to-pink-600",
-  MINIMAL: "from-zinc-400 to-zinc-600",
-};
-
 function UserCard({ user }: { user: UserResponseDto }) {
-  const gradient = themeGradients[user.theme] || themeGradients.DEFAULT;
+  const gradient = getAvatarGradient(user.theme);
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "short",
     year: "numeric",

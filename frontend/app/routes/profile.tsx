@@ -5,6 +5,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
+import { getAvatarGradient } from "~/lib/theme";
 
 export function meta() {
   return [
@@ -12,17 +13,6 @@ export function meta() {
     { name: "description", content: "Manage your account and bookmarks" },
   ];
 }
-
-// Theme gradient colors for avatars
-const themeGradients: Record<string, string> = {
-  DEFAULT: "from-gray-400 to-gray-600",
-  EMBER: "from-amber-400 to-orange-600",
-  OCEAN: "from-cyan-400 to-blue-600",
-  FOREST: "from-emerald-400 to-green-600",
-  VIOLET: "from-violet-400 to-purple-600",
-  ROSE: "from-rose-400 to-pink-600",
-  MINIMAL: "from-zinc-400 to-zinc-600",
-};
 
 interface BookmarkedUser {
   id: string;
@@ -162,9 +152,7 @@ export default function ProfilePage() {
     return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
-  const gradient = user?.theme
-    ? themeGradients[user.theme] || themeGradients.DEFAULT
-    : themeGradients.DEFAULT;
+  const gradient = getAvatarGradient(user?.theme);
 
   return (
     <div className="min-h-screen bg-background">
@@ -345,8 +333,7 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     bookmarkedUsers.map((bookmarkedUser) => {
-                      const userGradient =
-                        themeGradients[bookmarkedUser.theme] || themeGradients.DEFAULT;
+                      const userGradient = getAvatarGradient(bookmarkedUser.theme);
                       return (
                         <Link
                           key={bookmarkedUser.id}
@@ -383,8 +370,7 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   bookmarkedReviews.map((review) => {
-                    const reviewUserGradient =
-                      themeGradients[review.user.theme] || themeGradients.DEFAULT;
+                    const reviewUserGradient = getAvatarGradient(review.user.theme);
                     return (
                       <Link
                         key={review.id}
