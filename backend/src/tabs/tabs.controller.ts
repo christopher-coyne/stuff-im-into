@@ -1,17 +1,50 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   ApiStandardArrayResponse,
   ApiStandardResponse,
   StandardResponse,
 } from '../dto';
-import { CategoryDto, GetReviewsQueryDto, PaginatedReviewsDto } from './dtos';
+import { SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
+import { CategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto } from './dtos';
 import { TabsService } from './tabs.service';
 
 @ApiTags('Tabs')
 @Controller('tabs')
 export class TabsController {
   constructor(private readonly tabsService: TabsService) {}
+
+  @Post()
+  @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new tab' })
+  @ApiStandardResponse(TabResponseDto, 201)
+  async createTab(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: CreateTabDto,
+  ): Promise<StandardResponse<TabResponseDto>> {
+    if (!req.user) {
+      throw new Error('User profile not found');
+    }
+    const tab = await this.tabsService.createTab(req.user, dto);
+    return StandardResponse.created(tab);
+  }
+
+  @Patch('reorder')
+  @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Reorder tabs' })
+  @ApiStandardArrayResponse(TabResponseDto)
+  async reorderTabs(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: ReorderTabsDto,
+  ): Promise<StandardResponse<TabResponseDto[]>> {
+    if (!req.user) {
+      throw new Error('User profile not found');
+    }
+    const tabs = await this.tabsService.reorderTabs(req.user, dto);
+    return StandardResponse.ok(tabs);
+  }
 
   @Get(':tabId/categories')
   @ApiOperation({ summary: 'Get categories used in a specific tab' })

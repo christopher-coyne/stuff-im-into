@@ -1,10 +1,18 @@
-import { Search } from "lucide-react";
+import { GripVertical, Pencil, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
 import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { useAuth } from "~/lib/auth-context";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
 import type { CategoryDto, PaginatedReviewsDto } from "~/lib/api/api";
@@ -91,10 +99,28 @@ export function meta({ data }: Route.MetaArgs) {
 
 export default function MediaListPage() {
   const { user, currentTab, categories, reviews } = useLoaderData<typeof loader>();
+  const { user: loggedInUser, session } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showBio, setShowBio] = useState(false);
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const debouncedSearch = useDebounce(search, 300);
+
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showAddTabModal, setShowAddTabModal] = useState(false);
+  const [newTabName, setNewTabName] = useState("");
+  const [isCreatingTab, setIsCreatingTab] = useState(false);
+  const [tabError, setTabError] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState<string>(user.theme || "DEFAULT");
+  const [isSavingTheme, setIsSavingTheme] = useState(false);
+
+  // Drag and drop state
+  const [localTabs, setLocalTabs] = useState(user.tabs);
+  const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
+  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
+
+  const isOwnProfile = loggedInUser?.id === user.id;
 
   const selectedCategory = searchParams.get("category") || "all";
 
@@ -115,6 +141,106 @@ export default function MediaListPage() {
       searchParams.set("category", value);
     }
     setSearchParams(searchParams);
+  };
+
+  const handleThemeChange = async (theme: string) => {
+    if (!session) return;
+
+    setSelectedTheme(theme);
+    setIsSavingTheme(true);
+
+    try {
+      await api.users.usersControllerUpdateMe(
+        { theme: theme as "DEFAULT" | "EMBER" | "OCEAN" | "FOREST" | "VIOLET" | "ROSE" | "MINIMAL" },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      // Reload the page to reflect the new theme
+      navigate(0);
+    } catch (error) {
+      console.error("Failed to update theme:", error);
+      setSelectedTheme(user.theme || "DEFAULT");
+    } finally {
+      setIsSavingTheme(false);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, tabId: string) => {
+    setDraggedTabId(tabId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, tabId: string) => {
+    e.preventDefault();
+    if (tabId !== draggedTabId) {
+      setDragOverTabId(tabId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverTabId(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetTabId: string) => {
+    e.preventDefault();
+    if (!draggedTabId || draggedTabId === targetTabId || !session) return;
+
+    const draggedIndex = localTabs.findIndex((t) => t.id === draggedTabId);
+    const targetIndex = localTabs.findIndex((t) => t.id === targetTabId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    // Reorder locally first for immediate feedback
+    const newTabs = [...localTabs];
+    const [draggedTab] = newTabs.splice(draggedIndex, 1);
+    newTabs.splice(targetIndex, 0, draggedTab);
+    setLocalTabs(newTabs);
+
+    // Reset drag state
+    setDraggedTabId(null);
+    setDragOverTabId(null);
+
+    // Save to backend
+    try {
+      await api.tabs.tabsControllerReorderTabs(
+        { tabIds: newTabs.map((t) => t.id) },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+    } catch (error) {
+      console.error("Failed to reorder tabs:", error);
+      // Revert on error
+      setLocalTabs(user.tabs);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTabId(null);
+    setDragOverTabId(null);
+  };
+
+  const handleCreateTab = async () => {
+    if (!session || !newTabName.trim()) return;
+
+    setIsCreatingTab(true);
+    setTabError("");
+
+    try {
+      const response = await api.tabs.tabsControllerCreateTab(
+        { name: newTabName.trim() },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+
+      if (response.data?.data) {
+        setShowAddTabModal(false);
+        setNewTabName("");
+        // Navigate to the new tab
+        navigate(`/${user.username}/${response.data.data.slug}`);
+      }
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setTabError(err.response?.data?.message || "Failed to create tab");
+    } finally {
+      setIsCreatingTab(false);
+    }
   };
 
   const gradient = themeGradients[user.theme] || themeGradients.DEFAULT;
@@ -161,6 +287,18 @@ export default function MediaListPage() {
                 {showBio ? "Hide" : "About"}
               </Button>
             )}
+
+            {/* Edit Button (only for own profile, hidden when in edit mode) */}
+            {isOwnProfile && !isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditMode(true)}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {/* Bio (collapsible) */}
@@ -172,21 +310,43 @@ export default function MediaListPage() {
         </header>
 
         {/* Tabs */}
-        {user.tabs.length > 0 && (
+        {localTabs.length > 0 && (
           <nav className="border-b border-x border-border">
             <div className="flex gap-1 px-2">
-              {user.tabs.map((tab) => (
-                <Link
+              {localTabs.map((tab) => (
+                <div
                   key={tab.id}
-                  to={`/${user.username}/${tab.slug}`}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                    currentTab?.id === tab.id
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  draggable={isEditMode && isOwnProfile}
+                  onDragStart={(e) => handleDragStart(e, tab.id)}
+                  onDragOver={(e) => handleDragOver(e, tab.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, tab.id)}
+                  onDragEnd={handleDragEnd}
+                  className={`flex items-center transition-all ${
+                    draggedTabId === tab.id ? "opacity-50" : ""
+                  } ${
+                    dragOverTabId === tab.id ? "border-l-2 border-primary" : ""
                   }`}
                 >
-                  {tab.name}
-                </Link>
+                  {isEditMode && isOwnProfile && (
+                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab mr-1" />
+                  )}
+                  <Link
+                    to={`/${user.username}/${tab.slug}`}
+                    className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                      currentTab?.id === tab.id
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={(e) => {
+                      if (isEditMode) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    {tab.name}
+                  </Link>
+                </div>
               ))}
             </div>
           </nav>
@@ -233,6 +393,83 @@ export default function MediaListPage() {
         )}
         </main>
       </div>
+
+      {/* Sticky Edit Navbar */}
+      {isEditMode && isOwnProfile && (
+        <div className="fixed top-0 left-0 right-0 bg-background border-b border-border p-4 z-50">
+          <div className="max-w-3xl mx-auto flex justify-between items-center">
+            <Button variant="outline" onClick={() => setIsEditMode(false)}>
+              Exit Edit Mode
+            </Button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Theme:</span>
+                <Select value={selectedTheme} onValueChange={handleThemeChange} disabled={isSavingTheme}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(themeGradients).map((theme) => (
+                      <SelectItem key={theme} value={theme}>
+                        {theme.charAt(0) + theme.slice(1).toLowerCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={() => setShowAddTabModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Tab
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Tab Modal */}
+      <Dialog open={showAddTabModal} onOpenChange={setShowAddTabModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Tab</DialogTitle>
+            <DialogDescription>
+              Enter a name for your new tab. This will create a new section on your profile.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <Input
+              placeholder="Tab name (e.g., Movies, Books, Music)"
+              value={newTabName}
+              onChange={(e) => setNewTabName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newTabName.trim()) {
+                  handleCreateTab();
+                }
+              }}
+            />
+            {tabError && (
+              <p className="text-sm text-destructive">{tabError}</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddTabModal(false);
+                  setNewTabName("");
+                  setTabError("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateTab}
+                disabled={!newTabName.trim() || isCreatingTab}
+              >
+                {isCreatingTab ? "Creating..." : "Create Tab"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -110,6 +110,29 @@ export interface UpdateUserDto {
     | "MINIMAL";
 }
 
+export interface TabResponseDto {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+}
+
+export interface CreateTabDto {
+  /**
+   * Name of the tab
+   * @example "Movies"
+   */
+  name: string;
+}
+
+export interface ReorderTabsDto {
+  /**
+   * Array of tab IDs in the desired order
+   * @example ["tab-id-1","tab-id-2","tab-id-3"]
+   */
+  tabIds: string[];
+}
+
 export interface CategoryDto {
   id: string;
   name: string;
@@ -666,6 +689,63 @@ export class Api<
       }),
   };
   tabs = {
+    /**
+     * No description
+     *
+     * @tags Tabs
+     * @name TabsControllerCreateTab
+     * @summary Create a new tab
+     * @request POST:/tabs
+     * @secure
+     */
+    tabsControllerCreateTab: (data: CreateTabDto, params: RequestParams = {}) =>
+      this.request<
+        {
+          /** @example 201 */
+          status?: number;
+          data?: TabResponseDto;
+        },
+        any
+      >({
+        path: `/tabs`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Tabs
+     * @name TabsControllerReorderTabs
+     * @summary Reorder tabs
+     * @request PATCH:/tabs/reorder
+     * @secure
+     */
+    tabsControllerReorderTabs: (
+      data: ReorderTabsDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: TabResponseDto[];
+        },
+        any
+      >({
+        path: `/tabs/reorder`,
+        method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *
