@@ -3,6 +3,7 @@ import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, ChevronRight, Clock, Penc
 import { useState } from "react";
 import { Link, useLoaderData, useRevalidator } from "react-router";
 import { ReviewForm, type ReviewFormData } from "~/components/reviews";
+import { MediaPreview } from "~/components/reviews/media-preview";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
@@ -147,7 +148,7 @@ export default function ReviewDetailPage() {
     updateReviewMutation.mutate({
       title: data.title.trim(),
       description: data.description.trim() || undefined,
-      mediaType: data.mediaType,
+      mediaType: data.mediaType as UpdateReviewDto["mediaType"],
       mediaUrl: data.mediaUrl.trim() || undefined,
       categoryIds: data.categoryIds.length > 0 ? data.categoryIds : [],
       metaFields: validMetaFields.length > 0 ? validMetaFields : [],
@@ -172,7 +173,7 @@ export default function ReviewDetailPage() {
           title: review.title,
           tabId: review.tab.id,
           description: review.description ? String(review.description) : "",
-          mediaType: review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT",
+          mediaType: review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK",
           mediaUrl: review.mediaUrl ? String(review.mediaUrl) : "",
           categoryIds: review.categories.map((c) => c.id),
           metaFields: (review.metaFields || []).map((f) => ({
@@ -247,17 +248,12 @@ export default function ReviewDetailPage() {
         <main className="py-6">
         {/* Media embed */}
         <div className="aspect-video rounded-xl overflow-hidden bg-muted mb-6">
-          {review.mediaUrl ? (
-            <img
-              src={String(review.mediaUrl)}
-              alt={review.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              No media
-            </div>
-          )}
+          <MediaPreview
+            mediaType={review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK"}
+            mediaUrl={review.mediaUrl as string | null | undefined}
+            mediaConfig={review.mediaConfig as Record<string, unknown> | null}
+            title={review.title}
+          />
         </div>
 
         {/* Action bar */}

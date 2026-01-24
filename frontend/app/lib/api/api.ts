@@ -259,6 +259,8 @@ export interface CreateReviewDto {
   mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
   /** URL of the media */
   mediaUrl?: string;
+  /** Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify) */
+  mediaConfig?: object;
   /** Category IDs to assign to this review */
   categoryIds?: string[];
   /** Meta fields (key-value pairs) */
@@ -282,6 +284,8 @@ export interface UpdateReviewDto {
   mediaType?: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
   /** URL of the media */
   mediaUrl?: string;
+  /** Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify) */
+  mediaConfig?: object;
   /** Category IDs to assign to this review */
   categoryIds?: string[];
   /** Meta fields (key-value pairs) */

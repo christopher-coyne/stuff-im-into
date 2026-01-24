@@ -28,6 +28,7 @@ enum MediaType {
   SPOTIFY
   IMAGE
   TEXT
+  EXTERNAL_LINK
 }
 
 enum UserRole {

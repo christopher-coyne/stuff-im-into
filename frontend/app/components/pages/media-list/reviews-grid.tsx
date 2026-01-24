@@ -1,9 +1,41 @@
-import { BookmarkCheck } from "lucide-react";
+import { BookmarkCheck, ExternalLink, Music, Type, Video } from "lucide-react";
 import { Link } from "react-router";
 import type { ReviewListItemDto } from "~/lib/api/api";
 
 interface ReviewsGridProps {
   reviews: ReviewListItemDto[];
+}
+
+function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
+  const mediaUrl = review.mediaUrl as string | undefined;
+
+  // Show actual image for IMAGE type
+  if (review.mediaType === "IMAGE" && mediaUrl) {
+    return (
+      <img
+        src={mediaUrl}
+        alt={review.title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+      />
+    );
+  }
+
+  // Show placeholder icons for other types
+  const iconMap = {
+    VIDEO: Video,
+    SPOTIFY: Music,
+    EXTERNAL_LINK: ExternalLink,
+    TEXT: Type,
+    IMAGE: Type, // fallback if no URL
+  };
+
+  const Icon = iconMap[review.mediaType as keyof typeof iconMap] || Type;
+
+  return (
+    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+      <Icon className="h-12 w-12" />
+    </div>
+  );
 }
 
 export function ReviewsGrid({ reviews }: ReviewsGridProps) {
@@ -17,11 +49,7 @@ export function ReviewsGrid({ reviews }: ReviewsGridProps) {
         <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}
           <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted mb-2">
-            <img
-              src="https://placehold.co/200x300/1a1a1a/666?text=..."
-              alt={review.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            />
+            <MediaThumbnail review={review} />
             {/* Bookmark indicator */}
             {review.isBookmarked && (
               <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-amber-500">

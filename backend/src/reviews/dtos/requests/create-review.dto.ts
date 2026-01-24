@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEnum,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -45,6 +46,13 @@ export class CreateReviewDto {
   @IsOptional()
   @IsString()
   mediaUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify)',
+  })
+  @IsOptional()
+  @IsObject()
+  mediaConfig?: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Category IDs to assign to this review' })
   @IsOptional()

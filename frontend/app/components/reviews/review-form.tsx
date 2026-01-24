@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ImagePlus, Plus, X } from "lucide-react";
+import { ArrowLeft, Plus, X } from "lucide-react";
 import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -14,8 +14,10 @@ import {
 } from "~/components/ui/select";
 import { api } from "~/lib/api/client";
 import { getReviewGradient, getTagColor } from "~/lib/theme";
+import { ImageUpload } from "./image-upload";
+import { MediaPreview } from "./media-preview";
 
-type MediaType = "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+type MediaType = "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
 
 export interface ReviewFormData {
   title: string;
@@ -30,8 +32,9 @@ export interface ReviewFormData {
 
 const mediaTypeOptions: { value: MediaType; label: string }[] = [
   { value: "IMAGE", label: "Image" },
-  { value: "VIDEO", label: "Video" },
+  { value: "VIDEO", label: "YouTube" },
   { value: "SPOTIFY", label: "Spotify" },
+  { value: "EXTERNAL_LINK", label: "Link" },
   { value: "TEXT", label: "Text Only" },
 ];
 
@@ -203,27 +206,44 @@ export function ReviewForm({
           <main className="py-6">
             {/* Media section */}
             <div className="mb-6">
-              <div className="aspect-video rounded-xl overflow-hidden bg-muted mb-3 relative">
-                {watchedMediaUrl && watchedMediaType === "IMAGE" ? (
-                  <img
-                    src={watchedMediaUrl}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
+              {/* Image upload has its own preview */}
+              {watchedMediaType === "IMAGE" && !watchedMediaUrl ? (
+                <ImageUpload
+                  userId={user.id}
+                  currentUrl={watchedMediaUrl}
+                  onUpload={(url) => setValue("mediaUrl", url)}
+                  onRemove={() => setValue("mediaUrl", "")}
+                  disabled={isSubmitting}
+                />
+              ) : (
+                <div className="aspect-video rounded-xl overflow-hidden bg-muted mb-3 relative">
+                  <MediaPreview
+                    mediaType={watchedMediaType}
+                    mediaUrl={watchedMediaUrl}
+                    title={watch("title")}
                   />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
-                    <ImagePlus className="h-12 w-12" />
-                    <span className="text-sm">Media preview</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-3">
+                  {/* Remove button for uploaded images */}
+                  {watchedMediaType === "IMAGE" && watchedMediaUrl && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => setValue("mediaUrl", "")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-3">
                 <Select
                   value={watchedMediaType}
-                  onValueChange={(value) => setValue("mediaType", value as MediaType)}
+                  onValueChange={(value) => {
+                    setValue("mediaType", value as MediaType);
+                    setValue("mediaUrl", ""); // Clear URL when type changes
+                  }}
                 >
                   <SelectTrigger className="w-[120px]">
                     <SelectValue />
@@ -236,15 +256,32 @@ export function ReviewForm({
                     ))}
                   </SelectContent>
                 </Select>
-                {watchedMediaType !== "TEXT" && (
+
+                {/* Conditional input based on media type */}
+                {watchedMediaType === "IMAGE" && (
                   <Input
-                    placeholder={
-                      watchedMediaType === "IMAGE"
-                        ? "Image URL..."
-                        : watchedMediaType === "VIDEO"
-                          ? "YouTube URL..."
-                          : "Spotify URL..."
-                    }
+                    placeholder="Or paste image URL..."
+                    {...register("mediaUrl")}
+                    className="flex-1"
+                  />
+                )}
+                {watchedMediaType === "VIDEO" && (
+                  <Input
+                    placeholder="YouTube URL (e.g., youtube.com/watch?v=...)"
+                    {...register("mediaUrl")}
+                    className="flex-1"
+                  />
+                )}
+                {watchedMediaType === "SPOTIFY" && (
+                  <Input
+                    placeholder="Spotify URL (e.g., open.spotify.com/track/...)"
+                    {...register("mediaUrl")}
+                    className="flex-1"
+                  />
+                )}
+                {watchedMediaType === "EXTERNAL_LINK" && (
+                  <Input
+                    placeholder="URL (e.g., https://example.com/article)"
                     {...register("mediaUrl")}
                     className="flex-1"
                   />

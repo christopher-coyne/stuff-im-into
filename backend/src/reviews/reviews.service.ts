@@ -1,7 +1,80 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma, User } from '@prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import type { MediaType, Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma';
 import { CreateReviewDto, ReviewDetailDto, UpdateReviewDto } from './dtos';
+
+// Helper functions for extracting embed IDs from URLs
+
+function extractYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function extractSpotifyEmbed(
+  url: string,
+): { type: 'track' | 'album' | 'playlist'; id: string } | null {
+  const match = url.match(/spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/);
+  if (match) {
+    return { type: match[1] as 'track' | 'album' | 'playlist', id: match[2] };
+  }
+  return null;
+}
+
+function buildMediaConfig(
+  mediaType: MediaType,
+  mediaUrl: string | undefined,
+  existingConfig?: Record<string, unknown>,
+): Record<string, unknown> | null {
+  if (!mediaUrl) return existingConfig || null;
+
+  switch (mediaType) {
+    case 'VIDEO': {
+      const videoId = extractYouTubeId(mediaUrl);
+      if (!videoId) {
+        throw new BadRequestException(
+          'Invalid YouTube URL. Please provide a valid YouTube link.',
+        );
+      }
+      return { videoId, ...existingConfig };
+    }
+    case 'SPOTIFY': {
+      const embed = extractSpotifyEmbed(mediaUrl);
+      if (!embed) {
+        throw new BadRequestException(
+          'Invalid Spotify URL. Please provide a valid Spotify track, album, or playlist link.',
+        );
+      }
+      return { embedType: embed.type, embedId: embed.id, ...existingConfig };
+    }
+    case 'EXTERNAL_LINK': {
+      try {
+        const parsedUrl = new URL(mediaUrl);
+        return { domain: parsedUrl.hostname, ...existingConfig };
+      } catch {
+        throw new BadRequestException(
+          'Invalid URL. Please provide a valid external link.',
+        );
+      }
+    }
+    case 'IMAGE':
+    case 'TEXT':
+    default:
+      return existingConfig || null;
+  }
+}
 
 @Injectable()
 export class ReviewsService {
@@ -83,6 +156,13 @@ export class ReviewsService {
 
     const sortOrder = (lastReview?.sortOrder ?? -1) + 1;
 
+    // Build mediaConfig from URL if applicable
+    const mediaConfig = buildMediaConfig(
+      dto.mediaType,
+      dto.mediaUrl,
+      dto.mediaConfig,
+    );
+
     const review = await this.prisma.review.create({
       data: {
         userId: user.id,
@@ -91,6 +171,7 @@ export class ReviewsService {
         description: dto.description,
         mediaType: dto.mediaType,
         mediaUrl: dto.mediaUrl,
+        mediaConfig: mediaConfig as Prisma.InputJsonValue,
         metaFields: dto.metaFields as unknown as Prisma.InputJsonValue,
         sortOrder,
         publishedAt: dto.publish ? new Date() : null,
@@ -160,11 +241,30 @@ export class ReviewsService {
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.mediaType !== undefined) updateData.mediaType = dto.mediaType;
     if (dto.mediaUrl !== undefined) updateData.mediaUrl = dto.mediaUrl;
-    if (dto.metaFields !== undefined)
+    if (dto.metaFields !== undefined) {
       updateData.metaFields =
         dto.metaFields as unknown as Prisma.InputJsonValue;
+    }
     if (dto.publish !== undefined) {
       updateData.publishedAt = dto.publish ? new Date() : null;
+    }
+
+    // Build mediaConfig if media fields are being updated
+    if (dto.mediaType !== undefined || dto.mediaUrl !== undefined) {
+      // Fetch current review to get existing mediaType if not provided
+      const currentReview = await this.prisma.review.findUnique({
+        where: { id },
+        select: { mediaType: true },
+      });
+      const mediaType = dto.mediaType ?? currentReview?.mediaType;
+      if (mediaType) {
+        const mediaConfig = buildMediaConfig(
+          mediaType,
+          dto.mediaUrl,
+          dto.mediaConfig,
+        );
+        updateData.mediaConfig = mediaConfig as Prisma.InputJsonValue;
+      }
     }
 
     // Handle category updates
