@@ -119,33 +119,6 @@ async function main() {
 
   console.log(`Created ${users.length} users`);
 
-  // Create categories for each user
-  const categoriesData = [
-    // filmfanatic's categories
-    { userId: users[0].id, name: 'Favorites' },
-    { userId: users[0].id, name: 'Sci-Fi' },
-    { userId: users[0].id, name: 'Mind-Bending' },
-    { userId: users[0].id, name: 'Must Watch' },
-    // bookworm_jane's categories
-    { userId: users[1].id, name: 'Favorites' },
-    { userId: users[1].id, name: 'Fantasy' },
-    { userId: users[1].id, name: 'Page-Turners' },
-    { userId: users[1].id, name: 'Re-reads' },
-    // musichead's categories
-    { userId: users[2].id, name: 'Favorites' },
-    { userId: users[2].id, name: 'Chill Vibes' },
-    { userId: users[2].id, name: 'Workout' },
-    { userId: users[2].id, name: 'Late Night' },
-  ];
-
-  const categories = await Promise.all(
-    categoriesData.map((cat) =>
-      prisma.category.create({ data: { ...cat, slug: slugify(cat.name) } }),
-    ),
-  );
-
-  console.log(`Created ${categories.length} categories`);
-
   // Create tabs for each user
   const tabsData = [
     // filmfanatic's tabs
@@ -170,13 +143,51 @@ async function main() {
 
   console.log(`Created ${tabs.length} tabs`);
 
-  // Helper to get tab and categories by user
+  // Helper to get tabs by user
   const getUserTabs = (userId: string) => tabs.filter((t) => t.userId === userId);
-  const getUserCategories = (userId: string) => categories.filter((c) => c.userId === userId);
+
+  // Create categories for each tab
+  const filmfanaticTabs = getUserTabs(users[0].id);
+  const bookwormTabs = getUserTabs(users[1].id);
+  const musicTabs = getUserTabs(users[2].id);
+
+  const categoriesData = [
+    // filmfanatic's Movies tab categories
+    { tabId: filmfanaticTabs[0].id, name: 'Favorites' },
+    { tabId: filmfanaticTabs[0].id, name: 'Sci-Fi' },
+    { tabId: filmfanaticTabs[0].id, name: 'Mind-Bending' },
+    { tabId: filmfanaticTabs[0].id, name: 'Must Watch' },
+    // filmfanatic's TV Shows tab categories
+    { tabId: filmfanaticTabs[1].id, name: 'Favorites' },
+    // bookworm_jane's Fiction tab categories
+    { tabId: bookwormTabs[0].id, name: 'Favorites' },
+    { tabId: bookwormTabs[0].id, name: 'Fantasy' },
+    { tabId: bookwormTabs[0].id, name: 'Page-Turners' },
+    // bookworm_jane's Comics tab categories
+    { tabId: bookwormTabs[2].id, name: 'Favorites' },
+    { tabId: bookwormTabs[2].id, name: 'Re-reads' },
+    // musichead's Albums tab categories
+    { tabId: musicTabs[0].id, name: 'Favorites' },
+    { tabId: musicTabs[0].id, name: 'Chill Vibes' },
+    { tabId: musicTabs[0].id, name: 'Late Night' },
+    // musichead's Artists tab categories
+    { tabId: musicTabs[2].id, name: 'Chill Vibes' },
+  ];
+
+  const categories = await Promise.all(
+    categoriesData.map((cat) =>
+      prisma.category.create({ data: { ...cat, slug: slugify(cat.name) } }),
+    ),
+  );
+
+  console.log(`Created ${categories.length} categories`);
+
+  // Helper to get categories by tab
+  const getTabCategories = (tabId: string) => categories.filter((c) => c.tabId === tabId);
 
   // Create reviews for filmfanatic
-  const filmfanaticTabs = getUserTabs(users[0].id);
-  const filmfanaticCategories = getUserCategories(users[0].id);
+  const filmfanaticMoviesCategories = getTabCategories(filmfanaticTabs[0].id);
+  const filmfanaticTVCategories = getTabCategories(filmfanaticTabs[1].id);
 
   const filmfanaticReviews = await Promise.all([
     prisma.review.create({
@@ -204,8 +215,8 @@ Denis Villeneuve crafts a masterpiece of sci-fi cinema. The cinematography by Ro
         publishedAt: new Date(),
         categories: {
           create: [
-            { categoryId: filmfanaticCategories[0].id }, // Favorites
-            { categoryId: filmfanaticCategories[1].id }, // Sci-Fi
+            { categoryId: filmfanaticMoviesCategories[0].id }, // Favorites
+            { categoryId: filmfanaticMoviesCategories[1].id }, // Sci-Fi
           ],
         },
       },
@@ -228,8 +239,8 @@ The concept of dreams within dreams is executed flawlessly. The rotating hallway
         publishedAt: new Date(),
         categories: {
           create: [
-            { categoryId: filmfanaticCategories[2].id }, // Mind-Bending
-            { categoryId: filmfanaticCategories[3].id }, // Must Watch
+            { categoryId: filmfanaticMoviesCategories[2].id }, // Mind-Bending
+            { categoryId: filmfanaticMoviesCategories[3].id }, // Must Watch
           ],
         },
       },
@@ -247,15 +258,15 @@ Walter White's transformation from mild-mannered chemistry teacher to drug kingp
         sortOrder: 0,
         publishedAt: new Date(),
         categories: {
-          create: [{ categoryId: filmfanaticCategories[0].id }], // Favorites
+          create: [{ categoryId: filmfanaticTVCategories[0].id }], // Favorites
         },
       },
     }),
   ]);
 
   // Create reviews for bookworm_jane
-  const bookwormTabs = getUserTabs(users[1].id);
-  const bookwormCategories = getUserCategories(users[1].id);
+  const bookwormFictionCategories = getTabCategories(bookwormTabs[0].id);
+  const bookwormComicsCategories = getTabCategories(bookwormTabs[2].id);
 
   const bookwormReviews = await Promise.all([
     prisma.review.create({
@@ -279,8 +290,8 @@ Kvothe's story is told with such lyrical prose that you forget you're reading fa
         publishedAt: new Date(),
         categories: {
           create: [
-            { categoryId: bookwormCategories[0].id }, // Favorites
-            { categoryId: bookwormCategories[1].id }, // Fantasy
+            { categoryId: bookwormFictionCategories[0].id }, // Favorites
+            { categoryId: bookwormFictionCategories[1].id }, // Fantasy
           ],
         },
       },
@@ -304,7 +315,7 @@ The friendship that develops is unexpected and heartwarming. The science feels r
         publishedAt: new Date(),
         categories: {
           create: [
-            { categoryId: bookwormCategories[2].id }, // Page-Turners
+            { categoryId: bookwormFictionCategories[2].id }, // Page-Turners
           ],
         },
       },
@@ -327,8 +338,8 @@ Brian K. Vaughan and Fiona Staples created something truly special. It's romanti
         publishedAt: new Date(),
         categories: {
           create: [
-            { categoryId: bookwormCategories[0].id }, // Favorites
-            { categoryId: bookwormCategories[3].id }, // Re-reads
+            { categoryId: bookwormComicsCategories[0].id }, // Favorites
+            { categoryId: bookwormComicsCategories[1].id }, // Re-reads
           ],
         },
       },
@@ -336,8 +347,8 @@ Brian K. Vaughan and Fiona Staples created something truly special. It's romanti
   ]);
 
   // Create reviews for musichead
-  const musicTabs = getUserTabs(users[2].id);
-  const musicCategories = getUserCategories(users[2].id);
+  const musicAlbumsCategories = getTabCategories(musicTabs[0].id);
+  const musicArtistsCategories = getTabCategories(musicTabs[2].id);
 
   const musicReviews = await Promise.all([
     prisma.review.create({
@@ -359,8 +370,8 @@ Every track is meticulously crafted. "Touch" is an emotional journey, and "Giorg
         publishedAt: new Date(),
         categories: {
           create: [
-            { categoryId: musicCategories[0].id }, // Favorites
-            { categoryId: musicCategories[3].id }, // Late Night
+            { categoryId: musicAlbumsCategories[0].id }, // Favorites
+            { categoryId: musicAlbumsCategories[2].id }, // Late Night
           ],
         },
       },
@@ -384,8 +395,8 @@ Miles Davis assembled the perfect group and they created something timeless. "So
         publishedAt: new Date(),
         categories: {
           create: [
-            { categoryId: musicCategories[0].id }, // Favorites
-            { categoryId: musicCategories[1].id }, // Chill Vibes
+            { categoryId: musicAlbumsCategories[0].id }, // Favorites
+            { categoryId: musicAlbumsCategories[1].id }, // Chill Vibes
           ],
         },
       },
@@ -408,7 +419,7 @@ Their blend of global influences - Thai funk, dub, psychedelia - creates somethi
         publishedAt: new Date(),
         categories: {
           create: [
-            { categoryId: musicCategories[1].id }, // Chill Vibes
+            { categoryId: musicArtistsCategories[0].id }, // Chill Vibes
           ],
         },
       },

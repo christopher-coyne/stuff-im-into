@@ -139,6 +139,14 @@ export interface CategoryDto {
   slug: string;
 }
 
+export interface CreateCategoryDto {
+  /**
+   * Name of the category
+   * @example "Favorites"
+   */
+  name: string;
+}
+
 export interface ReviewListItemDto {
   id: string;
   title: string;
@@ -751,7 +759,7 @@ export class Api<
      *
      * @tags Tabs
      * @name TabsControllerFindCategoriesForTab
-     * @summary Get categories used in a specific tab
+     * @summary Get categories for a specific tab
      * @request GET:/tabs/{tabId}/categories
      */
     tabsControllerFindCategoriesForTab: (
@@ -768,6 +776,37 @@ export class Api<
       >({
         path: `/tabs/${tabId}/categories`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Tabs
+     * @name TabsControllerCreateCategory
+     * @summary Create a new category for a tab
+     * @request POST:/tabs/{tabId}/categories
+     * @secure
+     */
+    tabsControllerCreateCategory: (
+      tabId: string,
+      data: CreateCategoryDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 201 */
+          status?: number;
+          data?: CategoryDto;
+        },
+        any
+      >({
+        path: `/tabs/${tabId}/categories`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

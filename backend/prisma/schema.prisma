@@ -52,7 +52,6 @@ model User {
   // Relations
   tabs            Tab[]
   reviews         Review[]
-  categories      Category[]
   bookmarkedUsers UserBookmark[] @relation("BookmarkOwner")
   bookmarkedBy    UserBookmark[] @relation("BookmarkedUser")
   reviewBookmarks ReviewBookmark[]
@@ -73,9 +72,10 @@ model Tab {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId  String
-  reviews Review[]
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  reviews    Review[]
+  categories Category[]
 
   @@unique([userId, slug]) // Tab slugs unique per user
   @@map("tabs")
@@ -137,11 +137,11 @@ model Category {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId  String
+  tab     Tab              @relation(fields: [tabId], references: [id], onDelete: Cascade)
+  tabId   String
   reviews ReviewCategory[]
 
-  @@unique([userId, slug]) // Category slugs unique per user
+  @@unique([tabId, slug]) // Category slugs unique per tab
   @@map("categories")
 }
 

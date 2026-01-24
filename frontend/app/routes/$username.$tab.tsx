@@ -1,3 +1,4 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GripVertical, Pencil, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
@@ -113,7 +114,55 @@ export default function MediaListPage() {
   const [isCreatingTab, setIsCreatingTab] = useState(false);
   const [tabError, setTabError] = useState("");
   const [selectedTheme, setSelectedTheme] = useState<string>(user.theme || "DEFAULT");
-  const [isSavingTheme, setIsSavingTheme] = useState(false);
+
+  // Add category modal state
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  // React Query for categories
+  const queryClient = useQueryClient();
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories", currentTab?.id],
+    queryFn: async () => {
+      if (!currentTab) return [];
+      const response = await api.tabs.tabsControllerFindCategoriesForTab(currentTab.id);
+      return response.data.data || [];
+    },
+    initialData: categories,
+    enabled: !!currentTab,
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: async (name: string) => {
+      if (!currentTab || !session) throw new Error("Not authenticated");
+      const response = await api.tabs.tabsControllerCreateCategory(
+        currentTab.id,
+        { name },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories", currentTab?.id] });
+      setShowAddCategoryModal(false);
+      setNewCategoryName("");
+    },
+  });
+
+  const updateThemeMutation = useMutation({
+    mutationFn: async (theme: string) => {
+      if (!session) throw new Error("Not authenticated");
+      await api.users.usersControllerUpdateMe(
+        { theme: theme as "DEFAULT" | "EMBER" | "OCEAN" | "FOREST" | "VIOLET" | "ROSE" | "MINIMAL" },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+    },
+    onError: () => {
+      // Revert to original theme on error
+      setSelectedTheme(user.theme || "DEFAULT");
+    },
+  });
 
   // Drag and drop state
   const [localTabs, setLocalTabs] = useState(user.tabs);
@@ -123,6 +172,11 @@ export default function MediaListPage() {
   const isOwnProfile = loggedInUser?.id === user.id;
 
   const selectedCategory = searchParams.get("category") || "all";
+
+  // Sync localTabs when user data changes (e.g., navigating between profiles)
+  useEffect(() => {
+    setLocalTabs(user.tabs);
+  }, [user.tabs]);
 
   // Update URL when debounced search changes
   useEffect(() => {
@@ -143,25 +197,9 @@ export default function MediaListPage() {
     setSearchParams(searchParams);
   };
 
-  const handleThemeChange = async (theme: string) => {
-    if (!session) return;
-
-    setSelectedTheme(theme);
-    setIsSavingTheme(true);
-
-    try {
-      await api.users.usersControllerUpdateMe(
-        { theme: theme as "DEFAULT" | "EMBER" | "OCEAN" | "FOREST" | "VIOLET" | "ROSE" | "MINIMAL" },
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-      // Reload the page to reflect the new theme
-      navigate(0);
-    } catch (error) {
-      console.error("Failed to update theme:", error);
-      setSelectedTheme(user.theme || "DEFAULT");
-    } finally {
-      setIsSavingTheme(false);
-    }
+  const handleThemeChange = (theme: string) => {
+    setSelectedTheme(theme); // Optimistic update
+    updateThemeMutation.mutate(theme);
   };
 
   const handleDragStart = (e: React.DragEvent, tabId: string) => {
@@ -243,7 +281,12 @@ export default function MediaListPage() {
     }
   };
 
-  const gradient = themeGradients[user.theme] || themeGradients.DEFAULT;
+  const handleCreateCategory = () => {
+    if (!newCategoryName.trim()) return;
+    createCategoryMutation.mutate(newCategoryName.trim());
+  };
+
+  const gradient = themeGradients[selectedTheme] || themeGradients.DEFAULT;
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
@@ -368,20 +411,34 @@ export default function MediaListPage() {
                   className="pl-10"
                 />
               </div>
-              {categories.length > 0 && (
+              {categoriesData && categoriesData.length > 0 && (
                 <Select value={selectedCategory} onValueChange={handleCategoryChange}>
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All categories</SelectItem>
-                    {categories.map((category) => (
+                    {categoriesData.map((category) => (
                       <SelectItem key={category.id} value={category.slug}>
                         {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              )}
+              {isEditMode && isOwnProfile && (
+                <Button variant="outline" onClick={() => setShowAddCategoryModal(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Category
+                </Button>
+              )}
+              {isEditMode && isOwnProfile && (
+                <Link to="/reviews/add">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Review
+                  </Button>
+                </Link>
               )}
             </div>
 
@@ -404,7 +461,7 @@ export default function MediaListPage() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Theme:</span>
-                <Select value={selectedTheme} onValueChange={handleThemeChange} disabled={isSavingTheme}>
+                <Select value={selectedTheme} onValueChange={handleThemeChange} disabled={updateThemeMutation.isPending}>
                   <SelectTrigger className="w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -465,6 +522,54 @@ export default function MediaListPage() {
                 disabled={!newTabName.trim() || isCreatingTab}
               >
                 {isCreatingTab ? "Creating..." : "Create Tab"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Category Modal */}
+      <Dialog open={showAddCategoryModal} onOpenChange={setShowAddCategoryModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Category</DialogTitle>
+            <DialogDescription>
+              Enter a name for your new category. Categories help organize reviews within this tab.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <Input
+              placeholder="Category name (e.g., Favorites, Sci-Fi, Must Watch)"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newCategoryName.trim()) {
+                  handleCreateCategory();
+                }
+              }}
+            />
+            {createCategoryMutation.error && (
+              <p className="text-sm text-destructive">
+                {(createCategoryMutation.error as { response?: { data?: { message?: string } } })
+                  ?.response?.data?.message || "Failed to create category"}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddCategoryModal(false);
+                  setNewCategoryName("");
+                  createCategoryMutation.reset();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateCategory}
+                disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
+              >
+                {createCategoryMutation.isPending ? "Creating..." : "Create Category"}
               </Button>
             </div>
           </div>

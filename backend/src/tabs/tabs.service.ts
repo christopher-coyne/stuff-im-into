@@ -1,7 +1,7 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma';
-import { CategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto } from './dtos';
+import { CategoryDto, CreateCategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto } from './dtos';
 
 @Injectable()
 export class TabsService {
@@ -92,23 +92,59 @@ export class TabsService {
       throw new NotFoundException(`Tab not found`);
     }
 
-    // Get categories that have at least one published review in this tab
+    // Get all categories for this tab
     const categories = await this.prisma.category.findMany({
-      where: {
-        reviews: {
-          some: {
-            review: {
-              tabId,
-              publishedAt: { not: null },
-            },
-          },
-        },
-      },
+      where: { tabId },
       select: { id: true, name: true, slug: true },
       orderBy: { name: 'asc' },
     });
 
     return categories;
+  }
+
+  async createCategory(user: User, tabId: string, dto: CreateCategoryDto): Promise<CategoryDto> {
+    // Verify tab exists and belongs to the user
+    const tab = await this.prisma.tab.findUnique({
+      where: { id: tabId },
+      select: { id: true, userId: true },
+    });
+
+    if (!tab) {
+      throw new NotFoundException(`Tab not found`);
+    }
+
+    if (tab.userId !== user.id) {
+      throw new ForbiddenException(`You do not have permission to add categories to this tab`);
+    }
+
+    // Generate slug from name
+    const slug = dto.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    // Check if category with this slug already exists in this tab
+    const existing = await this.prisma.category.findUnique({
+      where: { tabId_slug: { tabId, slug } },
+    });
+
+    if (existing) {
+      throw new ConflictException('A category with this name already exists in this tab');
+    }
+
+    const category = await this.prisma.category.create({
+      data: {
+        tabId,
+        name: dto.name,
+        slug,
+      },
+    });
+
+    return {
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+    };
   }
 
   async findReviewsForTab(
