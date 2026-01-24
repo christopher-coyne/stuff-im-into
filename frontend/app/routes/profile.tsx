@@ -1,4 +1,4 @@
-import { ChevronRight, LogOut, Pencil } from "lucide-react";
+import { ChevronRight, Loader2, LogOut, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "~/components/ui/button";
@@ -335,8 +335,8 @@ export default function ProfilePage() {
               {/* Bookmark List */}
               <div className="divide-y divide-border">
                 {loadingBookmarks ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    Loading bookmarks...
+                  <div className="p-8 flex justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : bookmarkTab === "users" ? (
                   bookmarkedUsers.length === 0 ? (
