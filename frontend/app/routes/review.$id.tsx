@@ -1,10 +1,18 @@
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, ChevronRight, Clock, Pencil, Share2 } from "lucide-react";
+import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, ChevronRight, Clock, Pencil, Share2, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Link, useLoaderData, useRevalidator } from "react-router";
+import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import { ReviewForm, type ReviewFormData } from "~/components/reviews";
 import { MediaPreview } from "~/components/reviews/media-preview";
 import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { ReviewListItemDto, UpdateReviewDto } from "~/lib/api/api";
@@ -95,12 +103,33 @@ export function meta({ data }: Route.MetaArgs) {
 export default function ReviewDetailPage() {
   const { review, categoryReviews } = useLoaderData<typeof loader>();
   const { user: loggedInUser, session } = useAuth();
+  const navigate = useNavigate();
   const revalidator = useRevalidator();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [optimisticBookmarked, setOptimisticBookmarked] = useState<boolean | null>(null);
 
   const isOwner = loggedInUser?.id === review.user.id;
   const isBookmarked = optimisticBookmarked ?? review.isBookmarked;
+
+  // Delete mutation
+  const deleteReviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!session) throw new Error("Not authenticated");
+      await api.reviews.reviewsControllerDelete(review.id, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+    },
+    onSuccess: () => {
+      setIsDeleteDialogOpen(false);
+      // Navigate back to the user's tab page
+      navigate(`/${review.user.username}/${review.tab.slug}`);
+    },
+  });
+
+  const handleDeleteConfirm = () => {
+    deleteReviewMutation.mutate();
+  };
 
   // Bookmark mutation - pass desired state as parameter to avoid closure issues
   const bookmarkMutation = useMutation({
@@ -214,15 +243,26 @@ export default function ReviewDetailPage() {
             <span>Back to @{review.user.username}&apos;s list</span>
           </Link>
           {isOwner && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditMode(true)}
-              className="gap-2"
-            >
-              <Pencil className="h-4 w-4" />
-              Edit
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditMode(true)}
+                className="gap-2"
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+            </div>
           )}
         </div>
 
@@ -401,6 +441,34 @@ export default function ReviewDetailPage() {
         ))}
         </main>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Review</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{review.title}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={deleteReviewMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteReviewMutation.isPending}
+            >
+              {deleteReviewMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

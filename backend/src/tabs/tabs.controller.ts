@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   ApiStandardArrayResponse,
   ApiStandardResponse,
@@ -85,5 +85,21 @@ export class TabsController {
   ): Promise<StandardResponse<PaginatedReviewsDto>> {
     const result = await this.tabsService.findReviewsForTab(tabId, query, req.user?.id);
     return StandardResponse.ok(result);
+  }
+
+  @Delete(':tabId')
+  @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a tab and all its reviews' })
+  @ApiResponse({ status: 200, description: 'Tab deleted successfully' })
+  async deleteTab(
+    @Param('tabId') tabId: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<{ success: boolean }> {
+    if (!req.user) {
+      throw new Error('User profile not found');
+    }
+    await this.tabsService.deleteTab(req.user, tabId);
+    return { success: true };
   }
 }

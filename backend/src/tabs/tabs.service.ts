@@ -236,4 +236,25 @@ export class TabsService {
       },
     };
   }
+
+  async deleteTab(user: User, tabId: string): Promise<void> {
+    // Verify tab exists and belongs to the user
+    const tab = await this.prisma.tab.findUnique({
+      where: { id: tabId },
+      select: { id: true, userId: true },
+    });
+
+    if (!tab) {
+      throw new NotFoundException('Tab not found');
+    }
+
+    if (tab.userId !== user.id) {
+      throw new ForbiddenException('You do not have permission to delete this tab');
+    }
+
+    // Delete the tab (cascades will handle reviews, categories, etc.)
+    await this.prisma.tab.delete({
+      where: { id: tabId },
+    });
+  }
 }

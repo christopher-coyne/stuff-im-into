@@ -304,4 +304,27 @@ export class ReviewsService {
 
     return new ReviewDetailDto(updatedReview, false);
   }
+
+  async delete(id: string, user: User): Promise<void> {
+    // Find the review and verify ownership
+    const review = await this.prisma.review.findUnique({
+      where: { id },
+      select: { id: true, userId: true },
+    });
+
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
+
+    if (review.userId !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this review',
+      );
+    }
+
+    // Delete the review (cascades will handle related records)
+    await this.prisma.review.delete({
+      where: { id },
+    });
+  }
 }

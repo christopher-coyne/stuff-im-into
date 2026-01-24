@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bookmark, BookmarkCheck, GripVertical, Pencil, Plus, Search } from "lucide-react";
+import { Bookmark, BookmarkCheck, GripVertical, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useRevalidator, useSearchParams } from "react-router";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
@@ -115,6 +116,9 @@ export default function MediaListPage() {
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
+  // Delete tab modal state
+  const [showDeleteTabModal, setShowDeleteTabModal] = useState(false);
+
   // Bookmark state
   const [optimisticBookmarked, setOptimisticBookmarked] = useState<boolean | null>(null);
   const revalidator = useRevalidator();
@@ -190,6 +194,32 @@ export default function MediaListPage() {
       setOptimisticBookmarked(null);
     },
   });
+
+  // Delete tab mutation
+  const deleteTabMutation = useMutation({
+    mutationFn: async (tabId: string) => {
+      if (!session) throw new Error("Not authenticated");
+      await api.tabs.tabsControllerDeleteTab(tabId, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+    },
+    onSuccess: () => {
+      setShowDeleteTabModal(false);
+      // Navigate to user's profile (first tab or profile page)
+      const remainingTabs = localTabs.filter((t) => t.id !== currentTab?.id);
+      if (remainingTabs.length > 0) {
+        navigate(`/${user.username}/${remainingTabs[0].slug}`);
+      } else {
+        navigate(`/${user.username}`);
+      }
+    },
+  });
+
+  const handleDeleteTab = () => {
+    if (currentTab) {
+      deleteTabMutation.mutate(currentTab.id);
+    }
+  };
 
   // Drag and drop state
   const [localTabs, setLocalTabs] = useState(user.tabs);
@@ -490,6 +520,27 @@ export default function MediaListPage() {
 
             {/* Reviews Grid */}
             <ReviewsGrid reviews={reviews.items} />
+
+            {/* Delete Tab (only in edit mode) */}
+            {isEditMode && isOwnProfile && (
+              <div className="mt-12 pt-8 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete this tab and all its reviews
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteTabModal(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Tab
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <p className="text-muted-foreground">No tabs yet</p>
@@ -619,6 +670,34 @@ export default function MediaListPage() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Tab Confirmation Modal */}
+      <Dialog open={showDeleteTabModal} onOpenChange={setShowDeleteTabModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Tab</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{currentTab?.name}&quot;? This will permanently delete the tab and all {reviews.items.length} review{reviews.items.length !== 1 ? "s" : ""} within it. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteTabModal(false)}
+              disabled={deleteTabMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteTab}
+              disabled={deleteTabMutation.isPending}
+            >
+              {deleteTabMutation.isPending ? "Deleting..." : "Delete Tab"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

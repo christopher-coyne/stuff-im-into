@@ -152,7 +152,7 @@ export interface CreateCategoryDto {
 export interface ReviewListItemDto {
   id: string;
   title: string;
-  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
   mediaUrl?: object;
   mediaConfig?: object;
   /** @format date-time */
@@ -215,7 +215,7 @@ export interface ReviewDetailDto {
   id: string;
   title: string;
   description?: object;
-  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
   mediaUrl?: object;
   mediaConfig?: object;
   metaFields?: MetaFieldDto[];
@@ -256,7 +256,7 @@ export interface CreateReviewDto {
    * Type of media
    * @example "VIDEO"
    */
-  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
   /** URL of the media */
   mediaUrl?: string;
   /** Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify) */
@@ -281,7 +281,7 @@ export interface UpdateReviewDto {
    * Type of media
    * @example "VIDEO"
    */
-  mediaType?: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  mediaType?: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
   /** URL of the media */
   mediaUrl?: string;
   /** Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify) */
@@ -312,7 +312,7 @@ export interface BookmarkedReviewDto {
   id: string;
   title: string;
   description?: object;
-  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
   mediaUrl?: object;
   /** @format date-time */
   bookmarkedAt: string;
@@ -933,6 +933,23 @@ export class Api<
         format: "json",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Tabs
+     * @name TabsControllerDeleteTab
+     * @summary Delete a tab and all its reviews
+     * @request DELETE:/tabs/{tabId}
+     * @secure
+     */
+    tabsControllerDeleteTab: (tabId: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/tabs/${tabId}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
   };
   reviews = {
     /**
@@ -1018,6 +1035,23 @@ export class Api<
         secure: true,
         type: ContentType.Json,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reviews
+     * @name ReviewsControllerDelete
+     * @summary Delete a review
+     * @request DELETE:/reviews/{id}
+     * @secure
+     */
+    reviewsControllerDelete: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/reviews/${id}`,
+        method: "DELETE",
+        secure: true,
         ...params,
       }),
   };

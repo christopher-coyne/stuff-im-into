@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiStandardResponse, StandardResponse } from '../dto';
 import { OptionalAuthGuard, SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
 import { CreateReviewDto, ReviewDetailDto, UpdateReviewDto } from './dtos';
@@ -54,5 +54,21 @@ export class ReviewsController {
     }
     const review = await this.reviewsService.update(id, req.user, dto);
     return StandardResponse.ok(review);
+  }
+
+  @Delete(':id')
+  @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a review' })
+  @ApiResponse({ status: 200, description: 'Review deleted successfully' })
+  async delete(
+    @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<{ success: boolean }> {
+    if (!req.user) {
+      throw new Error('User profile not found');
+    }
+    await this.reviewsService.delete(id, req.user);
+    return { success: true };
   }
 }
