@@ -32,6 +32,9 @@ export class UserResponseDto {
 
   @ApiProperty({ type: [TabDto] })
   tabs: TabDto[];
+
+  @ApiProperty({ description: 'Whether the current user has bookmarked this user' })
+  isBookmarked: boolean;
 }
 
 export class UserDetailResponseDto extends UserResponseDto {

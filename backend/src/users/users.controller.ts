@@ -15,7 +15,7 @@ import {
   ApiStandardResponse,
   StandardResponse,
 } from '../dto';
-import { SupabaseAuthGuard } from '../supabase';
+import { OptionalAuthGuard, SupabaseAuthGuard } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
 import { CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponseDto } from './users.dto';
 import { UsersService } from './users.service';
@@ -26,12 +26,15 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users (for explore page)' })
   @ApiStandardArrayResponse(UserResponseDto)
   async findAll(
     @Query() query: GetUsersQueryDto,
+    @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<UserResponseDto[]>> {
-    const users = await this.usersService.findAll(query);
+    const users = await this.usersService.findAll(query, req.user?.id);
     return StandardResponse.ok(users);
   }
 
@@ -74,12 +77,15 @@ export class UsersController {
   }
 
   @Get(':username')
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user by username' })
   @ApiStandardResponse(UserResponseDto)
   async findByUsername(
     @Param('username') username: string,
+    @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<UserResponseDto>> {
-    const user = await this.usersService.findByUsername(username);
+    const user = await this.usersService.findByUsername(username, req.user?.id);
     return StandardResponse.ok(user);
   }
 }

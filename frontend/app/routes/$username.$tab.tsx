@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { GripVertical, Pencil, Plus, Search } from "lucide-react";
+import { Bookmark, BookmarkCheck, GripVertical, Pencil, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
+import { Link, useLoaderData, useNavigate, useRevalidator, useSearchParams } from "react-router";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
 import { Button } from "~/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
 import type { CategoryDto, PaginatedReviewsDto } from "~/lib/api/api";
 import { getHeaderGradient, themeHeaderGradients } from "~/lib/theme";
+import { getAuthHeaders } from "~/lib/supabase/server";
 import type { Route } from "./+types/$username.$tab";
 
 export async function loader({ params, request }: Route.LoaderArgs) {
@@ -30,7 +31,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Response("Username is required", { status: 400 });
   }
 
-  const response = await api.users.usersControllerFindByUsername(username);
+  // Get auth headers from cookies (for SSR)
+  const authHeaders = await getAuthHeaders(request);
+
+  const response = await api.users.usersControllerFindByUsername(username, {
+    headers: authHeaders,
+  });
   const user = response.data.data;
 
   if (!user) {
@@ -56,7 +62,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (currentTab) {
     const [categoriesResponse, reviewsResponse] = await Promise.all([
       api.tabs.tabsControllerFindCategoriesForTab(currentTab.id),
-      api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search }),
+      api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search }, { headers: authHeaders }),
     ]);
     categories = categoriesResponse.data.data || [];
 
@@ -67,7 +73,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
     // Re-fetch reviews with category filter if needed
     if (categoryId) {
-      const filteredResponse = await api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId });
+      const filteredResponse = await api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId }, { headers: authHeaders });
       reviews = filteredResponse.data.data || reviews;
     } else {
       reviews = reviewsResponse.data.data || reviews;
@@ -108,6 +114,11 @@ export default function MediaListPage() {
   // Add category modal state
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Bookmark state
+  const [optimisticBookmarked, setOptimisticBookmarked] = useState<boolean | null>(null);
+  const revalidator = useRevalidator();
+  const isUserBookmarked = optimisticBookmarked ?? user.isBookmarked;
 
   // React Query for categories
   const queryClient = useQueryClient();
@@ -151,6 +162,32 @@ export default function MediaListPage() {
     onError: () => {
       // Revert to original theme on error
       setSelectedTheme(user.theme || "DEFAULT");
+    },
+  });
+
+  // Bookmark user mutation
+  const bookmarkUserMutation = useMutation({
+    mutationFn: async (shouldBookmark: boolean) => {
+      if (!session) throw new Error("Not authenticated");
+      if (shouldBookmark) {
+        await api.bookmarks.bookmarksControllerBookmarkUser(user.id, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+      } else {
+        await api.bookmarks.bookmarksControllerUnbookmarkUser(user.id, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+      }
+    },
+    onMutate: (shouldBookmark) => {
+      setOptimisticBookmarked(shouldBookmark);
+    },
+    onError: () => {
+      setOptimisticBookmarked(null);
+    },
+    onSuccess: () => {
+      revalidator.revalidate();
+      setOptimisticBookmarked(null);
     },
   });
 
@@ -318,6 +355,25 @@ export default function MediaListPage() {
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20"
               >
                 {showBio ? "Hide" : "About"}
+              </Button>
+            )}
+
+            {/* Bookmark Button (only for other users' profiles) */}
+            {session && !isOwnProfile && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => bookmarkUserMutation.mutate(!isUserBookmarked)}
+                disabled={bookmarkUserMutation.isPending}
+                className={`bg-white/10 border-white/20 hover:bg-white/20 ${
+                  isUserBookmarked ? "text-amber-400" : "text-white"
+                }`}
+              >
+                {isUserBookmarked ? (
+                  <BookmarkCheck className="h-4 w-4" />
+                ) : (
+                  <Bookmark className="h-4 w-4" />
+                )}
               </Button>
             )}
 

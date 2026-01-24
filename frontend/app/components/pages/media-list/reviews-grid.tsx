@@ -1,3 +1,4 @@
+import { BookmarkCheck } from "lucide-react";
 import { Link } from "react-router";
 import type { ReviewListItemDto } from "~/lib/api/api";
 
@@ -15,12 +16,18 @@ export function ReviewsGrid({ reviews }: ReviewsGridProps) {
       {reviews.map((review) => (
         <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}
-          <div className="aspect-[2/3] rounded-lg overflow-hidden bg-muted mb-2">
+          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted mb-2">
             <img
               src="https://placehold.co/200x300/1a1a1a/666?text=..."
               alt={review.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
+            {/* Bookmark indicator */}
+            {review.isBookmarked && (
+              <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-amber-500">
+                <BookmarkCheck className="h-4 w-4" />
+              </div>
+            )}
           </div>
           {/* Title */}
           <h3 className="font-medium text-sm line-clamp-2">{review.title}</h3>

@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, ChevronRight, Clock, Pencil, Share2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLoaderData, useRevalidator } from "react-router";
 import { ReviewForm, type ReviewFormData } from "~/components/reviews";
 import { Button } from "~/components/ui/button";
@@ -8,6 +8,7 @@ import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { ReviewListItemDto, UpdateReviewDto } from "~/lib/api/api";
 import { getReviewGradient, getTagColor } from "~/lib/theme";
+import { getAuthHeaders } from "~/lib/supabase/server";
 import type { Route } from "./+types/review.$id";
 
 function calculateReadTime(text: string | null | undefined): string {
@@ -25,14 +26,19 @@ function formatDate(dateString: string): string {
   });
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, request }: Route.LoaderArgs) {
   const { id } = params;
 
   if (!id) {
     throw new Response("Review ID is required", { status: 400 });
   }
 
-  const response = await api.reviews.reviewsControllerFindById(id);
+  // Get auth headers from cookies (for SSR)
+  const authHeaders = await getAuthHeaders(request);
+
+  const response = await api.reviews.reviewsControllerFindById(id, {
+    headers: authHeaders,
+  });
   const review = response.data.data;
 
   if (!review) {
@@ -47,6 +53,8 @@ export async function loader({ params }: Route.LoaderArgs) {
       const res = await api.tabs.tabsControllerFindReviewsForTab(review.tab.id, {
         categoryId: category.id,
         limit: 5,
+      }, {
+        headers: authHeaders,
       });
       return { category, reviews: res.data.data?.items || [] };
     });
@@ -93,49 +101,27 @@ export default function ReviewDetailPage() {
   const isOwner = loggedInUser?.id === review.user.id;
   const isBookmarked = optimisticBookmarked ?? review.isBookmarked;
 
-  // Fetch bookmark status client-side when session is available
-  // (loader runs server-side without auth, so we need to check client-side)
-  useEffect(() => {
-    if (session && optimisticBookmarked === null) {
-      api.reviews
-        .reviewsControllerFindById(review.id, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-        .then((response) => {
-          if (response.data.data?.isBookmarked !== undefined) {
-            setOptimisticBookmarked(response.data.data.isBookmarked);
-          }
-        })
-        .catch(() => {
-          // Ignore errors - bookmark status is not critical
-        });
-    }
-  }, [session, review.id, optimisticBookmarked]);
-
-  // Bookmark mutation
+  // Bookmark mutation - pass desired state as parameter to avoid closure issues
   const bookmarkMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (shouldBookmark: boolean) => {
       if (!session) throw new Error("Not authenticated");
-      if (isBookmarked) {
-        await api.bookmarks.bookmarksControllerUnbookmarkReview(review.id, {
+      if (shouldBookmark) {
+        await api.bookmarks.bookmarksControllerBookmarkReview(review.id, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
       } else {
-        await api.bookmarks.bookmarksControllerBookmarkReview(review.id, {
+        await api.bookmarks.bookmarksControllerUnbookmarkReview(review.id, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
       }
     },
-    onMutate: () => {
-      // Optimistic update
-      setOptimisticBookmarked(!isBookmarked);
+    onMutate: (shouldBookmark) => {
+      setOptimisticBookmarked(shouldBookmark);
     },
     onError: () => {
-      // Revert on error
       setOptimisticBookmarked(null);
     },
     onSuccess: () => {
-      // Revalidate to get fresh data from server
       revalidator.revalidate();
       setOptimisticBookmarked(null);
     },
@@ -290,7 +276,7 @@ export default function ReviewDetailPage() {
             <button
               onClick={() => {
                 if (session) {
-                  bookmarkMutation.mutate();
+                  bookmarkMutation.mutate(!isBookmarked);
                 }
               }}
               disabled={!session || bookmarkMutation.isPending}

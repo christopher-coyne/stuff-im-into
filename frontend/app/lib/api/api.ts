@@ -79,6 +79,8 @@ export interface UserResponseDto {
   reviewCount: number;
   bookmarkCount: number;
   tabs: TabDto[];
+  /** Whether the current user has bookmarked this user */
+  isBookmarked: boolean;
 }
 
 export interface CreateUserDto {
@@ -612,6 +614,7 @@ export class Api<
      * @name UsersControllerFindAll
      * @summary Get all users (for explore page)
      * @request GET:/users
+     * @secure
      */
     usersControllerFindAll: (
       query?: {
@@ -646,6 +649,7 @@ export class Api<
         path: `/users`,
         method: "GET",
         query: query,
+        secure: true,
         format: "json",
         ...params,
       }),
@@ -742,6 +746,7 @@ export class Api<
      * @name UsersControllerFindByUsername
      * @summary Get user by username
      * @request GET:/users/{username}
+     * @secure
      */
     usersControllerFindByUsername: (
       username: string,
@@ -757,6 +762,7 @@ export class Api<
       >({
         path: `/users/${username}`,
         method: "GET",
+        secure: true,
         format: "json",
         ...params,
       }),
@@ -1097,6 +1103,46 @@ export class Api<
     ) =>
       this.request<void, any>({
         path: `/bookmarks/reviews/${reviewId}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Bookmarks
+     * @name BookmarksControllerBookmarkUser
+     * @summary Bookmark a user
+     * @request POST:/bookmarks/users/{userId}
+     * @secure
+     */
+    bookmarksControllerBookmarkUser: (
+      userId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/bookmarks/users/${userId}`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Bookmarks
+     * @name BookmarksControllerUnbookmarkUser
+     * @summary Remove a user bookmark
+     * @request DELETE:/bookmarks/users/{userId}
+     * @secure
+     */
+    bookmarksControllerUnbookmarkUser: (
+      userId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/bookmarks/users/${userId}`,
         method: "DELETE",
         secure: true,
         ...params,

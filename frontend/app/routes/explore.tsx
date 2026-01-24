@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Search } from "lucide-react";
+import { BookmarkCheck, Search } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { useDebounce } from "~/hooks/use-debounce";
+import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
 import { getAvatarGradient } from "~/lib/theme";
@@ -74,9 +75,12 @@ function UserCard({ user }: { user: UserResponseDto }) {
 
             {/* Footer */}
             <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                <Heart className="h-4 w-4" />
-                <span>{user.bookmarkCount}</span>
+              <div className="flex items-center gap-3">
+                {user.isBookmarked && (
+                  <div className="flex items-center gap-1 text-amber-500 text-sm">
+                    <BookmarkCheck className="h-4 w-4" />
+                  </div>
+                )}
               </div>
               {user.tabs.length > 0 && (
                 <div className="flex gap-1.5 flex-wrap justify-end">
@@ -101,6 +105,7 @@ function UserCard({ user }: { user: UserResponseDto }) {
 }
 
 export default function ExplorePage() {
+  const { session } = useAuth();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [sortBy, setSortBy] = useState<SortOption>("most_popular");
@@ -118,14 +123,15 @@ export default function ExplorePage() {
   };
 
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ["users", debouncedSearch, sortBy, page],
+    queryKey: ["users", debouncedSearch, sortBy, page, session?.access_token],
     queryFn: async () => {
+      const headers = session ? { Authorization: `Bearer ${session.access_token}` } : {};
       const response = await api.users.usersControllerFindAll({
         search: debouncedSearch || undefined,
         sortBy,
         page,
         limit: PAGE_SIZE,
-      });
+      }, { headers });
       return response.data.data;
     },
   });

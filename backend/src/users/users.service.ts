@@ -18,7 +18,7 @@ import {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: GetUsersQueryDto): Promise<UserResponseDto[]> {
+  async findAll(query: GetUsersQueryDto, currentUserId?: string): Promise<UserResponseDto[]> {
     const { search, sortBy = UserSortBy.MOST_POPULAR } = query;
     const orderBy = this.getOrderBy(sortBy);
 
@@ -44,6 +44,12 @@ export class UsersService {
           select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
+        bookmarkedBy: currentUserId
+          ? {
+              where: { ownerId: currentUserId },
+              select: { id: true },
+            }
+          : false,
       },
       orderBy,
       skip: query.skip,
@@ -61,10 +67,13 @@ export class UsersService {
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
       tabs: user.tabs,
+      isBookmarked: currentUserId
+        ? (user.bookmarkedBy as { id: string }[])?.length > 0
+        : false,
     }));
   }
 
-  async findByUsername(username: string): Promise<UserResponseDto> {
+  async findByUsername(username: string, currentUserId?: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { username },
       include: {
@@ -80,6 +89,12 @@ export class UsersService {
           select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
+        bookmarkedBy: currentUserId
+          ? {
+              where: { ownerId: currentUserId },
+              select: { id: true },
+            }
+          : false,
       },
     });
 
@@ -98,6 +113,9 @@ export class UsersService {
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
       tabs: user.tabs,
+      isBookmarked: currentUserId
+        ? (user.bookmarkedBy as { id: string }[])?.length > 0
+        : false,
     };
   }
 
@@ -177,6 +195,7 @@ export class UsersService {
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
       tabs: user.tabs,
+      isBookmarked: false,
     };
   }
 
@@ -214,6 +233,7 @@ export class UsersService {
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
       tabs: user.tabs,
+      isBookmarked: false,
     };
   }
 
@@ -248,6 +268,7 @@ export class UsersService {
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
       tabs: user.tabs,
+      isBookmarked: false,
     };
   }
 

@@ -64,4 +64,26 @@ export class BookmarksController {
     await this.bookmarksService.unbookmarkReview(req.user, reviewId);
     return StandardResponse.ok(null);
   }
+
+  @Post('users/:userId')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Bookmark a user' })
+  async bookmarkUser(
+    @Req() req: AuthenticatedRequest,
+    @Param('userId') userId: string,
+  ): Promise<StandardResponse<null>> {
+    await this.bookmarksService.bookmarkUser(req.user, userId);
+    return StandardResponse.created(null);
+  }
+
+  @Delete('users/:userId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remove a user bookmark' })
+  async unbookmarkUser(
+    @Req() req: AuthenticatedRequest,
+    @Param('userId') userId: string,
+  ): Promise<StandardResponse<null>> {
+    await this.bookmarksService.unbookmarkUser(req.user, userId);
+    return StandardResponse.ok(null);
+  }
 }

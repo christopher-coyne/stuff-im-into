@@ -143,4 +143,70 @@ export class BookmarksService {
 
     return !!bookmark;
   }
+
+  async bookmarkUser(user: User | null, userId: string): Promise<void> {
+    if (!user) {
+      throw new ForbiddenException('Not authenticated');
+    }
+
+    // Can't bookmark yourself
+    if (user.id === userId) {
+      throw new ForbiddenException('Cannot bookmark yourself');
+    }
+
+    // Verify the user exists
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Create bookmark (upsert to handle duplicates gracefully)
+    await this.prisma.userBookmark.upsert({
+      where: {
+        ownerId_bookmarkedUserId: {
+          ownerId: user.id,
+          bookmarkedUserId: userId,
+        },
+      },
+      create: {
+        ownerId: user.id,
+        bookmarkedUserId: userId,
+      },
+      update: {},
+    });
+  }
+
+  async unbookmarkUser(user: User | null, userId: string): Promise<void> {
+    if (!user) {
+      throw new ForbiddenException('Not authenticated');
+    }
+
+    await this.prisma.userBookmark.deleteMany({
+      where: {
+        ownerId: user.id,
+        bookmarkedUserId: userId,
+      },
+    });
+  }
+
+  async isUserBookmarked(user: User | null, userId: string): Promise<boolean> {
+    if (!user) {
+      return false;
+    }
+
+    const bookmark = await this.prisma.userBookmark.findUnique({
+      where: {
+        ownerId_bookmarkedUserId: {
+          ownerId: user.id,
+          bookmarkedUserId: userId,
+        },
+      },
+    });
+
+    return !!bookmark;
+  }
 }
