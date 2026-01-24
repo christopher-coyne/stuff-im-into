@@ -5,6 +5,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { MarkdownEditor } from "~/components/ui/markdown-editor";
 import {
   Select,
   SelectContent,
@@ -263,12 +264,13 @@ export function ReviewForm({
             <div className="mb-6">
               {/* Text editor for TEXT mode */}
               {watchedMediaType === "TEXT" ? (
-                <div className="rounded-xl border border-border bg-muted/30 p-4 mb-3">
-                  <textarea
-                    placeholder="Write your text content here... (Markdown supported)"
-                    {...register("textContent")}
-                    rows={8}
-                    className="w-full bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground outline-none resize-none"
+                <div className="mb-3">
+                  <MarkdownEditor
+                    name="textContent"
+                    control={control}
+                    placeholder="Write your text content here..."
+                    minHeight={250}
+                    className="bg-muted/30"
                   />
                 </div>
               ) : watchedMediaType === "IMAGE" && !watchedMediaUrl ? (
@@ -418,11 +420,11 @@ export function ReviewForm({
 
             {/* Description section */}
             <div className="mb-8">
-              <textarea
-                placeholder="Write your review... (Markdown supported)"
-                {...register("description")}
-                rows={10}
-                className="w-full bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground outline-none resize-none"
+              <MarkdownEditor
+                name="description"
+                control={control}
+                placeholder="Write your review..."
+                minHeight={300}
               />
             </div>
 

@@ -1,12 +1,14 @@
 import { BookmarkCheck, ExternalLink, Music, Type, Video } from "lucide-react";
 import { Link } from "react-router";
 import type { ReviewListItemDto } from "~/lib/api/api";
+import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 
 interface ReviewsGridProps {
   reviews: ReviewListItemDto[];
+  theme?: string | null;
 }
 
-function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
+function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme?: string | null }) {
   const mediaUrl = review.mediaUrl as string | undefined;
   const mediaConfig = review.mediaConfig as Record<string, unknown> | undefined;
 
@@ -32,13 +34,26 @@ function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
     );
   }
 
+  // Show Spotify album art for SPOTIFY type
+  if (review.mediaType === "SPOTIFY" && mediaConfig?.thumbnailUrl) {
+    return (
+      <img
+        src={String(mediaConfig.thumbnailUrl)}
+        alt={review.title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+      />
+    );
+  }
+
   // Show truncated text for TEXT type
   if (review.mediaType === "TEXT" && mediaConfig?.content) {
     return (
-      <div className="w-full h-full p-3 overflow-hidden">
-        <p className="text-xs text-muted-foreground line-clamp-6 leading-relaxed">
-          {String(mediaConfig.content)}
-        </p>
+      <div className="w-full h-full p-3 overflow-hidden line-clamp-6">
+        <MarkdownRenderer
+          content={String(mediaConfig.content)}
+          theme={theme}
+          className="text-xs leading-relaxed [&_*]:text-xs [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_h1]:text-sm [&_h2]:text-sm [&_h3]:text-xs"
+        />
       </div>
     );
   }
@@ -61,7 +76,7 @@ function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
   );
 }
 
-export function ReviewsGrid({ reviews }: ReviewsGridProps) {
+export function ReviewsGrid({ reviews, theme }: ReviewsGridProps) {
   if (reviews.length === 0) {
     return <p className="text-muted-foreground text-center py-8">No reviews found</p>;
   }
@@ -72,7 +87,7 @@ export function ReviewsGrid({ reviews }: ReviewsGridProps) {
         <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}
           <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted mb-2">
-            <MediaThumbnail review={review} />
+            <MediaThumbnail review={review} theme={theme} />
             {/* Bookmark indicator */}
             {review.isBookmarked && (
               <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-amber-500">

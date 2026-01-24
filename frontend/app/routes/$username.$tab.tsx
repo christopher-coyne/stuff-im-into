@@ -428,53 +428,53 @@ export default function MediaListPage() {
           )}
         </header>
 
-        {/* Tabs */}
-        {localTabs.length > 0 && (
-          <nav className="border-b border-x border-border">
-            <div className="flex gap-1 px-2">
-              {localTabs.map((tab) => (
-                <div
-                  key={tab.id}
-                  draggable={isEditMode && isOwnProfile}
-                  onDragStart={(e) => handleDragStart(e, tab.id)}
-                  onDragOver={(e) => handleDragOver(e, tab.id)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, tab.id)}
-                  onDragEnd={handleDragEnd}
-                  className={`flex items-center transition-all ${
-                    draggedTabId === tab.id ? "opacity-50" : ""
-                  } ${
-                    dragOverTabId === tab.id ? "border-l-2 border-primary" : ""
-                  }`}
-                >
-                  {isEditMode && isOwnProfile && (
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab mr-1" />
-                  )}
-                  <Link
-                    to={`/${user.username}/${tab.slug}`}
-                    className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                      currentTab?.id === tab.id
-                        ? "border-primary text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
-                    }`}
-                    onClick={(e) => {
-                      if (isEditMode) {
-                        e.preventDefault();
-                      }
-                    }}
-                  >
-                    {tab.name}
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </nav>
-        )}
-
         {/* Main content area */}
         <main className="py-8">
         {currentTab ? (
           <div>
+            {/* Tabs */}
+            {localTabs.length > 0 && (
+              <nav className="border-b border-border mb-6">
+                <div className="flex gap-1">
+                  {localTabs.map((tab) => (
+                    <div
+                      key={tab.id}
+                      draggable={isEditMode && isOwnProfile}
+                      onDragStart={(e) => handleDragStart(e, tab.id)}
+                      onDragOver={(e) => handleDragOver(e, tab.id)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, tab.id)}
+                      onDragEnd={handleDragEnd}
+                      className={`flex items-center transition-all ${
+                        draggedTabId === tab.id ? "opacity-50" : ""
+                      } ${
+                        dragOverTabId === tab.id ? "border-l-2 border-primary" : ""
+                      }`}
+                    >
+                      {isEditMode && isOwnProfile && (
+                        <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab mr-1" />
+                      )}
+                      <Link
+                        to={`/${user.username}/${tab.slug}`}
+                        className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                          currentTab?.id === tab.id
+                            ? "border-primary text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                        onClick={(e) => {
+                          if (isEditMode) {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
+                        {tab.name}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </nav>
+            )}
+
             {/* Search and Filter */}
             <div className="flex gap-3 mb-6">
               <div className="flex-1 relative">
@@ -519,7 +519,7 @@ export default function MediaListPage() {
             </div>
 
             {/* Reviews Grid */}
-            <ReviewsGrid reviews={reviews.items} />
+            <ReviewsGrid reviews={reviews.items} theme={user.theme} />
 
             {/* Delete Tab (only in edit mode) */}
             {isEditMode && isOwnProfile && (

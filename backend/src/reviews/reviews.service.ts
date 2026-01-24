@@ -33,11 +33,23 @@ function extractSpotifyEmbed(
   return null;
 }
 
-function buildMediaConfig(
+async function fetchSpotifyThumbnail(url: string): Promise<string | null> {
+  try {
+    const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+    const response = await fetch(oembedUrl);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.thumbnail_url || null;
+  } catch {
+    return null;
+  }
+}
+
+async function buildMediaConfig(
   mediaType: MediaType,
   mediaUrl: string | undefined,
   existingConfig?: Record<string, unknown>,
-): Record<string, unknown> | null {
+): Promise<Record<string, unknown> | null> {
   if (!mediaUrl) return existingConfig || null;
 
   switch (mediaType) {
@@ -57,7 +69,14 @@ function buildMediaConfig(
           'Invalid Spotify URL. Please provide a valid Spotify track, album, or playlist link.',
         );
       }
-      return { embedType: embed.type, embedId: embed.id, ...existingConfig };
+      // Fetch thumbnail from Spotify oEmbed API
+      const thumbnailUrl = await fetchSpotifyThumbnail(mediaUrl);
+      return {
+        embedType: embed.type,
+        embedId: embed.id,
+        thumbnailUrl,
+        ...existingConfig,
+      };
     }
     case 'EXTERNAL_LINK': {
       try {
@@ -159,7 +178,7 @@ export class ReviewsService {
     const sortOrder = (lastReview?.sortOrder ?? -1) + 1;
 
     // Build mediaConfig from URL if applicable
-    const mediaConfig = buildMediaConfig(
+    const mediaConfig = await buildMediaConfig(
       dto.mediaType,
       dto.mediaUrl,
       dto.mediaConfig,
@@ -260,7 +279,7 @@ export class ReviewsService {
       });
       const mediaType = dto.mediaType ?? currentReview?.mediaType;
       if (mediaType) {
-        const mediaConfig = buildMediaConfig(
+        const mediaConfig = await buildMediaConfig(
           mediaType,
           dto.mediaUrl,
           dto.mediaConfig,

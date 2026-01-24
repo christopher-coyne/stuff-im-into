@@ -1,4 +1,5 @@
 import { ExternalLink, ImagePlus, Music, Type, Video } from "lucide-react";
+import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 
 type MediaType = "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
 
@@ -18,6 +19,10 @@ interface MediaPreviewProps {
   mediaConfig?: MediaConfig | null;
   title?: string;
   className?: string;
+  /** Render TEXT content as markdown (use on detail pages) */
+  renderMarkdown?: boolean;
+  /** Theme for markdown accent colors */
+  theme?: string | null;
 }
 
 export function MediaPreview({
@@ -26,6 +31,8 @@ export function MediaPreview({
   mediaConfig,
   title,
   className = "",
+  renderMarkdown = false,
+  theme,
 }: MediaPreviewProps) {
   const containerClass = `w-full h-full ${className}`;
 
@@ -104,7 +111,11 @@ export function MediaPreview({
       const content = mediaConfig?.content;
       return content ? (
         <div className={`${containerClass} p-6 overflow-auto bg-muted/30`}>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+          {renderMarkdown ? (
+            <MarkdownRenderer content={content} theme={theme} />
+          ) : (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+          )}
         </div>
       ) : (
         <MediaPlaceholder icon={Type} text="Text only" />

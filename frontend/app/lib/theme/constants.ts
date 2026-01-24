@@ -53,6 +53,19 @@ export const themeTagColors: Record<ThemeName, string> = {
 };
 
 /**
+ * Accent text colors - for links and emphasized text in prose
+ */
+export const themeAccentColors: Record<ThemeName, string> = {
+  DEFAULT: "text-gray-600 dark:text-gray-400",
+  EMBER: "text-amber-600 dark:text-amber-400",
+  OCEAN: "text-cyan-600 dark:text-cyan-400",
+  FOREST: "text-emerald-600 dark:text-emerald-400",
+  VIOLET: "text-violet-600 dark:text-violet-400",
+  ROSE: "text-rose-600 dark:text-rose-400",
+  MINIMAL: "text-zinc-600 dark:text-zinc-400",
+};
+
+/**
  * Helper to get gradient with fallback to DEFAULT
  */
 export function getAvatarGradient(theme: string | undefined | null): string {
@@ -69,4 +82,8 @@ export function getReviewGradient(theme: string | undefined | null): string {
 
 export function getTagColor(theme: string | undefined | null): string {
   return themeTagColors[(theme as ThemeName) || "DEFAULT"] || themeTagColors.DEFAULT;
+}
+
+export function getAccentColor(theme: string | undefined | null): string {
+  return themeAccentColors[(theme as ThemeName) || "DEFAULT"] || themeAccentColors.DEFAULT;
 }

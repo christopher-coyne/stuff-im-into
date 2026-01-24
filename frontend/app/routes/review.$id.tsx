@@ -5,6 +5,7 @@ import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import { ReviewForm, type ReviewFormData } from "~/components/reviews";
 import { MediaPreview } from "~/components/reviews/media-preview";
 import { Button } from "~/components/ui/button";
+import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 import {
   Dialog,
   DialogContent,
@@ -296,12 +297,14 @@ export default function ReviewDetailPage() {
         {/* Main content */}
         <main className="py-6">
         {/* Media embed */}
-        <div className="aspect-video rounded-xl overflow-hidden bg-muted mb-6">
+        <div className={`rounded-xl overflow-hidden bg-muted mb-6 ${review.mediaType === "TEXT" ? "min-h-[200px]" : "aspect-video"}`}>
           <MediaPreview
             mediaType={review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK"}
             mediaUrl={review.mediaUrl as string | null | undefined}
             mediaConfig={review.mediaConfig as Record<string, unknown> | null}
             title={review.title}
+            renderMarkdown={review.mediaType === "TEXT"}
+            theme={review.user.theme}
           />
         </div>
 
@@ -372,9 +375,11 @@ export default function ReviewDetailPage() {
 
         {/* Description */}
         {review.description && (
-          <div className="prose prose-sm dark:prose-invert max-w-none mb-12">
-            <p className="whitespace-pre-wrap">{String(review.description)}</p>
-          </div>
+          <MarkdownRenderer
+            content={String(review.description)}
+            className="mb-12"
+            theme={review.user.theme}
+          />
         )}
 
         {/* Related reviews */}
