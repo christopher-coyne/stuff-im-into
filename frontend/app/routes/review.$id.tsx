@@ -145,11 +145,17 @@ export default function ReviewDetailPage() {
   const handleEditSubmit = (data: ReviewFormData) => {
     const validMetaFields = data.metaFields.filter((f) => f.label.trim() && f.value.trim());
 
+    // Build mediaConfig for TEXT type
+    const mediaConfig = data.mediaType === "TEXT" && data.textContent.trim()
+      ? { content: data.textContent.trim() }
+      : undefined;
+
     updateReviewMutation.mutate({
       title: data.title.trim(),
       description: data.description.trim() || undefined,
       mediaType: data.mediaType as UpdateReviewDto["mediaType"],
       mediaUrl: data.mediaUrl.trim() || undefined,
+      mediaConfig,
       categoryIds: data.categoryIds.length > 0 ? data.categoryIds : [],
       metaFields: validMetaFields.length > 0 ? validMetaFields : [],
       publish: data.publish,
@@ -166,6 +172,8 @@ export default function ReviewDetailPage() {
           ?.response?.data?.message || "Failed to update review"
       : null;
 
+    const mediaConfig = review.mediaConfig as Record<string, unknown> | null;
+
     return (
       <ReviewForm
         user={review.user}
@@ -175,6 +183,7 @@ export default function ReviewDetailPage() {
           description: review.description ? String(review.description) : "",
           mediaType: review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK",
           mediaUrl: review.mediaUrl ? String(review.mediaUrl) : "",
+          textContent: mediaConfig?.content ? String(mediaConfig.content) : "",
           categoryIds: review.categories.map((c) => c.id),
           metaFields: (review.metaFields || []).map((f) => ({
             label: f.label,

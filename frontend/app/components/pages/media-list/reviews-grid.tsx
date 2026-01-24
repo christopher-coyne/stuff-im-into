@@ -8,6 +8,7 @@ interface ReviewsGridProps {
 
 function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
   const mediaUrl = review.mediaUrl as string | undefined;
+  const mediaConfig = review.mediaConfig as Record<string, unknown> | undefined;
 
   // Show actual image for IMAGE type
   if (review.mediaType === "IMAGE" && mediaUrl) {
@@ -17,6 +18,28 @@ function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
         alt={review.title}
         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
       />
+    );
+  }
+
+  // Show YouTube thumbnail for VIDEO type
+  if (review.mediaType === "VIDEO" && mediaConfig?.videoId) {
+    return (
+      <img
+        src={`https://img.youtube.com/vi/${mediaConfig.videoId}/hqdefault.jpg`}
+        alt={review.title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+      />
+    );
+  }
+
+  // Show truncated text for TEXT type
+  if (review.mediaType === "TEXT" && mediaConfig?.content) {
+    return (
+      <div className="w-full h-full p-3 overflow-hidden">
+        <p className="text-xs text-muted-foreground line-clamp-6 leading-relaxed">
+          {String(mediaConfig.content)}
+        </p>
+      </div>
     );
   }
 
@@ -44,7 +67,7 @@ export function ReviewsGrid({ reviews }: ReviewsGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
       {reviews.map((review) => (
         <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}

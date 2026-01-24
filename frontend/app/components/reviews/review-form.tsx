@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Plus, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
@@ -19,12 +19,60 @@ import { MediaPreview } from "./media-preview";
 
 type MediaType = "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
 
+// Helper functions to parse URLs for preview
+function extractYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function extractSpotifyEmbed(url: string): { embedType: string; embedId: string } | null {
+  const match = url.match(/spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/);
+  if (match) {
+    return { embedType: match[1], embedId: match[2] };
+  }
+  return null;
+}
+
+function buildPreviewConfig(mediaType: MediaType, mediaUrl: string): Record<string, unknown> | null {
+  if (!mediaUrl) return null;
+
+  switch (mediaType) {
+    case "VIDEO": {
+      const videoId = extractYouTubeId(mediaUrl);
+      return videoId ? { videoId } : null;
+    }
+    case "SPOTIFY": {
+      const embed = extractSpotifyEmbed(mediaUrl);
+      return embed ? { embedType: embed.embedType, embedId: embed.embedId } : null;
+    }
+    case "EXTERNAL_LINK": {
+      try {
+        const parsedUrl = new URL(mediaUrl);
+        return { domain: parsedUrl.hostname };
+      } catch {
+        return null;
+      }
+    }
+    default:
+      return null;
+  }
+}
+
 export interface ReviewFormData {
   title: string;
   tabId: string;
   description: string;
   mediaType: MediaType;
   mediaUrl: string;
+  textContent: string; // For TEXT media type - stored in mediaConfig.content
   categoryIds: string[];
   metaFields: { label: string; value: string }[];
   publish: boolean;
@@ -77,6 +125,7 @@ export function ReviewForm({
       description: initialValues?.description ?? "",
       mediaType: initialValues?.mediaType ?? "IMAGE",
       mediaUrl: initialValues?.mediaUrl ?? "",
+      textContent: initialValues?.textContent ?? "",
       categoryIds: initialValues?.categoryIds ?? [],
       metaFields: initialValues?.metaFields ?? [],
       publish: initialValues?.publish ?? true,
@@ -93,6 +142,12 @@ export function ReviewForm({
   const watchedMediaUrl = watch("mediaUrl");
   const watchedCategoryIds = watch("categoryIds");
   const watchedPublish = watch("publish");
+
+  // Compute mediaConfig for preview from URL
+  const previewMediaConfig = useMemo(
+    () => buildPreviewConfig(watchedMediaType, watchedMediaUrl),
+    [watchedMediaType, watchedMediaUrl]
+  );
 
   // Fetch user's tabs
   const { data: tabs = [] } = useQuery({
@@ -206,8 +261,17 @@ export function ReviewForm({
           <main className="py-6">
             {/* Media section */}
             <div className="mb-6">
-              {/* Image upload has its own preview */}
-              {watchedMediaType === "IMAGE" && !watchedMediaUrl ? (
+              {/* Text editor for TEXT mode */}
+              {watchedMediaType === "TEXT" ? (
+                <div className="rounded-xl border border-border bg-muted/30 p-4 mb-3">
+                  <textarea
+                    placeholder="Write your text content here... (Markdown supported)"
+                    {...register("textContent")}
+                    rows={8}
+                    className="w-full bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground outline-none resize-none"
+                  />
+                </div>
+              ) : watchedMediaType === "IMAGE" && !watchedMediaUrl ? (
                 <ImageUpload
                   userId={user.id}
                   currentUrl={watchedMediaUrl}
@@ -220,6 +284,7 @@ export function ReviewForm({
                   <MediaPreview
                     mediaType={watchedMediaType}
                     mediaUrl={watchedMediaUrl}
+                    mediaConfig={previewMediaConfig}
                     title={watch("title")}
                   />
                   {/* Remove button for uploaded images */}

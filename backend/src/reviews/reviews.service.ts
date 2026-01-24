@@ -69,8 +69,10 @@ function buildMediaConfig(
         );
       }
     }
-    case 'IMAGE':
     case 'TEXT':
+      // For TEXT type, preserve the content from existingConfig
+      return existingConfig || null;
+    case 'IMAGE':
     default:
       return existingConfig || null;
   }

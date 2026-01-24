@@ -9,6 +9,7 @@ interface MediaConfig {
   embedId?: string;
   domain?: string;
   title?: string;
+  content?: string; // For TEXT type
 }
 
 interface MediaPreviewProps {
@@ -63,13 +64,15 @@ export function MediaPreview({
       const embedType = mediaConfig?.embedType || "track";
       const embedId = mediaConfig?.embedId;
       return embedId ? (
-        <iframe
-          src={`https://open.spotify.com/embed/${embedType}/${embedId}?utm_source=generator&theme=0`}
-          title={title || "Spotify embed"}
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-          className={`${containerClass} rounded-xl`}
-        />
+        <div className={`${containerClass} flex items-center justify-center bg-black/90 p-4`}>
+          <iframe
+            src={`https://open.spotify.com/embed/${embedType}/${embedId}?utm_source=generator&theme=0`}
+            title={title || "Spotify embed"}
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+            className="w-full h-[352px] max-h-full rounded-xl"
+          />
+        </div>
       ) : (
         <MediaPlaceholder icon={Music} text="Enter Spotify URL" />
       );
@@ -97,9 +100,19 @@ export function MediaPreview({
       );
     }
 
-    case "TEXT":
+    case "TEXT": {
+      const content = mediaConfig?.content;
+      return content ? (
+        <div className={`${containerClass} p-6 overflow-auto bg-muted/30`}>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+        </div>
+      ) : (
+        <MediaPlaceholder icon={Type} text="Text only" />
+      );
+    }
+
     default:
-      return <MediaPlaceholder icon={Type} text="Text only" />;
+      return <MediaPlaceholder icon={Type} text="No media" />;
   }
 }
 

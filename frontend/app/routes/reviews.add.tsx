@@ -29,12 +29,18 @@ export default function AddReviewPage() {
   const handleSubmit = (data: ReviewFormData) => {
     const validMetaFields = data.metaFields.filter((f) => f.label.trim() && f.value.trim());
 
+    // Build mediaConfig for TEXT type
+    const mediaConfig = data.mediaType === "TEXT" && data.textContent.trim()
+      ? { content: data.textContent.trim() }
+      : undefined;
+
     createReviewMutation.mutate({
       title: data.title.trim(),
       tabId: data.tabId,
       description: data.description.trim() || undefined,
       mediaType: data.mediaType as CreateReviewDto["mediaType"],
       mediaUrl: data.mediaUrl.trim() || undefined,
+      mediaConfig,
       categoryIds: data.categoryIds.length > 0 ? data.categoryIds : undefined,
       metaFields: validMetaFields.length > 0 ? validMetaFields : undefined,
       publish: data.publish,
