@@ -9,14 +9,6 @@ export class AuthDto {
   password: string;
 }
 
-export class OnboardingDto {
-  @ApiProperty({ example: 'johndoe' })
-  username: string;
-
-  @ApiPropertyOptional({ example: 'Film enthusiast and bookworm' })
-  bio?: string;
-}
-
 export class AuthResponseDto {
   @ApiPropertyOptional()
   accessToken?: string;

@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -6,6 +7,7 @@ import {
 import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma';
 import {
+  CreateUserDto,
   GetUsersQueryDto,
   UpdateUserDto,
   UserResponseDto,
@@ -114,10 +116,68 @@ export class UsersService {
   ): Promise<UserResponseDto> {
     if (!user) {
       throw new ForbiddenException(
-        'Profile not set up - complete onboarding first',
+        'Profile not set up - use PUT to create profile first',
       );
     }
     return this.update(user.id, dto);
+  }
+
+  async upsertCurrentUser(
+    supabaseUserId: string,
+    dto: CreateUserDto,
+  ): Promise<UserResponseDto> {
+    // Check if username is taken by another user
+    const existingUsername = await this.prisma.user.findUnique({
+      where: { username: dto.username },
+    });
+
+    if (existingUsername && existingUsername.id !== supabaseUserId) {
+      throw new ConflictException('Username already taken');
+    }
+
+    const user = await this.prisma.user.upsert({
+      where: { id: supabaseUserId },
+      create: {
+        id: supabaseUserId,
+        username: dto.username,
+        bio: dto.bio,
+        avatarUrl: dto.avatarUrl,
+        theme: dto.theme,
+      },
+      update: {
+        username: dto.username,
+        bio: dto.bio,
+        avatarUrl: dto.avatarUrl,
+        theme: dto.theme,
+      },
+      include: {
+        _count: {
+          select: {
+            reviews: {
+              where: { publishedAt: { not: null } },
+            },
+            bookmarkedBy: true,
+          },
+        },
+        tabs: {
+          select: { id: true, name: true, slug: true, sortOrder: true },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+
+    return {
+      id: user.id,
+      username: user.username,
+      bio: user.bio,
+      avatarUrl: user.avatarUrl,
+      theme: user.theme,
+      role: user.role,
+      createdAt: user.createdAt,
+      reviewCount: user._count.reviews,
+      bookmarkCount: user._count.bookmarkedBy,
+      tabs: user.tabs,
+    };
   }
 
   async findById(id: string): Promise<UserResponseDto> {

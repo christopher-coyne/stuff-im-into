@@ -1,4 +1,4 @@
-import { Moon, Sun, User } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "~/lib/auth-context";
@@ -33,17 +33,6 @@ function ThemeToggle() {
   );
 }
 
-// Theme gradient colors for avatars
-const themeGradients: Record<string, string> = {
-  DEFAULT: "from-gray-400 to-gray-600",
-  EMBER: "from-amber-400 to-orange-600",
-  OCEAN: "from-cyan-400 to-blue-600",
-  FOREST: "from-emerald-400 to-green-600",
-  VIOLET: "from-violet-400 to-purple-600",
-  ROSE: "from-rose-400 to-pink-600",
-  MINIMAL: "from-zinc-400 to-zinc-600",
-};
-
 export function Navbar() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -55,10 +44,7 @@ export function Navbar() {
   const switchToSignup = () => setSignupModalOpen(true);
   const switchToLogin = () => setLoginModalOpen(true);
 
-  const gradient = user?.theme
-    ? themeGradients[user.theme] || themeGradients.DEFAULT
-    : themeGradients.DEFAULT;
-
+  console.log('user ', user, ' is auth ', isAuthenticated)
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-4">
@@ -73,37 +59,25 @@ export function Navbar() {
 
           {/* Right - Auth & Theme */}
           <div className="flex items-center gap-2">
+            {isAuthenticated && user && (
+              <Link
+                to={`/${user.username}`}
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                my media
+              </Link>
+            )}
+
             <ThemeToggle />
 
             {isLoading ? (
               <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
             ) : isAuthenticated && user ? (
               <Link
-                to={`/${user.username}`}
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-accent transition-colors"
+                to="/profile"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                <div
-                  className={`h-8 w-8 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center`}
-                >
-                  {user.avatarUrl ? (
-                    <img
-                      src={String(user.avatarUrl)}
-                      alt={user.username}
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-4 w-4 text-white/80" />
-                  )}
-                </div>
-              </Link>
-            ) : isAuthenticated ? (
-              <Link
-                to="/onboarding"
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-accent transition-colors"
-              >
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </div>
+                @{user.username}
               </Link>
             ) : (
               <div className="flex items-center gap-2">

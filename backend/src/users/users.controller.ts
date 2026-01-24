@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -16,7 +17,7 @@ import {
 } from '../dto';
 import { SupabaseAuthGuard } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
-import { GetUsersQueryDto, UpdateUserDto, UserResponseDto } from './users.dto';
+import { CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponseDto } from './users.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
@@ -43,6 +44,19 @@ export class UsersController {
     @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<UserResponseDto>> {
     const user = await this.usersService.getCurrentUser(req.user);
+    return StandardResponse.ok(user);
+  }
+
+  @Put('me')
+  @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create or replace current user profile' })
+  @ApiStandardResponse(UserResponseDto)
+  async upsertMe(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: CreateUserDto,
+  ): Promise<StandardResponse<UserResponseDto>> {
+    const user = await this.usersService.upsertCurrentUser(req.supabaseUser.id, dto);
     return StandardResponse.ok(user);
   }
 

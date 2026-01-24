@@ -1,7 +1,5 @@
 import {
-  BadRequestException,
   Body,
-  ConflictException,
   Controller,
   Get,
   HttpCode,
@@ -13,24 +11,18 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiStandardResponse, StandardResponse } from '../dto';
-import { PrismaService } from '../prisma';
 import { SupabaseAuthGuard, SupabaseService } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
 import {
   AuthDto,
   AuthResponseDto,
   MeResponseDto,
-  OnboardingDto,
-  UserProfileDto,
 } from './auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly supabaseService: SupabaseService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly supabaseService: SupabaseService) {}
 
   @Post('signup')
   @ApiOperation({ summary: 'Create a new account' })
@@ -67,38 +59,6 @@ export class AuthController {
       accessToken: data.session?.access_token,
       user: data.user ?? undefined,
     });
-  }
-
-  @Post('onboarding')
-  @UseGuards(SupabaseAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Complete profile setup after signup' })
-  @ApiStandardResponse(UserProfileDto, 201)
-  async onboarding(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: OnboardingDto,
-  ): Promise<StandardResponse<UserProfileDto>> {
-    if (req.user) {
-      throw new BadRequestException('Profile already exists');
-    }
-
-    const existingUsername = await this.prisma.user.findUnique({
-      where: { username: dto.username },
-    });
-
-    if (existingUsername) {
-      throw new ConflictException('Username already taken');
-    }
-
-    const user = await this.prisma.user.create({
-      data: {
-        id: req.supabaseUser.id,
-        username: dto.username,
-        bio: dto.bio,
-      },
-    });
-
-    return StandardResponse.created(user);
   }
 
   @Get('me')

@@ -48,13 +48,6 @@ export interface UserProfileDto {
   updatedAt: string;
 }
 
-export interface OnboardingDto {
-  /** @example "johndoe" */
-  username: string;
-  /** @example "Film enthusiast and bookworm" */
-  bio?: string;
-}
-
 export interface MeResponseDto {
   supabaseUser: object;
   user?: UserProfileDto;
@@ -86,6 +79,21 @@ export interface UserResponseDto {
   reviewCount: number;
   bookmarkCount: number;
   tabs: TabDto[];
+}
+
+export interface CreateUserDto {
+  /** Unique username (letters, numbers, underscores only) */
+  username: string;
+  bio?: string;
+  avatarUrl?: string;
+  theme?:
+    | "DEFAULT"
+    | "EMBER"
+    | "OCEAN"
+    | "FOREST"
+    | "VIOLET"
+    | "ROSE"
+    | "MINIMAL";
 }
 
 export interface UpdateUserDto {
@@ -182,6 +190,49 @@ export interface ReviewDetailDto {
   tab: ReviewTabDto;
   categories: ReviewCategoryDto[];
   relatedReviews: RelatedReviewDto[];
+}
+
+export interface BookmarkedReviewUserDto {
+  id: string;
+  username: string;
+  avatarUrl?: object;
+  theme:
+    | "DEFAULT"
+    | "EMBER"
+    | "OCEAN"
+    | "FOREST"
+    | "VIOLET"
+    | "ROSE"
+    | "MINIMAL";
+}
+
+export interface BookmarkedReviewDto {
+  id: string;
+  title: string;
+  description?: object;
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
+  mediaUrl?: object;
+  /** @format date-time */
+  bookmarkedAt: string;
+  user: BookmarkedReviewUserDto;
+}
+
+export interface BookmarkedUserDto {
+  id: string;
+  username: string;
+  bio?: object;
+  avatarUrl?: object;
+  theme:
+    | "DEFAULT"
+    | "EMBER"
+    | "OCEAN"
+    | "FOREST"
+    | "VIOLET"
+    | "ROSE"
+    | "MINIMAL";
+  reviewCount: number;
+  /** @format date-time */
+  bookmarkedAt: string;
 }
 
 import type {
@@ -436,36 +487,6 @@ export class Api<
      * No description
      *
      * @tags Auth
-     * @name AuthControllerOnboarding
-     * @summary Complete profile setup after signup
-     * @request POST:/auth/onboarding
-     * @secure
-     */
-    authControllerOnboarding: (
-      data: OnboardingDto,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        {
-          /** @example 201 */
-          status?: number;
-          data?: UserProfileDto;
-        },
-        any
-      >({
-        path: `/auth/onboarding`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Auth
      * @name AuthControllerMe
      * @summary Get current user profile
      * @request GET:/auth/me
@@ -554,6 +575,36 @@ export class Api<
         path: `/users/me`,
         method: "GET",
         secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Users
+     * @name UsersControllerUpsertMe
+     * @summary Create or replace current user profile
+     * @request PUT:/users/me
+     * @secure
+     */
+    usersControllerUpsertMe: (
+      data: CreateUserDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: UserResponseDto;
+        },
+        any
+      >({
+        path: `/users/me`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -707,6 +758,57 @@ export class Api<
       >({
         path: `/reviews/${id}`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
+  bookmarks = {
+    /**
+     * No description
+     *
+     * @tags Bookmarks
+     * @name BookmarksControllerGetReviewBookmarks
+     * @summary Get bookmarked reviews for current user
+     * @request GET:/bookmarks/reviews
+     * @secure
+     */
+    bookmarksControllerGetReviewBookmarks: (params: RequestParams = {}) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: BookmarkedReviewDto[];
+        },
+        any
+      >({
+        path: `/bookmarks/reviews`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Bookmarks
+     * @name BookmarksControllerGetUserBookmarks
+     * @summary Get bookmarked users for current user
+     * @request GET:/bookmarks/users
+     * @secure
+     */
+    bookmarksControllerGetUserBookmarks: (params: RequestParams = {}) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: BookmarkedUserDto[];
+        },
+        any
+      >({
+        path: `/bookmarks/users`,
+        method: "GET",
+        secure: true,
         format: "json",
         ...params,
       }),

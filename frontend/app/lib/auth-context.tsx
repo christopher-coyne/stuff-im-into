@@ -26,7 +26,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ error?: string }>;
   signup: (email: string, password: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
-  completeOnboarding: (username: string, bio?: string) => Promise<{ error?: string }>;
+  createProfile: (username: string, bio?: string) => Promise<{ error?: string }>;
   // Refresh user profile from API
   refreshUser: () => Promise<void>;
 }
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!session;
   const needsOnboarding = isAuthenticated && !user;
 
-  // Fetch app user profile from our backend
+  // Fetch app user profile from our backend (used on initial load)
   const fetchUserProfile = async (accessToken: string) => {
     try {
       const response = await api.auth.authControllerMe({
@@ -56,6 +56,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch {
       setUser(null);
+    }
+  };
+
+  // Fetch fresh user data (used after updates)
+  const fetchFreshUserProfile = async (accessToken: string) => {
+    try {
+      const response = await api.users.usersControllerGetMe({
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (response.data.data) {
+        setUser(response.data.data as unknown as UserProfileDto);
+      }
+    } catch {
+      // Silently fail - user state remains unchanged
     }
   };
 
@@ -124,15 +138,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  const completeOnboarding = async (username: string, bio?: string) => {
-    if (!session) {
+  const createProfile = async (username: string, bio?: string) => {
+    // Get fresh session from Supabase (React state may not have updated yet)
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+    if (!currentSession) {
       return { error: "Not authenticated" };
     }
 
     try {
-      const response = await api.auth.authControllerOnboarding(
+      const response = await api.users.usersControllerUpsertMe(
         { username, bio },
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
+        { headers: { Authorization: `Bearer ${currentSession.access_token}` } }
       );
 
       if (response.data.data) {
@@ -142,14 +159,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return {
-        error: err.response?.data?.message || "Failed to complete onboarding",
+        error: err.response?.data?.message || "Failed to create profile",
       };
     }
   };
 
   const refreshUser = async () => {
     if (session) {
-      await fetchUserProfile(session.access_token);
+      await fetchFreshUserProfile(session.access_token);
     }
   };
 
@@ -165,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         signup,
         logout,
-        completeOnboarding,
+        createProfile,
         refreshUser,
       }}
     >
