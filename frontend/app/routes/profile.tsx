@@ -1,6 +1,8 @@
+import { useMutation } from "@tanstack/react-query";
 import { ChevronRight, Loader2, LogOut, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { AvatarUpload } from "~/components/profile/avatar-upload";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { useAuth } from "~/lib/auth-context";
@@ -50,6 +52,20 @@ export default function ProfilePage() {
   const [editBio, setEditBio] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  // Avatar upload mutation
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (avatarUrl: string) => {
+      if (!session) throw new Error("Not authenticated");
+      await api.users.usersControllerUpdateMe(
+        { avatarUrl },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+    },
+    onSuccess: () => {
+      refreshUser();
+    },
+  });
 
   // Bookmarks state
   const [bookmarkTab, setBookmarkTab] = useState<BookmarkTab>("users");
@@ -174,19 +190,30 @@ export default function ProfilePage() {
               {/* User Header */}
               <div className="flex items-start gap-4">
                 {/* Avatar */}
-                <div
-                  className={`h-20 w-20 rounded-full bg-linear-to-br ${gradient} flex items-center justify-center text-2xl font-semibold text-white shrink-0`}
-                >
-                  {user?.avatarUrl ? (
-                    <img
-                      src={String(user.avatarUrl)}
-                      alt={user.username}
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    user?.username?.charAt(0).toUpperCase()
-                  )}
-                </div>
+                {isEditing && user ? (
+                  <AvatarUpload
+                    userId={user.id}
+                    currentUrl={user.avatarUrl ? String(user.avatarUrl) : null}
+                    username={user.username}
+                    onUpload={(url) => updateAvatarMutation.mutate(url)}
+                    disabled={updateAvatarMutation.isPending}
+                    size="lg"
+                  />
+                ) : (
+                  <div
+                    className={`h-20 w-20 rounded-full bg-linear-to-br ${gradient} flex items-center justify-center text-2xl font-semibold text-white shrink-0`}
+                  >
+                    {user?.avatarUrl ? (
+                      <img
+                        src={String(user.avatarUrl)}
+                        alt={user.username}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      user?.username?.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                )}
 
                 {/* User Info */}
                 <div className="flex-1 min-w-0">
