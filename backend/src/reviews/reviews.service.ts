@@ -190,6 +190,7 @@ export class ReviewsService {
         tabId: dto.tabId,
         title: dto.title,
         description: dto.description,
+        author: dto.author,
         mediaType: dto.mediaType,
         mediaUrl: dto.mediaUrl,
         mediaConfig: mediaConfig as Prisma.InputJsonValue,
@@ -260,6 +261,7 @@ export class ReviewsService {
     const updateData: Prisma.ReviewUpdateInput = {};
     if (dto.title !== undefined) updateData.title = dto.title;
     if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.author !== undefined) updateData.author = dto.author;
     if (dto.mediaType !== undefined) updateData.mediaType = dto.mediaType;
     if (dto.mediaUrl !== undefined) updateData.mediaUrl = dto.mediaUrl;
     if (dto.metaFields !== undefined) {

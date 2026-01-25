@@ -9,6 +9,9 @@ export class ReviewListItemDto {
   @ApiProperty()
   title: string;
 
+  @ApiPropertyOptional()
+  author: string | null;
+
   @ApiProperty({ enum: MediaType })
   mediaType: MediaType;
 

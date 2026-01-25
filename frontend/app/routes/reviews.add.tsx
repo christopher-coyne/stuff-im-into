@@ -38,6 +38,7 @@ export default function AddReviewPage() {
       title: data.title.trim(),
       tabId: data.tabId,
       description: data.description.trim() || undefined,
+      author: data.author.trim() || undefined,
       mediaType: data.mediaType as CreateReviewDto["mediaType"],
       mediaUrl: data.mediaUrl.trim() || undefined,
       mediaConfig,

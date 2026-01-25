@@ -71,6 +71,7 @@ export interface ReviewFormData {
   title: string;
   tabId: string;
   description: string;
+  author: string;
   mediaType: MediaType;
   mediaUrl: string;
   textContent: string; // For TEXT media type - stored in mediaConfig.content
@@ -124,6 +125,7 @@ export function ReviewForm({
       title: initialValues?.title ?? "",
       tabId: initialValues?.tabId ?? initialTabId ?? "",
       description: initialValues?.description ?? "",
+      author: initialValues?.author ?? "",
       mediaType: initialValues?.mediaType ?? "IMAGE",
       mediaUrl: initialValues?.mediaUrl ?? "",
       textContent: initialValues?.textContent ?? "",
@@ -221,7 +223,15 @@ export function ReviewForm({
               type="text"
               placeholder="Enter title..."
               {...register("title", { required: true })}
-              className="w-full text-3xl font-bold text-white bg-transparent border-none outline-none placeholder:text-white/50 mb-3"
+              className="w-full text-3xl font-bold text-white bg-transparent border-none outline-none placeholder:text-white/50 mb-1"
+            />
+
+            {/* Author Input */}
+            <input
+              type="text"
+              placeholder="Author (optional)"
+              {...register("author")}
+              className="w-full text-lg text-white/80 bg-transparent border-none outline-none placeholder:text-white/40 mb-3"
             />
 
             {/* User info & Tab selector */}

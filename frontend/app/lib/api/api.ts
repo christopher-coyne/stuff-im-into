@@ -152,6 +152,7 @@ export interface CreateCategoryDto {
 export interface ReviewListItemDto {
   id: string;
   title: string;
+  author?: object;
   mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
   mediaUrl?: object;
   mediaConfig?: object;
@@ -215,6 +216,7 @@ export interface ReviewDetailDto {
   id: string;
   title: string;
   description?: object;
+  author?: object;
   mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
   mediaUrl?: object;
   mediaConfig?: object;
@@ -253,6 +255,11 @@ export interface CreateReviewDto {
   /** Markdown description/content */
   description?: string;
   /**
+   * Author/creator of the media
+   * @example "Christopher Nolan"
+   */
+  author?: string;
+  /**
    * Type of media
    * @example "VIDEO"
    */
@@ -277,6 +284,11 @@ export interface UpdateReviewDto {
   title?: string;
   /** Markdown description/content */
   description?: string;
+  /**
+   * Author/creator of the media
+   * @example "Christopher Nolan"
+   */
+  author?: string;
   /**
    * Type of media
    * @example "VIDEO"

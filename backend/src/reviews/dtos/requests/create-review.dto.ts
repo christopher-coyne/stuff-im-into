@@ -38,6 +38,11 @@ export class CreateReviewDto {
   @IsString()
   description?: string;
 
+  @ApiPropertyOptional({ description: 'Author/creator of the media', example: 'Christopher Nolan' })
+  @IsOptional()
+  @IsString()
+  author?: string;
+
   @ApiProperty({ description: 'Type of media', enum: MediaType, example: 'VIDEO' })
   @IsEnum(MediaType)
   mediaType: MediaType;

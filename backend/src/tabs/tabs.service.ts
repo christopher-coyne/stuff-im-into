@@ -211,6 +211,7 @@ export class TabsService {
       items: reviews.map((review) => ({
         id: review.id,
         title: review.title,
+        author: review.author,
         mediaType: review.mediaType,
         mediaUrl: review.mediaUrl,
         mediaConfig: review.mediaConfig as object | null,

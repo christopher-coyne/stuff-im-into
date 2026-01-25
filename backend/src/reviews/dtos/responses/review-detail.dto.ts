@@ -66,6 +66,9 @@ export class ReviewDetailDto {
   @ApiPropertyOptional()
   description: string | null;
 
+  @ApiPropertyOptional()
+  author: string | null;
+
   @ApiProperty({ enum: MediaType })
   mediaType: MediaType;
 
@@ -109,6 +112,7 @@ export class ReviewDetailDto {
       id: review.id,
       title: review.title,
       description: review.description,
+      author: review.author,
       mediaType: review.mediaType,
       mediaUrl: review.mediaUrl,
       mediaConfig: review.mediaConfig,

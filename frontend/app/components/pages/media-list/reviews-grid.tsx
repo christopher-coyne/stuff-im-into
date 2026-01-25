@@ -86,7 +86,7 @@ export function ReviewsGrid({ reviews, theme }: ReviewsGridProps) {
       {reviews.map((review) => (
         <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}
-          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted mb-2">
+          <div className="relative aspect-square rounded-lg overflow-hidden bg-muted mb-2">
             <MediaThumbnail review={review} theme={theme} />
             {/* Bookmark indicator */}
             {review.isBookmarked && (
@@ -97,6 +97,10 @@ export function ReviewsGrid({ reviews, theme }: ReviewsGridProps) {
           </div>
           {/* Title */}
           <h3 className="font-medium text-sm line-clamp-2">{review.title}</h3>
+          {/* Author */}
+          {review.author && (
+            <p className="text-xs text-muted-foreground line-clamp-1">{String(review.author)}</p>
+          )}
           {/* Tags */}
           {review.categories.length > 0 && (
             <div className="flex gap-1.5 mt-2 flex-wrap">

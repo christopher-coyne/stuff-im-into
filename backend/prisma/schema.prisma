@@ -90,6 +90,7 @@ model Review {
   id          String    @id @default(uuid())
   title       String
   description String?   // Markdown content
+  author      String?   // Optional author/creator of the media
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

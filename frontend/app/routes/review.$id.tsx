@@ -183,6 +183,7 @@ export default function ReviewDetailPage() {
     updateReviewMutation.mutate({
       title: data.title.trim(),
       description: data.description.trim() || undefined,
+      author: data.author.trim() || undefined,
       mediaType: data.mediaType as UpdateReviewDto["mediaType"],
       mediaUrl: data.mediaUrl.trim() || undefined,
       mediaConfig,
@@ -211,6 +212,7 @@ export default function ReviewDetailPage() {
           title: review.title,
           tabId: review.tab.id,
           description: review.description ? String(review.description) : "",
+          author: review.author ? String(review.author) : "",
           mediaType: review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK",
           mediaUrl: review.mediaUrl ? String(review.mediaUrl) : "",
           textContent: mediaConfig?.content ? String(mediaConfig.content) : "",
@@ -268,9 +270,14 @@ export default function ReviewDetailPage() {
         </div>
 
         {/* Header with gradient */}
-        <header className={`bg-gradient-to-b ${gradient} rounded-t-xl px-6 py-6`}>
+        <header className={`bg-gradient-to-b ${gradient} rounded-xl px-6 py-6`}>
           {/* Title */}
-          <h1 className="text-3xl font-bold text-white mb-3">{review.title}</h1>
+          <h1 className="text-3xl font-bold text-white mb-1">{review.title}</h1>
+
+          {/* Author */}
+          {review.author && (
+            <p className="text-lg text-white/80 mb-3">{String(review.author)}</p>
+          )}
 
           {/* User info */}
           <Link

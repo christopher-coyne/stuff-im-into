@@ -353,7 +353,7 @@ export default function MediaListPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-6 pt-6">
         {/* Header */}
-        <header className={`bg-gradient-to-br ${gradient} px-6 py-8 rounded-t-xl`}>
+        <header className={`bg-gradient-to-br ${gradient} px-6 py-8 rounded-xl`}>
           <div className="flex items-center gap-6">
             {/* Profile Picture */}
             <div className="h-20 w-20 rounded-full bg-white/20 flex-shrink-0 overflow-hidden">
