@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { BookmarkCheck, Search } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -21,10 +20,11 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { useDebounce } from "~/hooks/use-debounce";
-import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
 import { getAvatarGradient } from "~/lib/theme";
+import { getAuthHeaders } from "~/lib/supabase/server";
+import type { Route } from "./+types/explore";
 
 const PAGE_SIZE = 5;
 
@@ -36,6 +36,27 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "newest", label: "Newest" },
   { value: "most_reviews", label: "Most reviews" },
 ];
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+  const search = url.searchParams.get("search") || undefined;
+  const sortBy = (url.searchParams.get("sortBy") as SortOption) || "most_popular";
+
+  const authHeaders = await getAuthHeaders(request);
+
+  const response = await api.users.usersControllerFindAll(
+    { search, sortBy, page, limit: PAGE_SIZE },
+    { headers: authHeaders }
+  );
+
+  return {
+    users: response.data.data || [],
+    page,
+    search: search || "",
+    sortBy,
+  };
+}
 
 function UserCard({ user }: { user: UserResponseDto }) {
   const gradient = getAvatarGradient(user.theme);
@@ -105,36 +126,40 @@ function UserCard({ user }: { user: UserResponseDto }) {
 }
 
 export default function ExplorePage() {
-  const { session } = useAuth();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 300);
-  const [sortBy, setSortBy] = useState<SortOption>("most_popular");
-  const [page, setPage] = useState(1);
+  const { users, page, search: initialSearch, sortBy } = useLoaderData<typeof loader>();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Reset page when search or sort changes
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1);
-  };
+  // Local state for search input (for debouncing)
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const debouncedSearch = useDebounce(searchInput, 300);
+
+  // Update URL when debounced search changes
+  useEffect(() => {
+    const currentSearch = searchParams.get("search") || "";
+    if (debouncedSearch !== currentSearch) {
+      const newParams = new URLSearchParams(searchParams);
+      if (debouncedSearch) {
+        newParams.set("search", debouncedSearch);
+      } else {
+        newParams.delete("search");
+      }
+      newParams.set("page", "1"); // Reset to page 1 on search change
+      setSearchParams(newParams);
+    }
+  }, [debouncedSearch]);
 
   const handleSortChange = (value: SortOption) => {
-    setSortBy(value);
-    setPage(1);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("sortBy", value);
+    newParams.set("page", "1"); // Reset to page 1 on sort change
+    setSearchParams(newParams);
   };
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ["users", debouncedSearch, sortBy, page, session?.access_token],
-    queryFn: async () => {
-      const headers = session ? { Authorization: `Bearer ${session.access_token}` } : {};
-      const response = await api.users.usersControllerFindAll({
-        search: debouncedSearch || undefined,
-        sortBy,
-        page,
-        limit: PAGE_SIZE,
-      }, { headers });
-      return response.data.data;
-    },
-  });
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", String(newPage));
+    setSearchParams(newParams);
+  };
 
   const hasNextPage = users.length === PAGE_SIZE;
   const hasPrevPage = page > 1;
@@ -162,14 +187,14 @@ export default function ExplorePage() {
             <Input
               type="text"
               placeholder="Search users..."
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="pl-10"
             />
           </div>
 
           {/* Sort */}
-          <Select value={sortBy} onValueChange={(value) => handleSortChange(value as SortOption)}>
+          <Select value={sortBy} onValueChange={handleSortChange}>
             <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
@@ -185,9 +210,7 @@ export default function ExplorePage() {
 
         {/* User List */}
         <div className="space-y-3">
-          {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
-          ) : users.length === 0 ? (
+          {users.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               No users found
             </div>
@@ -197,12 +220,12 @@ export default function ExplorePage() {
         </div>
 
         {/* Pagination */}
-        {!isLoading && users.length > 0 && (hasPrevPage || hasNextPage) && (
+        {users.length > 0 && (hasPrevPage || hasNextPage) && (
           <Pagination className="mt-8">
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setPage((p) => p - 1)}
+                  onClick={() => handlePageChange(page - 1)}
                   disabled={!hasPrevPage}
                 />
               </PaginationItem>
@@ -211,7 +234,7 @@ export default function ExplorePage() {
               </PaginationItem>
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setPage((p) => p + 1)}
+                  onClick={() => handlePageChange(page + 1)}
                   disabled={!hasNextPage}
                 />
               </PaginationItem>

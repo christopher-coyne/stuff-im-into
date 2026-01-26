@@ -2,6 +2,8 @@
 
 A media curation app where users create tabs and reviews to share what they're into.
 
+IMPORTANT: make sure you fix eslint and typescript issues before you think a feature is completed
+
 ## Tech Stack
 
 ### Frontend (`/frontend`)

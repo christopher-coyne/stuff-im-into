@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
+import { useAuth } from "~/lib/auth-context";
 import type { Route } from "./+types/home";
 
 export function meta({}: Route.MetaArgs) {
@@ -10,6 +11,8 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
+  const { isAuthenticated, user } = useAuth();
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="text-center max-w-md">
@@ -22,9 +25,15 @@ export default function Home() {
           Share your thoughts on movies, music, books, and everything you're into.
         </p>
         <div className="flex gap-3 justify-center">
-          <Button asChild>
-            <Link to="/signup">Sign up</Link>
-          </Button>
+          {isAuthenticated && user ? (
+            <Button asChild>
+              <Link to={`/${user.username}`}>My Profile</Link>
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link to="/signup">Sign up</Link>
+            </Button>
+          )}
           <Button variant="outline" asChild>
             <Link to="/explore">Explore</Link>
           </Button>
