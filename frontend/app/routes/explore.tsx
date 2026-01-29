@@ -66,12 +66,12 @@ function UserCard({ user }: { user: UserResponseDto }) {
   });
 
   return (
-    <Link to={`/${user.username}`} className="block">
+    <Link to={`/users/${user.username}`} className="block">
       <Card className="p-4 hover:border-zinc-700 transition-colors">
         <div className="flex gap-4">
           {/* Avatar */}
           <div
-            className={`h-12 w-12 rounded-full bg-gradient-to-br ${gradient} flex-shrink-0`}
+            className={`h-12 w-12 rounded-full bg-linear-to-br ${gradient} shrink-0`}
           >
             {user.avatarUrl && (
               <img
@@ -170,7 +170,7 @@ export default function ExplorePage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent">
               Explore
             </span>
           </h1>
@@ -211,8 +211,19 @@ export default function ExplorePage() {
         {/* User List */}
         <div className="space-y-3">
           {users.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              No users found
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No users found</p>
+              {(searchParams.get("search") || searchParams.get("sortBy") || searchParams.get("page")) && (
+                <button
+                  onClick={() => {
+                    setSearchInput("");
+                    setSearchParams(new URLSearchParams());
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Reset filters
+                </button>
+              )}
             </div>
           ) : (
             users.map((user) => <UserCard key={user.id} user={user} />)

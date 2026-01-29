@@ -27,7 +27,7 @@ export default function Home() {
         <div className="flex gap-3 justify-center">
           {isAuthenticated && user ? (
             <Button asChild>
-              <Link to={`/${user.username}`}>My Profile</Link>
+              <Link to={`/users/${user.username}`}>My Profile</Link>
             </Button>
           ) : (
             <Button asChild>

@@ -67,30 +67,54 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let status = "Error";
+  let message = "An unexpected error occurred.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
+    status = String(error.status);
+    message =
       error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
+        ? "The page you're looking for doesn't exist or has been moved."
+        : error.statusText || message;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
+    message = error.message;
     stack = error.stack;
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
-    </main>
+    <QueryProvider>
+      <AuthProvider>
+        <Navbar />
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            <h1 className="text-6xl font-bold text-muted-foreground mb-4">{status}</h1>
+            <h2 className="text-2xl font-semibold mb-2">
+              {status === "404" ? "Page not found" : "Something went wrong"}
+            </h2>
+            <p className="text-muted-foreground mb-8">{message}</p>
+            <div className="flex gap-3 justify-center">
+              <a
+                href="/"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2"
+              >
+                Go home
+              </a>
+              <a
+                href="/explore"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+              >
+                Explore
+              </a>
+            </div>
+            {stack && (
+              <pre className="mt-8 w-full p-4 overflow-x-auto text-left text-xs bg-muted rounded-lg">
+                <code>{stack}</code>
+              </pre>
+            )}
+          </div>
+        </div>
+      </AuthProvider>
+    </QueryProvider>
   );
 }

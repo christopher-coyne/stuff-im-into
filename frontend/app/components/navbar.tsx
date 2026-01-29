@@ -61,7 +61,7 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             {isAuthenticated && user && (
               <Link
-                to={`/${user.username}`}
+                to={`/users/${user.username}`}
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 my media

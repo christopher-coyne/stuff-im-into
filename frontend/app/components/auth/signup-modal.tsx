@@ -87,7 +87,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
     }
 
     handleClose(false);
-    navigate(`/${username}`);
+    navigate(`/users/${username}`);
   };
 
   const handleSwitchToLogin = () => {

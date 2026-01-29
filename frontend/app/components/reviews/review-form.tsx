@@ -202,7 +202,7 @@ export function ReviewForm({
         {/* Back link */}
         <div className="pt-6 pb-4 flex items-center justify-between">
           <Link
-            to={selectedTab ? `/${user.username}/${selectedTab.slug}` : `/${user.username}`}
+            to={selectedTab ? `/users/${user.username}/${selectedTab.slug}` : `/users/${user.username}`}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             <ArrowLeft className="h-4 w-4" />

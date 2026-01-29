@@ -1,26 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bookmark, BookmarkCheck, GripVertical, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { GripVertical, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLoaderData, useNavigate, useRevalidator, useSearchParams } from "react-router";
+import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
+import { AddCategoryModal } from "~/components/pages/media-list/add-category-modal";
+import { AddTabModal } from "~/components/pages/media-list/add-tab-modal";
+import { DeleteTabModal } from "~/components/pages/media-list/delete-tab-modal";
+import { ProfileHeader } from "~/components/pages/media-list/profile-header";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
 import { Button } from "~/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { useAuth } from "~/lib/auth-context";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
+import { loaderFetch } from "~/lib/api/loader-fetch";
 import type { CategoryDto, PaginatedReviewsDto } from "~/lib/api/api";
-import { getHeaderGradient, themeHeaderGradients } from "~/lib/theme";
+import { themeHeaderGradients } from "~/lib/theme";
 import { getAuthHeaders } from "~/lib/supabase/server";
-import type { Route } from "./+types/$username.$tab";
+import type { Route } from "./+types/users.$username.$tab";
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { username, tab: tabSlug } = params;
@@ -35,10 +32,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   // Get auth headers from cookies (for SSR)
   const authHeaders = await getAuthHeaders(request);
 
-  const response = await api.users.usersControllerFindByUsername(username, {
-    headers: authHeaders,
-  });
-  const user = response.data.data;
+  const userResponse = await loaderFetch(() =>
+    api.users.usersControllerFindByUsername(username, { headers: authHeaders })
+  );
+  const user = userResponse.data.data;
 
   if (!user) {
     throw new Response("User not found", { status: 404 });
@@ -62,8 +59,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   if (currentTab) {
     const [categoriesResponse, reviewsResponse] = await Promise.all([
-      api.tabs.tabsControllerFindCategoriesForTab(currentTab.id),
-      api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search }, { headers: authHeaders }),
+      loaderFetch(() => api.tabs.tabsControllerFindCategoriesForTab(currentTab.id)),
+      loaderFetch(() => api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search }, { headers: authHeaders })),
     ]);
     categories = categoriesResponse.data.data || [];
 
@@ -74,7 +71,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
     // Re-fetch reviews with category filter if needed
     if (categoryId) {
-      const filteredResponse = await api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId }, { headers: authHeaders });
+      const filteredResponse = await loaderFetch(() =>
+        api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId }, { headers: authHeaders })
+      );
       reviews = filteredResponse.data.data || reviews;
     } else {
       reviews = reviewsResponse.data.data || reviews;
@@ -100,33 +99,21 @@ export default function MediaListPage() {
   const { user: loggedInUser, session } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showBio, setShowBio] = useState(false);
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const debouncedSearch = useDebounce(search, 300);
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
   const [showAddTabModal, setShowAddTabModal] = useState(false);
-  const [newTabName, setNewTabName] = useState("");
-  const [isCreatingTab, setIsCreatingTab] = useState(false);
-  const [tabError, setTabError] = useState("");
   const [selectedTheme, setSelectedTheme] = useState<string>(user.theme || "DEFAULT");
 
   // Add category modal state
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
 
   // Delete tab modal state
   const [showDeleteTabModal, setShowDeleteTabModal] = useState(false);
 
-  // Bookmark state
-  const [optimisticBookmarked, setOptimisticBookmarked] = useState<boolean | null>(null);
-  const revalidator = useRevalidator();
-  const isUserBookmarked = optimisticBookmarked ?? user.isBookmarked;
-
   // React Query for categories
-  const queryClient = useQueryClient();
-
   const { data: categoriesData } = useQuery({
     queryKey: ["categories", currentTab?.id],
     queryFn: async () => {
@@ -136,23 +123,6 @@ export default function MediaListPage() {
     },
     initialData: categories,
     enabled: !!currentTab,
-  });
-
-  const createCategoryMutation = useMutation({
-    mutationFn: async (name: string) => {
-      if (!currentTab || !session) throw new Error("Not authenticated");
-      const response = await api.tabs.tabsControllerCreateCategory(
-        currentTab.id,
-        { name },
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", currentTab?.id] });
-      setShowAddCategoryModal(false);
-      setNewCategoryName("");
-    },
   });
 
   const updateThemeMutation = useMutation({
@@ -168,58 +138,6 @@ export default function MediaListPage() {
       setSelectedTheme(user.theme || "DEFAULT");
     },
   });
-
-  // Bookmark user mutation
-  const bookmarkUserMutation = useMutation({
-    mutationFn: async (shouldBookmark: boolean) => {
-      if (!session) throw new Error("Not authenticated");
-      if (shouldBookmark) {
-        await api.bookmarks.bookmarksControllerBookmarkUser(user.id, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-      } else {
-        await api.bookmarks.bookmarksControllerUnbookmarkUser(user.id, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-      }
-    },
-    onMutate: (shouldBookmark) => {
-      setOptimisticBookmarked(shouldBookmark);
-    },
-    onError: () => {
-      setOptimisticBookmarked(null);
-    },
-    onSuccess: () => {
-      revalidator.revalidate();
-      setOptimisticBookmarked(null);
-    },
-  });
-
-  // Delete tab mutation
-  const deleteTabMutation = useMutation({
-    mutationFn: async (tabId: string) => {
-      if (!session) throw new Error("Not authenticated");
-      await api.tabs.tabsControllerDeleteTab(tabId, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-    },
-    onSuccess: () => {
-      setShowDeleteTabModal(false);
-      // Navigate to user's profile (first tab or profile page)
-      const remainingTabs = localTabs.filter((t) => t.id !== currentTab?.id);
-      if (remainingTabs.length > 0) {
-        navigate(`/${user.username}/${remainingTabs[0].slug}`);
-      } else {
-        navigate(`/${user.username}`);
-      }
-    },
-  });
-
-  const handleDeleteTab = () => {
-    if (currentTab) {
-      deleteTabMutation.mutate(currentTab.id);
-    }
-  };
 
   // Drag and drop state
   const [localTabs, setLocalTabs] = useState(user.tabs);
@@ -312,121 +230,16 @@ export default function MediaListPage() {
     setDragOverTabId(null);
   };
 
-  const handleCreateTab = async () => {
-    if (!session || !newTabName.trim()) return;
-
-    setIsCreatingTab(true);
-    setTabError("");
-
-    try {
-      const response = await api.tabs.tabsControllerCreateTab(
-        { name: newTabName.trim() },
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-
-      if (response.data?.data) {
-        setShowAddTabModal(false);
-        setNewTabName("");
-        // Navigate to the new tab
-        navigate(`/${user.username}/${response.data.data.slug}`);
-      }
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setTabError(err.response?.data?.message || "Failed to create tab");
-    } finally {
-      setIsCreatingTab(false);
-    }
-  };
-
-  const handleCreateCategory = () => {
-    if (!newCategoryName.trim()) return;
-    createCategoryMutation.mutate(newCategoryName.trim());
-  };
-
-  const gradient = getHeaderGradient(selectedTheme);
-  const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-6 pt-6">
-        {/* Header */}
-        <header className={`bg-gradient-to-br ${gradient} px-6 py-8 rounded-xl`}>
-          <div className="flex items-center gap-6">
-            {/* Profile Picture */}
-            <div className="h-20 w-20 rounded-full bg-white/20 shrink-0 overflow-hidden">
-              {user.avatarUrl ? (
-                <img
-                  src={String(user.avatarUrl)}
-                  alt={user.username}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center text-white/60 text-2xl font-bold">
-                  {user.username.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-
-            {/* Username and Join Date */}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-white">@{user.username}</h1>
-              <p className="text-white/70 text-sm">Joined {joinDate}</p>
-            </div>
-
-            {/* About Button */}
-            {user.bio && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowBio(!showBio)}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                {showBio ? "Hide" : "About"}
-              </Button>
-            )}
-
-            {/* Bookmark Button (only for other users' profiles) */}
-            {session && !isOwnProfile && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => bookmarkUserMutation.mutate(!isUserBookmarked)}
-                disabled={bookmarkUserMutation.isPending}
-                className={`bg-white/10 border-white/20 hover:bg-white/20 ${
-                  isUserBookmarked ? "text-amber-400" : "text-white"
-                }`}
-              >
-                {isUserBookmarked ? (
-                  <BookmarkCheck className="h-4 w-4" />
-                ) : (
-                  <Bookmark className="h-4 w-4" />
-                )}
-              </Button>
-            )}
-
-            {/* Edit Button (only for own profile, hidden when in edit mode) */}
-            {isOwnProfile && !isEditMode && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditMode(true)}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* Bio (collapsible) */}
-          {showBio && user.bio && (
-            <div className="mt-4 p-4 rounded-lg bg-black/20 text-white/90">
-              {String(user.bio)}
-            </div>
-          )}
-        </header>
+        <ProfileHeader
+          user={user}
+          theme={selectedTheme}
+          isOwnProfile={isOwnProfile}
+          isEditMode={isEditMode}
+          onEditModeChange={setIsEditMode}
+        />
 
         {/* Main content area */}
         <main className="py-8">
@@ -455,7 +268,7 @@ export default function MediaListPage() {
                         <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab mr-1" />
                       )}
                       <Link
-                        to={`/${user.username}/${tab.slug}`}
+                        to={`/users/${user.username}/${tab.slug}`}
                         className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
                           currentTab?.id === tab.id
                             ? "border-primary text-foreground"
@@ -580,126 +393,30 @@ export default function MediaListPage() {
         </div>
       )}
 
-      {/* Add Tab Modal */}
-      <Dialog open={showAddTabModal} onOpenChange={setShowAddTabModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Tab</DialogTitle>
-            <DialogDescription>
-              Enter a name for your new tab. This will create a new section on your profile.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <Input
-              placeholder="Tab name (e.g., Movies, Books, Music)"
-              value={newTabName}
-              onChange={(e) => setNewTabName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && newTabName.trim()) {
-                  handleCreateTab();
-                }
-              }}
-            />
-            {tabError && (
-              <p className="text-sm text-destructive">{tabError}</p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowAddTabModal(false);
-                  setNewTabName("");
-                  setTabError("");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateTab}
-                disabled={!newTabName.trim() || isCreatingTab}
-              >
-                {isCreatingTab ? "Creating..." : "Create Tab"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AddTabModal
+        open={showAddTabModal}
+        onOpenChange={setShowAddTabModal}
+        onSuccess={(newTab) => navigate(`/users/${user.username}/${newTab.slug}`)}
+      />
 
-      {/* Add Category Modal */}
-      <Dialog open={showAddCategoryModal} onOpenChange={setShowAddCategoryModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Category</DialogTitle>
-            <DialogDescription>
-              Enter a name for your new category. Categories help organize reviews within this tab.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <Input
-              placeholder="Category name (e.g., Favorites, Sci-Fi, Must Watch)"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && newCategoryName.trim()) {
-                  handleCreateCategory();
-                }
-              }}
-            />
-            {createCategoryMutation.error && (
-              <p className="text-sm text-destructive">
-                {(createCategoryMutation.error as { response?: { data?: { message?: string } } })
-                  ?.response?.data?.message || "Failed to create category"}
-              </p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowAddCategoryModal(false);
-                  setNewCategoryName("");
-                  createCategoryMutation.reset();
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateCategory}
-                disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
-              >
-                {createCategoryMutation.isPending ? "Creating..." : "Create Category"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {currentTab && (
+        <AddCategoryModal
+          open={showAddCategoryModal}
+          onOpenChange={setShowAddCategoryModal}
+          tabId={currentTab.id}
+        />
+      )}
 
-      {/* Delete Tab Confirmation Modal */}
-      <Dialog open={showDeleteTabModal} onOpenChange={setShowDeleteTabModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Tab</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{currentTab?.name}&quot;? This will permanently delete the tab and all {reviews.items.length} review{reviews.items.length !== 1 ? "s" : ""} within it. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteTabModal(false)}
-              disabled={deleteTabMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteTab}
-              disabled={deleteTabMutation.isPending}
-            >
-              {deleteTabMutation.isPending ? "Deleting..." : "Delete Tab"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {currentTab && (
+        <DeleteTabModal
+          open={showDeleteTabModal}
+          onOpenChange={setShowDeleteTabModal}
+          tabId={currentTab.id}
+          tabName={currentTab.name}
+          reviewCount={reviews.items.length}
+          onSuccess={() => navigate(`/users/${user.username}`)}
+        />
+      )}
     </div>
   );
 }

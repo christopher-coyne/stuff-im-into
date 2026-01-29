@@ -282,7 +282,7 @@ export default function ProfilePage() {
                       )}
                       {user && (
                         <Link
-                          to={`/${user.username}`}
+                          to={`/users/${user.username}`}
                           className="inline-flex items-center gap-1 mt-3 px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-500 text-sm font-medium hover:bg-amber-500/30 transition-colors"
                         >
                           View my media
@@ -364,7 +364,7 @@ export default function ProfilePage() {
                       return (
                         <Link
                           key={bookmarkedUser.id}
-                          to={`/${bookmarkedUser.username}`}
+                          to={`/users/${bookmarkedUser.username}`}
                           className="flex items-center gap-4 px-6 py-4 hover:bg-accent/50 transition-colors"
                         >
                           <div
@@ -447,7 +447,7 @@ export default function ProfilePage() {
             asChild
             className="bg-amber-500 hover:bg-amber-600 text-white"
           >
-            <Link to={user ? `/${user.username}` : "/"}>View Profile</Link>
+            <Link to={user ? `/users/${user.username}` : "/"}>View Profile</Link>
           </Button>
         </div>
       </div>

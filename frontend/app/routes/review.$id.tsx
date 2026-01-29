@@ -124,7 +124,7 @@ export default function ReviewDetailPage() {
     onSuccess: () => {
       setIsDeleteDialogOpen(false);
       // Navigate back to the user's tab page
-      navigate(`/${review.user.username}/${review.tab.slug}`);
+      navigate(`/users/${review.user.username}/${review.tab.slug}`);
     },
   });
 
@@ -239,7 +239,7 @@ export default function ReviewDetailPage() {
         {/* Back link */}
         <div className="pt-6 pb-4 flex items-center justify-between">
           <Link
-            to={`/${review.user.username}/${review.tab.slug}`}
+            to={`/users/${review.user.username}/${review.tab.slug}`}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -281,7 +281,7 @@ export default function ReviewDetailPage() {
 
           {/* User info */}
           <Link
-            to={`/${review.user.username}`}
+            to={`/users/${review.user.username}`}
             className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
           >
             <div className="h-7 w-7 rounded-full bg-amber-500 overflow-hidden flex items-center justify-center">
