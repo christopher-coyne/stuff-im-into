@@ -101,10 +101,8 @@ export default function ReviewDetailPage() {
   const revalidator = useRevalidator();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [optimisticBookmarked, setOptimisticBookmarked] = useState<boolean | null>(null);
 
   const isOwner = loggedInUser?.id === review.user.id;
-  const isBookmarked = optimisticBookmarked ?? review.isBookmarked;
 
   // Delete mutation
   const deleteReviewMutation = useMutation({
@@ -125,7 +123,7 @@ export default function ReviewDetailPage() {
     deleteReviewMutation.mutate();
   };
 
-  // Bookmark mutation - pass desired state as parameter to avoid closure issues
+  // Bookmark mutation
   const bookmarkMutation = useMutation({
     mutationFn: async (shouldBookmark: boolean) => {
       if (!session) throw new Error("Not authenticated");
@@ -139,15 +137,8 @@ export default function ReviewDetailPage() {
         });
       }
     },
-    onMutate: (shouldBookmark) => {
-      setOptimisticBookmarked(shouldBookmark);
-    },
-    onError: () => {
-      setOptimisticBookmarked(null);
-    },
     onSuccess: () => {
       revalidator.revalidate();
-      setOptimisticBookmarked(null);
     },
   });
 
@@ -324,16 +315,16 @@ export default function ReviewDetailPage() {
             <button
               onClick={() => {
                 if (session) {
-                  bookmarkMutation.mutate(!isBookmarked);
+                  bookmarkMutation.mutate(!review.isBookmarked);
                 }
               }}
               disabled={!session || bookmarkMutation.isPending}
               className={`hover:text-foreground transition-colors ${
-                isBookmarked ? "text-amber-500" : ""
+                review.isBookmarked ? "text-amber-500" : ""
               } ${!session ? "opacity-50 cursor-not-allowed" : ""}`}
-              title={session ? (isBookmarked ? "Remove bookmark" : "Bookmark") : "Log in to bookmark"}
+              title={session ? (review.isBookmarked ? "Remove bookmark" : "Bookmark") : "Log in to bookmark"}
             >
-              {isBookmarked ? (
+              {review.isBookmarked ? (
                 <BookmarkCheck className="h-5 w-5" />
               ) : (
                 <Bookmark className="h-5 w-5" />
@@ -358,7 +349,7 @@ export default function ReviewDetailPage() {
 
         {/* Categories */}
         {review.categories.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-8">
+          <div className="flex gap-2 flex-wrap mb-6">
             {review.categories.map((cat) => (
               <span
                 key={cat.id}
@@ -368,6 +359,11 @@ export default function ReviewDetailPage() {
               </span>
             ))}
           </div>
+        )}
+
+        {/* Divider */}
+        {review.categories.length > 0 && review.description && (
+          <hr className="border-border mb-6" />
         )}
 
         {/* Description */}

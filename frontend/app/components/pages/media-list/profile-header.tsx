@@ -26,9 +26,7 @@ export function ProfileHeader({
   const { session } = useAuth();
   const revalidator = useRevalidator();
   const [showBio, setShowBio] = useState(false);
-  const [optimisticBookmarked, setOptimisticBookmarked] = useState<boolean | null>(null);
 
-  const isUserBookmarked = optimisticBookmarked ?? user.isBookmarked;
   const gradient = getHeaderGradient(theme);
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "long",
@@ -48,15 +46,8 @@ export function ProfileHeader({
         });
       }
     },
-    onMutate: (shouldBookmark) => {
-      setOptimisticBookmarked(shouldBookmark);
-    },
-    onError: () => {
-      setOptimisticBookmarked(null);
-    },
     onSuccess: () => {
       revalidator.revalidate();
-      setOptimisticBookmarked(null);
     },
   });
 
@@ -101,13 +92,13 @@ export function ProfileHeader({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => bookmarkUserMutation.mutate(!isUserBookmarked)}
+            onClick={() => bookmarkUserMutation.mutate(!user.isBookmarked)}
             disabled={bookmarkUserMutation.isPending}
             className={`bg-white/10 border-white/20 hover:bg-white/20 ${
-              isUserBookmarked ? "text-amber-400" : "text-white"
+              user.isBookmarked ? "text-amber-400" : "text-white"
             }`}
           >
-            {isUserBookmarked ? (
+            {user.isBookmarked ? (
               <BookmarkCheck className="h-4 w-4" />
             ) : (
               <Bookmark className="h-4 w-4" />
