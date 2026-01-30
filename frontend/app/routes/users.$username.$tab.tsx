@@ -1,13 +1,13 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { GripVertical, Plus, Search, Trash2 } from "lucide-react";
+import { GripVertical, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
 import { AddCategoryModal } from "~/components/pages/media-list/add-category-modal";
 import { AddTabModal } from "~/components/pages/media-list/add-tab-modal";
 import { DeleteTabModal } from "~/components/pages/media-list/delete-tab-modal";
+import { EditSidebar } from "~/components/pages/media-list/edit-sidebar";
 import { ProfileHeader } from "~/components/pages/media-list/profile-header";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
-import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { useAuth } from "~/lib/auth-context";
@@ -15,7 +15,6 @@ import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
 import { loaderFetch } from "~/lib/api/loader-fetch";
 import type { CategoryDto, PaginatedReviewsDto } from "~/lib/api/api";
-import { themeHeaderGradients } from "~/lib/theme";
 import { getAuthHeaders } from "~/lib/supabase/server";
 import type { Route } from "./+types/users.$username.$tab";
 
@@ -318,45 +317,10 @@ export default function MediaListPage() {
                   </SelectContent>
                 </Select>
               )}
-              {isEditMode && isOwnProfile && (
-                <Button variant="outline" onClick={() => setShowAddCategoryModal(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Category
-                </Button>
-              )}
-              {isEditMode && isOwnProfile && currentTab && (
-                <Link to={`/reviews/add?tab=${currentTab.id}`}>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Review
-                  </Button>
-                </Link>
-              )}
             </div>
 
             {/* Reviews Grid */}
             <ReviewsGrid reviews={reviews.items} theme={user.theme} />
-
-            {/* Delete Tab (only in edit mode) */}
-            {isEditMode && isOwnProfile && (
-              <div className="mt-12 pt-8 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Permanently delete this tab and all its reviews
-                    </p>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowDeleteTabModal(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Tab
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <p className="text-muted-foreground">No tabs yet</p>
@@ -364,36 +328,18 @@ export default function MediaListPage() {
         </main>
       </div>
 
-      {/* Sticky Edit Navbar */}
+      {/* Floating Edit Sidebar */}
       {isEditMode && isOwnProfile && (
-        <div className="fixed top-0 left-0 right-0 bg-background border-b border-border p-4 z-50">
-          <div className="max-w-3xl mx-auto flex justify-between items-center">
-            <Button variant="outline" onClick={() => setIsEditMode(false)}>
-              Exit Edit Mode
-            </Button>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Theme:</span>
-                <Select value={selectedTheme} onValueChange={handleThemeChange} disabled={updateThemeMutation.isPending}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(themeHeaderGradients).map((theme) => (
-                      <SelectItem key={theme} value={theme}>
-                        {theme.charAt(0) + theme.slice(1).toLowerCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={() => setShowAddTabModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Tab
-              </Button>
-            </div>
-          </div>
-        </div>
+        <EditSidebar
+          currentTab={currentTab}
+          selectedTheme={selectedTheme}
+          isThemeUpdating={updateThemeMutation.isPending}
+          onThemeChange={handleThemeChange}
+          onExitEditMode={() => setIsEditMode(false)}
+          onAddTab={() => setShowAddTabModal(true)}
+          onDeleteTab={() => setShowDeleteTabModal(true)}
+          onAddCategory={() => setShowAddCategoryModal(true)}
+        />
       )}
 
       <AddTabModal

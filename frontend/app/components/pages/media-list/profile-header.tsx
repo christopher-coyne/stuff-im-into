@@ -106,16 +106,26 @@ export function ProfileHeader({
           </Button>
         )}
 
-        {/* Edit Button (only for own profile, hidden when in edit mode) */}
-        {isOwnProfile && !isEditMode && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEditModeChange(true)}
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
+        {/* Edit / View Mode Button (only for own profile) */}
+        {isOwnProfile && (
+          isEditMode ? (
+            <Button
+              size="sm"
+              onClick={() => onEditModeChange(false)}
+              className="bg-black text-white hover:bg-black/90"
+            >
+              View mode
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEditModeChange(true)}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )
         )}
       </div>
 
