@@ -52,7 +52,7 @@ function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme?: 
         <MarkdownRenderer
           content={String(mediaConfig.content)}
           theme={theme}
-          className="text-xs leading-relaxed [&_*]:text-xs [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_h1]:text-sm [&_h2]:text-sm [&_h3]:text-xs"
+          className="text-sm leading-relaxed [&_*]:text-lg [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm"
         />
       </div>
     );

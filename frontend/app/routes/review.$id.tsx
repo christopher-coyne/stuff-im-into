@@ -1,19 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, ChevronRight, Clock, Pencil, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, Clock, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
+import { CategoryReviewsSection, DeleteReviewDialog } from "~/components/media-review";
 import { ReviewForm, type ReviewFormData } from "~/components/reviews";
 import { MediaPreview } from "~/components/reviews/media-preview";
 import { Button } from "~/components/ui/button";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { ReviewListItemDto, UpdateReviewDto } from "~/lib/api/api";
@@ -346,9 +339,6 @@ export default function ReviewDetailPage() {
                 <Bookmark className="h-5 w-5" />
               )}
             </button>
-            <button className="hover:text-foreground transition-colors">
-              <Share2 className="h-5 w-5" />
-            </button>
           </div>
         </div>
 
@@ -389,98 +379,19 @@ export default function ReviewDetailPage() {
           />
         )}
 
-        {/* Related reviews */}
-        {review.relatedReviews.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Related</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {review.relatedReviews.map((related) => (
-                <Link key={related.id} to={`/review/${related.id}`} className="group">
-                  <div className="aspect-[2/3] rounded-lg overflow-hidden bg-muted mb-2">
-                    {related.mediaUrl ? (
-                      <img
-                        src={String(related.mediaUrl)}
-                        alt={related.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                        No image
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-xs font-medium line-clamp-2">{related.title}</h3>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Other reviews by category */}
-        {Object.entries(categoryReviews).map(([categoryId, { name, reviews }]) => (
-          <section key={categoryId} className="mb-8">
-            <div className="rounded-xl border border-border overflow-hidden">
-              <div className="px-5 py-4 border-b border-border">
-                <h2 className="text-lg font-semibold">Other {name}</h2>
-              </div>
-              <div className="divide-y divide-border">
-                {reviews.map((item) => (
-                  <Link
-                    key={item.id}
-                    to={`/review/${item.id}`}
-                    className="flex items-center gap-4 px-5 py-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                      {item.mediaUrl ? (
-                        <img
-                          src={String(item.mediaUrl)}
-                          alt={item.title}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs">
-                          ?
-                        </div>
-                      )}
-                    </div>
-                    <span className="flex-1 font-medium">{item.title}</span>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-        ))}
+        <CategoryReviewsSection categoryReviews={categoryReviews} />
         </main>
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Review</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{review.title}&quot;? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={deleteReviewMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleteReviewMutation.isPending}
-            >
-              {deleteReviewMutation.isPending ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteReviewDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title={review.title}
+        onConfirm={handleDeleteConfirm}
+        isPending={deleteReviewMutation.isPending}
+      />
     </div>
   );
 }

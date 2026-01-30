@@ -155,12 +155,15 @@ export default function MediaListPage() {
 
   // Update URL when debounced search changes
   useEffect(() => {
+    const currentSearch = searchParams.get("search") || "";
+    if (debouncedSearch === currentSearch) return; // No change needed
+
     if (debouncedSearch) {
       searchParams.set("search", debouncedSearch);
     } else {
       searchParams.delete("search");
     }
-    setSearchParams(searchParams);
+    setSearchParams(searchParams, { replace: true });
   }, [debouncedSearch]);
 
   const handleCategoryChange = (value: string) => {
