@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Theme, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class AuthDto {
@@ -33,9 +33,6 @@ export class UserProfileDto {
 
   @ApiPropertyOptional()
   avatarUrl?: string | null;
-
-  @ApiProperty({ enum: Theme })
-  theme: Theme;
 
   @ApiProperty({ enum: UserRole })
   role: UserRole;

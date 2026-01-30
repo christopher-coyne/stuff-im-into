@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MediaType, Theme } from '@prisma/client';
+import { MediaType } from '@prisma/client';
 
 export class BookmarkedReviewUserDto {
   @ApiProperty()
@@ -10,9 +10,6 @@ export class BookmarkedReviewUserDto {
 
   @ApiPropertyOptional()
   avatarUrl: string | null;
-
-  @ApiProperty({ enum: Theme })
-  theme: Theme;
 }
 
 export class BookmarkedReviewDto {

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Category, MediaType, Review, Tab, Theme, User } from '@prisma/client';
+import { Category, MediaType, Review, Tab, User } from '@prisma/client';
 
 export class ReviewUserDto {
   @ApiProperty()
@@ -10,9 +10,6 @@ export class ReviewUserDto {
 
   @ApiPropertyOptional()
   avatarUrl: string | null;
-
-  @ApiProperty({ enum: Theme })
-  theme: Theme;
 }
 
 export class ReviewTabDto {
@@ -122,7 +119,6 @@ export class ReviewDetailDto {
         id: review.user.id,
         username: review.user.username,
         avatarUrl: review.user.avatarUrl,
-        theme: review.user.theme,
       },
       tab: {
         id: review.tab.id,

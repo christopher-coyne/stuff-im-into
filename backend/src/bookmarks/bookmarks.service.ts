@@ -41,7 +41,6 @@ export class BookmarksService {
           id: b.review.user.id,
           username: b.review.user.username,
           avatarUrl: b.review.user.avatarUrl,
-          theme: b.review.user.theme,
         },
       }));
   }
@@ -74,7 +73,6 @@ export class BookmarksService {
       username: b.bookmarkedUser.username,
       bio: b.bookmarkedUser.bio,
       avatarUrl: b.bookmarkedUser.avatarUrl,
-      theme: b.bookmarkedUser.theme,
       reviewCount: b.bookmarkedUser._count.reviews,
       bookmarkedAt: b.createdAt,
     }));

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Theme, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { TabDto } from './tab.dto';
+import { UserThemeDto } from './user-theme.dto';
 
 export class UserResponseDto {
   @ApiProperty()
@@ -15,8 +16,8 @@ export class UserResponseDto {
   @ApiPropertyOptional()
   avatarUrl: string | null;
 
-  @ApiProperty({ enum: Theme })
-  theme: Theme;
+  @ApiPropertyOptional({ type: UserThemeDto, description: 'User theme settings (null if not set)' })
+  userTheme: UserThemeDto | null;
 
   @ApiProperty({ enum: UserRole })
   role: UserRole;

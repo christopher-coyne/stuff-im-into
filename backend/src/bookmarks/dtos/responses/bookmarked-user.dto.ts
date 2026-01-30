@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Theme } from '@prisma/client';
 
 export class BookmarkedUserDto {
   @ApiProperty()
@@ -13,9 +12,6 @@ export class BookmarkedUserDto {
 
   @ApiPropertyOptional()
   avatarUrl: string | null;
-
-  @ApiProperty({ enum: Theme })
-  theme: Theme;
 
   @ApiProperty()
   reviewCount: number;

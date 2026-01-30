@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Theme } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({ description: 'Unique username (letters, numbers, underscores only)' })
@@ -20,9 +19,4 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string;
-
-  @ApiPropertyOptional({ enum: Theme })
-  @IsOptional()
-  @IsEnum(Theme)
-  theme?: Theme;
 }

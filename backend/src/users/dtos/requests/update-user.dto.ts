@@ -1,6 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Theme } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateUserDto {
   @ApiPropertyOptional()
@@ -17,9 +16,4 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string;
-
-  @ApiPropertyOptional({ enum: Theme })
-  @IsOptional()
-  @IsEnum(Theme)
-  theme?: Theme;
 }

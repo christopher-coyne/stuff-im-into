@@ -33,14 +33,6 @@ export interface UserProfileDto {
   username: string;
   bio?: object;
   avatarUrl?: object;
-  theme:
-    | "DEFAULT"
-    | "EMBER"
-    | "OCEAN"
-    | "FOREST"
-    | "VIOLET"
-    | "ROSE"
-    | "MINIMAL";
   role: "USER" | "ADMIN";
   /** @format date-time */
   createdAt: string;
@@ -51,6 +43,21 @@ export interface UserProfileDto {
 export interface MeResponseDto {
   supabaseUser: object;
   user?: UserProfileDto;
+}
+
+export interface AestheticDto {
+  id: string;
+  slug: string;
+  name: string;
+  description?: object;
+}
+
+export interface UserThemeDto {
+  id: string;
+  aestheticId: string;
+  /** Palette name (validated by frontend) */
+  palette: string;
+  aesthetic: AestheticDto;
 }
 
 export interface TabDto {
@@ -65,14 +72,8 @@ export interface UserResponseDto {
   username: string;
   bio?: object;
   avatarUrl?: object;
-  theme:
-    | "DEFAULT"
-    | "EMBER"
-    | "OCEAN"
-    | "FOREST"
-    | "VIOLET"
-    | "ROSE"
-    | "MINIMAL";
+  /** User theme settings (null if not set) */
+  userTheme?: UserThemeDto;
   role: "USER" | "ADMIN";
   /** @format date-time */
   createdAt: string;
@@ -88,28 +89,12 @@ export interface CreateUserDto {
   username: string;
   bio?: string;
   avatarUrl?: string;
-  theme?:
-    | "DEFAULT"
-    | "EMBER"
-    | "OCEAN"
-    | "FOREST"
-    | "VIOLET"
-    | "ROSE"
-    | "MINIMAL";
 }
 
 export interface UpdateUserDto {
   username?: string;
   bio?: string;
   avatarUrl?: string;
-  theme?:
-    | "DEFAULT"
-    | "EMBER"
-    | "OCEAN"
-    | "FOREST"
-    | "VIOLET"
-    | "ROSE"
-    | "MINIMAL";
 }
 
 export interface TabResponseDto {
@@ -184,14 +169,6 @@ export interface ReviewUserDto {
   id: string;
   username: string;
   avatarUrl?: object;
-  theme:
-    | "DEFAULT"
-    | "EMBER"
-    | "OCEAN"
-    | "FOREST"
-    | "VIOLET"
-    | "ROSE"
-    | "MINIMAL";
 }
 
 export interface ReviewTabDto {
@@ -310,14 +287,6 @@ export interface BookmarkedReviewUserDto {
   id: string;
   username: string;
   avatarUrl?: object;
-  theme:
-    | "DEFAULT"
-    | "EMBER"
-    | "OCEAN"
-    | "FOREST"
-    | "VIOLET"
-    | "ROSE"
-    | "MINIMAL";
 }
 
 export interface BookmarkedReviewDto {
@@ -336,14 +305,6 @@ export interface BookmarkedUserDto {
   username: string;
   bio?: object;
   avatarUrl?: object;
-  theme:
-    | "DEFAULT"
-    | "EMBER"
-    | "OCEAN"
-    | "FOREST"
-    | "VIOLET"
-    | "ROSE"
-    | "MINIMAL";
   reviewCount: number;
   /** @format date-time */
   bookmarkedAt: string;

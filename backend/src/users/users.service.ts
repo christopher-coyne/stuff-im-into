@@ -44,6 +44,11 @@ export class UsersService {
           select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
+        userTheme: {
+          include: {
+            aesthetic: true,
+          },
+        },
         bookmarkedBy: currentUserId
           ? {
               where: { ownerId: currentUserId },
@@ -61,7 +66,14 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
-      theme: user.theme,
+      userTheme: user.userTheme
+        ? {
+            id: user.userTheme.id,
+            aestheticId: user.userTheme.aestheticId,
+            palette: user.userTheme.palette,
+            aesthetic: user.userTheme.aesthetic,
+          }
+        : null,
       role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
@@ -89,6 +101,11 @@ export class UsersService {
           select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
+        userTheme: {
+          include: {
+            aesthetic: true,
+          },
+        },
         bookmarkedBy: currentUserId
           ? {
               where: { ownerId: currentUserId },
@@ -107,7 +124,14 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
-      theme: user.theme,
+      userTheme: user.userTheme
+        ? {
+            id: user.userTheme.id,
+            aestheticId: user.userTheme.aestheticId,
+            palette: user.userTheme.palette,
+            aesthetic: user.userTheme.aesthetic,
+          }
+        : null,
       role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
@@ -160,13 +184,11 @@ export class UsersService {
         username: dto.username,
         bio: dto.bio,
         avatarUrl: dto.avatarUrl,
-        theme: dto.theme,
       },
       update: {
         username: dto.username,
         bio: dto.bio,
         avatarUrl: dto.avatarUrl,
-        theme: dto.theme,
       },
       include: {
         _count: {
@@ -181,6 +203,11 @@ export class UsersService {
           select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
+        userTheme: {
+          include: {
+            aesthetic: true,
+          },
+        },
       },
     });
 
@@ -189,7 +216,14 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
-      theme: user.theme,
+      userTheme: user.userTheme
+        ? {
+            id: user.userTheme.id,
+            aestheticId: user.userTheme.aestheticId,
+            palette: user.userTheme.palette,
+            aesthetic: user.userTheme.aesthetic,
+          }
+        : null,
       role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
@@ -215,6 +249,11 @@ export class UsersService {
           select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
+        userTheme: {
+          include: {
+            aesthetic: true,
+          },
+        },
       },
     });
 
@@ -227,7 +266,14 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
-      theme: user.theme,
+      userTheme: user.userTheme
+        ? {
+            id: user.userTheme.id,
+            aestheticId: user.userTheme.aestheticId,
+            palette: user.userTheme.palette,
+            aesthetic: user.userTheme.aesthetic,
+          }
+        : null,
       role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
@@ -254,6 +300,11 @@ export class UsersService {
           select: { id: true, name: true, slug: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
+        userTheme: {
+          include: {
+            aesthetic: true,
+          },
+        },
       },
     });
 
@@ -262,7 +313,14 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
-      theme: user.theme,
+      userTheme: user.userTheme
+        ? {
+            id: user.userTheme.id,
+            aestheticId: user.userTheme.aestheticId,
+            palette: user.userTheme.palette,
+            aesthetic: user.userTheme.aesthetic,
+          }
+        : null,
       role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
