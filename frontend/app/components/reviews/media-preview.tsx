@@ -21,8 +21,6 @@ interface MediaPreviewProps {
   className?: string;
   /** Render TEXT content as markdown (use on detail pages) */
   renderMarkdown?: boolean;
-  /** Theme for markdown accent colors */
-  theme?: string | null;
 }
 
 export function MediaPreview({
@@ -32,7 +30,6 @@ export function MediaPreview({
   title,
   className = "",
   renderMarkdown = false,
-  theme,
 }: MediaPreviewProps) {
   const containerClass = `w-full h-full ${className}`;
 
@@ -112,7 +109,7 @@ export function MediaPreview({
       return content ? (
         <div className={`${containerClass} p-6 overflow-auto bg-muted/30`}>
           {renderMarkdown ? (
-            <MarkdownRenderer content={content} theme={theme} />
+            <MarkdownRenderer content={content} />
           ) : (
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
           )}

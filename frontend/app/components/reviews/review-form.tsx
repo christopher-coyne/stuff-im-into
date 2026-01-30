@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { api } from "~/lib/api/client";
-import { getReviewGradient, getTagColor } from "~/lib/theme";
 import { ImageUpload } from "./image-upload";
 import { MediaPreview } from "./media-preview";
 
@@ -93,7 +92,6 @@ interface ReviewFormProps {
     id: string;
     username: string;
     avatarUrl?: string | object | null;
-    theme?: string | null;
   };
   initialValues?: Partial<ReviewFormData>;
   initialTabId?: string;
@@ -193,8 +191,6 @@ export function ReviewForm({
   };
 
   const selectedTab = tabs.find((t) => t.id === watchedTabId);
-  const gradient = getReviewGradient(user.theme);
-  const tagColor = getTagColor(user.theme);
 
   return (
     <div className="min-h-screen bg-background">
@@ -217,7 +213,7 @@ export function ReviewForm({
 
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* Header with gradient */}
-          <header className={`bg-linear-to-b ${gradient} rounded-t-xl px-6 py-6`}>
+          <header className="bg-linear-to-b from-zinc-700 to-zinc-900 rounded-t-xl px-6 py-6">
             {/* Title Input */}
             <input
               type="text"
@@ -411,7 +407,7 @@ export function ReviewForm({
                   onClick={() => handleCategoryToggle(category.id)}
                   className={`text-sm px-3 py-1 rounded-full transition-all ${
                     watchedCategoryIds?.includes(category.id)
-                      ? tagColor
+                      ? "bg-secondary text-secondary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >

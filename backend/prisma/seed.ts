@@ -1,4 +1,4 @@
-import { PrismaClient, Theme, MediaType, UserRole } from '@prisma/client';
+import { PrismaClient, MediaType, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -9,6 +9,28 @@ function slugify(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
+
+// =============================================================================
+// AESTHETIC DEFINITIONS (styling is defined on frontend, DB only stores metadata)
+// =============================================================================
+
+const AESTHETICS = [
+  {
+    slug: 'neobrutalist',
+    name: 'Neobrutalist',
+    description: 'Bold, loud, and unapologetic. Thick borders, hard shadows, and vibrant colors.',
+  },
+  {
+    slug: 'minimalist',
+    name: 'Minimalist',
+    description: 'Clean, spacious, and elegant. Focus on content with subtle design elements.',
+  },
+  {
+    slug: 'terminal',
+    name: 'Terminal',
+    description: 'Hacker aesthetic. Monospace fonts, dark backgrounds, and glowing text.',
+  },
+];
 
 async function main() {
   console.log('Seeding database...');
@@ -21,7 +43,18 @@ async function main() {
   await prisma.review.deleteMany();
   await prisma.category.deleteMany();
   await prisma.tab.deleteMany();
+  await prisma.userTheme.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.aesthetic.deleteMany();
+
+  // Seed aesthetics
+  const aesthetics = await Promise.all(
+    AESTHETICS.map((aesthetic) => prisma.aesthetic.create({ data: aesthetic })),
+  );
+  console.log(`Created ${aesthetics.length} aesthetics`);
+
+  // Helper to get aesthetic by slug
+  const getAesthetic = (slug: string) => aesthetics.find((a) => a.slug === slug)!;
 
   // Create users
   const users = await Promise.all([
@@ -31,7 +64,6 @@ async function main() {
         username: 'filmfanatic',
         bio: 'Movie lover and amateur critic. Always looking for the next great film.',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=filmfanatic',
-        theme: Theme.EMBER,
         role: UserRole.USER,
       },
     }),
@@ -41,7 +73,6 @@ async function main() {
         username: 'bookworm_jane',
         bio: 'Devouring books since 1995. Sci-fi and fantasy are my jam.',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bookworm',
-        theme: Theme.FOREST,
         role: UserRole.USER,
       },
     }),
@@ -51,7 +82,6 @@ async function main() {
         username: 'musichead',
         bio: 'Vinyl collector. From jazz to electronic, if it sounds good, I\'m in.',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=musichead',
-        theme: Theme.VIOLET,
         role: UserRole.USER,
       },
     }),
@@ -61,7 +91,6 @@ async function main() {
         username: 'admin_user',
         bio: 'Platform administrator',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
-        theme: Theme.MINIMAL,
         role: UserRole.ADMIN,
       },
     }),
@@ -71,7 +100,6 @@ async function main() {
         username: 'techie_sam',
         bio: 'Software engineer by day, gamer by night. Building cool stuff.',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=techie',
-        theme: Theme.OCEAN,
         role: UserRole.USER,
       },
     }),
@@ -81,7 +109,6 @@ async function main() {
         username: 'foodie_adventures',
         bio: 'Exploring the world one meal at a time. Restaurant reviews and home cooking tips.',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=foodie',
-        theme: Theme.EMBER,
         role: UserRole.USER,
       },
     }),
@@ -91,7 +118,6 @@ async function main() {
         username: 'artsy_alex',
         bio: 'Digital artist and gallery hopper. Sharing my favorite visual experiences.',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=artsy',
-        theme: Theme.ROSE,
         role: UserRole.USER,
       },
     }),
@@ -101,7 +127,6 @@ async function main() {
         username: 'fitness_freak',
         bio: 'Personal trainer sharing workout routines and wellness tips.',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fitness',
-        theme: Theme.FOREST,
         role: UserRole.USER,
       },
     }),
@@ -111,13 +136,39 @@ async function main() {
         username: 'travel_tales',
         bio: 'Wanderlust enthusiast. 30 countries and counting.',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=travel',
-        theme: Theme.VIOLET,
         role: UserRole.USER,
       },
     }),
   ]);
 
   console.log(`Created ${users.length} users`);
+
+  // Create user themes (assign different aesthetics to demo variety)
+  const userThemes = await Promise.all([
+    prisma.userTheme.create({
+      data: {
+        userId: users[0].id, // filmfanatic
+        aestheticId: getAesthetic('neobrutalist').id,
+        palette: 'electric', // Non-default palette
+      },
+    }),
+    prisma.userTheme.create({
+      data: {
+        userId: users[1].id, // bookworm_jane
+        aestheticId: getAesthetic('minimalist').id,
+        // Uses default palette
+      },
+    }),
+    prisma.userTheme.create({
+      data: {
+        userId: users[2].id, // musichead
+        aestheticId: getAesthetic('terminal').id,
+        palette: 'amber',
+      },
+    }),
+  ]);
+
+  console.log(`Created ${userThemes.length} user themes`);
 
   // Create tabs for each user
   const tabsData = [

@@ -6,11 +6,9 @@ import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
-import { getHeaderGradient } from "~/lib/theme";
 
 interface ProfileHeaderProps {
   user: UserResponseDto;
-  theme: string;
   isOwnProfile: boolean;
   isEditMode: boolean;
   onEditModeChange: (editing: boolean) => void;
@@ -18,7 +16,6 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({
   user,
-  theme,
   isOwnProfile,
   isEditMode,
   onEditModeChange,
@@ -27,7 +24,6 @@ export function ProfileHeader({
   const revalidator = useRevalidator();
   const [showBio, setShowBio] = useState(false);
 
-  const gradient = getHeaderGradient(theme);
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
@@ -52,7 +48,7 @@ export function ProfileHeader({
   });
 
   return (
-    <header className={`bg-linear-to-br ${gradient} px-6 py-8 rounded-xl`}>
+    <header className="bg-linear-to-br from-zinc-700 to-zinc-900 px-6 py-8 rounded-xl">
       <div className="flex items-center gap-6">
         {/* Profile Picture */}
         <div className="h-20 w-20 rounded-full bg-white/20 shrink-0 overflow-hidden">

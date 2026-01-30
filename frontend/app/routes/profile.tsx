@@ -7,7 +7,6 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
-import { getAvatarGradient } from "~/lib/theme";
 
 export function meta() {
   return [
@@ -21,7 +20,6 @@ interface BookmarkedUser {
   username: string;
   bio?: string | null;
   avatarUrl?: string | null;
-  theme: string;
   reviewCount: number;
   bookmarkedAt: string;
 }
@@ -37,7 +35,6 @@ interface BookmarkedReview {
     id: string;
     username: string;
     avatarUrl?: string | null;
-    theme: string;
   };
 }
 
@@ -168,8 +165,6 @@ export default function ProfilePage() {
     return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
-  const gradient = getAvatarGradient(user?.theme);
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-12">
@@ -201,7 +196,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <div
-                    className={`h-20 w-20 rounded-full bg-linear-to-br ${gradient} flex items-center justify-center text-2xl font-semibold text-white shrink-0`}
+                    className="h-20 w-20 rounded-full bg-linear-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-2xl font-semibold text-white shrink-0"
                   >
                     {user?.avatarUrl ? (
                       <img
@@ -359,16 +354,14 @@ export default function ProfilePage() {
                       No bookmarked users yet
                     </div>
                   ) : (
-                    bookmarkedUsers.map((bookmarkedUser) => {
-                      const userGradient = getAvatarGradient(bookmarkedUser.theme);
-                      return (
+                    bookmarkedUsers.map((bookmarkedUser) => (
                         <Link
                           key={bookmarkedUser.id}
                           to={`/users/${bookmarkedUser.username}`}
                           className="flex items-center gap-4 px-6 py-4 hover:bg-accent/50 transition-colors"
                         >
                           <div
-                            className={`h-12 w-12 rounded-full bg-linear-to-br ${userGradient} flex items-center justify-center text-lg font-semibold text-white shrink-0`}
+                            className="h-12 w-12 rounded-full bg-linear-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-lg font-semibold text-white shrink-0"
                           >
                             {bookmarkedUser.avatarUrl ? (
                               <img
@@ -388,24 +381,22 @@ export default function ProfilePage() {
                           </div>
                           <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
                         </Link>
-                      );
-                    })
+                      )
+                    )
                   )
                 ) : bookmarkedReviews.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">
                     No bookmarked reviews yet
                   </div>
                 ) : (
-                  bookmarkedReviews.map((review) => {
-                    const reviewUserGradient = getAvatarGradient(review.user.theme);
-                    return (
+                  bookmarkedReviews.map((review) => (
                       <Link
                         key={review.id}
                         to={`/review/${review.id}`}
                         className="flex items-center gap-4 px-6 py-4 hover:bg-accent/50 transition-colors"
                       >
                         <div
-                          className={`h-12 w-12 rounded-full bg-linear-to-br ${reviewUserGradient} flex items-center justify-center text-lg font-semibold text-white shrink-0`}
+                          className="h-12 w-12 rounded-full bg-linear-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-lg font-semibold text-white shrink-0"
                         >
                           {review.user.avatarUrl ? (
                             <img
@@ -425,8 +416,7 @@ export default function ProfilePage() {
                         </div>
                         <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
                       </Link>
-                    );
-                  })
+                    ))
                 )}
               </div>
             </CardContent>

@@ -22,7 +22,6 @@ import {
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
-import { getAvatarGradient } from "~/lib/theme";
 import { getAuthHeaders } from "~/lib/supabase/server";
 import type { Route } from "./+types/explore";
 
@@ -59,7 +58,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 function UserCard({ user }: { user: UserResponseDto }) {
-  const gradient = getAvatarGradient(user.theme);
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "short",
     year: "numeric",
@@ -71,7 +69,7 @@ function UserCard({ user }: { user: UserResponseDto }) {
         <div className="flex gap-4">
           {/* Avatar */}
           <div
-            className={`h-12 w-12 rounded-full bg-linear-to-br ${gradient} shrink-0`}
+            className="h-12 w-12 rounded-full bg-linear-to-br from-zinc-700 to-zinc-900 shrink-0"
           >
             {user.avatarUrl && (
               <img

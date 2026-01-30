@@ -10,7 +10,6 @@ import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { ReviewListItemDto, UpdateReviewDto } from "~/lib/api/api";
-import { getReviewGradient, getTagColor } from "~/lib/theme";
 import { getAuthHeaders } from "~/lib/supabase/server";
 import type { Route } from "./+types/review.$id";
 
@@ -177,9 +176,6 @@ export default function ReviewDetailPage() {
     });
   };
 
-  const gradient = getReviewGradient(review.user.theme);
-  const tagColor = getTagColor(review.user.theme);
-
   // Edit mode - show the form
   if (isEditMode && isOwner) {
     const errorMessage = updateReviewMutation.error
@@ -254,7 +250,7 @@ export default function ReviewDetailPage() {
         </div>
 
         {/* Header with gradient */}
-        <header className={`bg-gradient-to-b ${gradient} rounded-xl px-6 py-6`}>
+        <header className="bg-gradient-to-b from-zinc-700 to-zinc-900 rounded-xl px-6 py-6">
           {/* Title */}
           <h1 className="text-3xl font-bold text-white mb-1">{review.title}</h1>
 
@@ -295,7 +291,6 @@ export default function ReviewDetailPage() {
             mediaConfig={review.mediaConfig as Record<string, unknown> | null}
             title={review.title}
             renderMarkdown={review.mediaType === "TEXT"}
-            theme={review.user.theme}
           />
         </div>
 
@@ -353,7 +348,7 @@ export default function ReviewDetailPage() {
             {review.categories.map((cat) => (
               <span
                 key={cat.id}
-                className={`text-sm px-3 py-1 rounded-full ${tagColor}`}
+                className="text-sm px-3 py-1 rounded-full bg-secondary text-secondary-foreground"
               >
                 {cat.name}
               </span>
@@ -371,7 +366,6 @@ export default function ReviewDetailPage() {
           <MarkdownRenderer
             content={String(review.description)}
             className="mb-12"
-            theme={review.user.theme}
           />
         )}
 

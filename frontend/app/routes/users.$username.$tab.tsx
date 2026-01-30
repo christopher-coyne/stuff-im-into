@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { GripVertical, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
@@ -104,7 +104,6 @@ export default function MediaListPage() {
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
   const [showAddTabModal, setShowAddTabModal] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState<string>(user.theme || "DEFAULT");
 
   // Add category modal state
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -122,20 +121,6 @@ export default function MediaListPage() {
     },
     initialData: categories,
     enabled: !!currentTab,
-  });
-
-  const updateThemeMutation = useMutation({
-    mutationFn: async (theme: string) => {
-      if (!session) throw new Error("Not authenticated");
-      await api.users.usersControllerUpdateMe(
-        { theme: theme as "DEFAULT" | "EMBER" | "OCEAN" | "FOREST" | "VIOLET" | "ROSE" | "MINIMAL" },
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-    },
-    onError: () => {
-      // Revert to original theme on error
-      setSelectedTheme(user.theme || "DEFAULT");
-    },
   });
 
   // Drag and drop state
@@ -172,11 +157,6 @@ export default function MediaListPage() {
       searchParams.set("category", value);
     }
     setSearchParams(searchParams);
-  };
-
-  const handleThemeChange = (theme: string) => {
-    setSelectedTheme(theme); // Optimistic update
-    updateThemeMutation.mutate(theme);
   };
 
   const handleDragStart = (e: React.DragEvent, tabId: string) => {
@@ -237,7 +217,6 @@ export default function MediaListPage() {
       <div className="max-w-3xl mx-auto px-6 pt-6">
         <ProfileHeader
           user={user}
-          theme={selectedTheme}
           isOwnProfile={isOwnProfile}
           isEditMode={isEditMode}
           onEditModeChange={setIsEditMode}
@@ -320,7 +299,7 @@ export default function MediaListPage() {
             </div>
 
             {/* Reviews Grid */}
-            <ReviewsGrid reviews={reviews.items} theme={user.theme} />
+            <ReviewsGrid reviews={reviews.items} />
           </div>
         ) : (
           <p className="text-muted-foreground">No tabs yet</p>
@@ -332,9 +311,6 @@ export default function MediaListPage() {
       {isEditMode && isOwnProfile && (
         <EditSidebar
           currentTab={currentTab}
-          selectedTheme={selectedTheme}
-          isThemeUpdating={updateThemeMutation.isPending}
-          onThemeChange={handleThemeChange}
           onExitEditMode={() => setIsEditMode(false)}
           onAddTab={() => setShowAddTabModal(true)}
           onDeleteTab={() => setShowDeleteTabModal(true)}

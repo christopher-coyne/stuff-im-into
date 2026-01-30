@@ -5,10 +5,9 @@ import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 
 interface ReviewsGridProps {
   reviews: ReviewListItemDto[];
-  theme?: string | null;
 }
 
-function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme?: string | null }) {
+function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
   const mediaUrl = review.mediaUrl as string | undefined;
   const mediaConfig = review.mediaConfig as Record<string, unknown> | undefined;
 
@@ -51,7 +50,6 @@ function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme?: 
       <div className="w-full h-full p-3 overflow-hidden line-clamp-6">
         <MarkdownRenderer
           content={String(mediaConfig.content)}
-          theme={theme}
           className="text-sm leading-relaxed [&_*]:text-lg [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm"
         />
       </div>
@@ -76,7 +74,7 @@ function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme?: 
   );
 }
 
-export function ReviewsGrid({ reviews, theme }: ReviewsGridProps) {
+export function ReviewsGrid({ reviews }: ReviewsGridProps) {
   if (reviews.length === 0) {
     return <p className="text-muted-foreground text-center py-8">No reviews found</p>;
   }
@@ -87,7 +85,7 @@ export function ReviewsGrid({ reviews, theme }: ReviewsGridProps) {
         <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}
           <div className="relative aspect-square rounded-lg overflow-hidden bg-muted mb-2">
-            <MediaThumbnail review={review} theme={theme} />
+            <MediaThumbnail review={review} />
             {/* Bookmark indicator */}
             {review.isBookmarked && (
               <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-amber-500">

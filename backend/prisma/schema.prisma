@@ -13,16 +13,6 @@ datasource db {
 // ENUMS
 // =============================================================================
 
-enum Theme {
-  DEFAULT
-  EMBER
-  OCEAN
-  FOREST
-  VIOLET
-  ROSE
-  MINIMAL
-}
-
 enum MediaType {
   VIDEO
   SPOTIFY
@@ -45,7 +35,6 @@ model User {
   username  String   @unique
   bio       String?
   avatarUrl String?
-  theme     Theme    @default(DEFAULT)
   role      UserRole @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,11 +42,47 @@ model User {
   // Relations
   tabs            Tab[]
   reviews         Review[]
-  bookmarkedUsers UserBookmark[] @relation("BookmarkOwner")
-  bookmarkedBy    UserBookmark[] @relation("BookmarkedUser")
+  bookmarkedUsers UserBookmark[]   @relation("BookmarkOwner")
+  bookmarkedBy    UserBookmark[]   @relation("BookmarkedUser")
   reviewBookmarks ReviewBookmark[]
+  userTheme       UserTheme?
 
   @@map("users")
+}
+
+// =============================================================================
+// AESTHETICS & THEMES
+// =============================================================================
+
+model Aesthetic {
+  id          String  @id @default(uuid())
+  slug        String  @unique
+  name        String
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userThemes UserTheme[]
+
+  @@map("aesthetics")
+}
+
+model UserTheme {
+  id          String @id @default(uuid())
+  userId      String @unique // One theme per user
+  aestheticId String
+  palette     String @default("default") // Palette name, validated by frontend
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aesthetic Aesthetic @relation(fields: [aestheticId], references: [id])
+
+  @@map("user_themes")
 }
 
 // =============================================================================
@@ -67,7 +92,7 @@ model User {
 model Tab {
   id        String   @id @default(uuid())
   name      String
-  slug      String   // URL-friendly version of name (auto-generated)
+  slug      String // URL-friendly version of name (auto-generated)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -87,13 +112,13 @@ model Tab {
 // =============================================================================
 
 model Review {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   title       String
-  description String?   // Markdown content
-  author      String?   // Optional author/creator of the media
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  description String? // Markdown content
+  author      String? // Optional author/creator of the media
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Draft/Publish logic:
   // - null = draft (not visible publicly, only to owner)
@@ -103,10 +128,10 @@ model Review {
   // Media representation
   mediaType   MediaType
   mediaUrl    String?
-  mediaConfig Json?     // Type-specific config (e.g., { startTime: 30 } for videos)
+  mediaConfig Json? // Type-specific config (e.g., { startTime: 30 } for videos)
 
   // Meta fields (user-defined key/value pairs like "Director: Denis Villeneuve")
-  metaFields Json?     // Array of { label: string, value: string }
+  metaFields Json? // Array of { label: string, value: string }
 
   // Relations
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -134,7 +159,7 @@ model Review {
 model Category {
   id        String   @id @default(uuid())
   name      String
-  slug      String   // URL-friendly version of name (auto-generated)
+  slug      String // URL-friendly version of name (auto-generated)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
