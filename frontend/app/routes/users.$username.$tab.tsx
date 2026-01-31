@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { GripVertical, Search } from "lucide-react";
+import { GripVertical, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
 import { AddCategoryModal } from "~/components/pages/media-list/add-category-modal";
@@ -349,10 +349,27 @@ export default function MediaListPage() {
             </div>
 
             {/* Reviews Grid */}
-            <ReviewsGrid reviews={reviews.items} theme={theme} />
+            <ReviewsGrid
+              reviews={reviews.items}
+              theme={theme}
+              isOwner={isOwnProfile}
+              currentTabId={currentTab?.id}
+            />
           </div>
         ) : (
-          <p className="text-muted-foreground">No tabs yet</p>
+          <div className="p-8 text-center" style={styles.card}>
+            <p style={styles.mutedText}>No content yet</p>
+            {isOwnProfile && (
+              <button
+                onClick={() => setShowAddTabModal(true)}
+                className="inline-flex items-center gap-2 mt-4 px-4 py-2 text-sm"
+                style={styles.button}
+              >
+                <Plus className="h-4 w-4" />
+                Add Tab
+              </button>
+            )}
+          </div>
         )}
         </main>
         </div>

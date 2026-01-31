@@ -1,4 +1,4 @@
-import { BookmarkCheck, ExternalLink, Music, Type, Video } from "lucide-react";
+import { BookmarkCheck, ExternalLink, Music, Plus, Type, Video } from "lucide-react";
 import { Link } from "react-router";
 import type { ReviewListItemDto } from "~/lib/api/api";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
@@ -7,6 +7,8 @@ import type { ResolvedTheme } from "~/lib/theme/themes";
 interface ReviewsGridProps {
   reviews: ReviewListItemDto[];
   theme: ResolvedTheme;
+  isOwner?: boolean;
+  currentTabId?: string;
 }
 
 function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme: ResolvedTheme }) {
@@ -81,11 +83,25 @@ function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme: R
   );
 }
 
-export function ReviewsGrid({ reviews, theme }: ReviewsGridProps) {
+export function ReviewsGrid({ reviews, theme, isOwner, currentTabId }: ReviewsGridProps) {
   const { styles } = theme;
 
   if (reviews.length === 0) {
-    return <p className="text-center py-8" style={styles.mutedText}>No reviews found</p>;
+    return (
+      <div className="p-8 text-center" style={styles.card}>
+        <p style={styles.mutedText}>No reviews yet</p>
+        {isOwner && currentTabId && (
+          <Link
+            to={`/reviews/add?tab=${currentTabId}`}
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2 text-sm"
+            style={styles.button}
+          >
+            <Plus className="h-4 w-4" />
+            Add Review
+          </Link>
+        )}
+      </div>
+    );
   }
 
   return (
