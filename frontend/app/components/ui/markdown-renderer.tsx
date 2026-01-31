@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "~/lib/utils";
@@ -5,11 +6,12 @@ import { cn } from "~/lib/utils";
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  style?: CSSProperties;
 }
 
-export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className, style }: MarkdownRendererProps) {
   return (
-    <div className={cn("prose prose-sm dark:prose-invert max-w-none", className)}>
+    <div className={cn("prose prose-sm dark:prose-invert max-w-none", className)} style={style}>
       <Markdown
         remarkPlugins={[remarkGfm]}
         components={{

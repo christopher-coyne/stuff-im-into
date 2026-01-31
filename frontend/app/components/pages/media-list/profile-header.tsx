@@ -2,11 +2,10 @@ import { useMutation } from "@tanstack/react-query";
 import { Bookmark, BookmarkCheck, Pencil } from "lucide-react";
 import { useState } from "react";
 import { useRevalidator } from "react-router";
-import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
-import { AESTHETICS, type AestheticSlug } from "~/lib/theme/themes";
+import { AESTHETICS, type AestheticSlug, type ResolvedTheme } from "~/lib/theme/themes";
 
 interface ProfileHeaderProps {
   user: UserResponseDto;
@@ -14,6 +13,7 @@ interface ProfileHeaderProps {
   isEditMode: boolean;
   onEditModeChange: (editing: boolean) => void;
   currentTheme?: { aesthetic: AestheticSlug; palette: string };
+  theme: ResolvedTheme;
 }
 
 export function ProfileHeader({
@@ -22,10 +22,12 @@ export function ProfileHeader({
   isEditMode,
   onEditModeChange,
   currentTheme,
+  theme,
 }: ProfileHeaderProps) {
   const { session } = useAuth();
   const revalidator = useRevalidator();
   const [showBio, setShowBio] = useState(false);
+  const { styles } = theme;
 
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "long",
@@ -57,10 +59,10 @@ export function ProfileHeader({
   });
 
   return (
-    <header className="bg-linear-to-br from-zinc-700 to-zinc-900 px-6 py-8 rounded-xl">
+    <header className="px-6 py-8" style={styles.header}>
       <div className="flex items-center gap-6">
         {/* Profile Picture */}
-        <div className="h-20 w-20 rounded-full bg-white/20 shrink-0 overflow-hidden">
+        <div className="h-20 w-20 shrink-0 overflow-hidden" style={styles.avatar}>
           {user.avatarUrl ? (
             <img
               src={String(user.avatarUrl)}
@@ -68,7 +70,10 @@ export function ProfileHeader({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center text-white/60 text-2xl font-bold">
+            <div
+              className="h-full w-full flex items-center justify-center text-2xl"
+              style={styles.avatarFallback}
+            >
               {user.username.charAt(0).toUpperCase()}
             </div>
           )}
@@ -76,10 +81,14 @@ export function ProfileHeader({
 
         {/* Username and Join Date */}
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">@{user.username}</h1>
-          <p className="text-white/70 text-sm">Joined {joinDate}</p>
+          <h1 className="text-2xl" style={styles.headerText}>
+            @{user.username}
+          </h1>
+          <p className="text-sm" style={styles.headerTextMuted}>
+            Joined {joinDate}
+          </p>
           {themeName && (
-            <p className="text-white/50 text-xs mt-1">
+            <p className="text-xs mt-1" style={{ ...styles.headerTextMuted, opacity: 0.6 }}>
               {themeName} · <span className="capitalize">{paletteName}</span>
             </p>
           )}
@@ -87,61 +96,60 @@ export function ProfileHeader({
 
         {/* About Button */}
         {user.bio && (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => setShowBio(!showBio)}
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            className="px-3 py-1.5 text-sm"
+            style={styles.button}
           >
             {showBio ? "Hide" : "About"}
-          </Button>
+          </button>
         )}
 
         {/* Bookmark Button (only for other users' profiles) */}
         {session && !isOwnProfile && (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => bookmarkUserMutation.mutate(!user.isBookmarked)}
             disabled={bookmarkUserMutation.isPending}
-            className={`bg-white/10 border-white/20 hover:bg-white/20 ${
-              user.isBookmarked ? "text-amber-400" : "text-white"
-            }`}
+            className="p-2"
+            style={{
+              ...styles.buttonIcon,
+              color: user.isBookmarked ? theme.colors.accent : theme.colors.foreground,
+              opacity: bookmarkUserMutation.isPending ? 0.5 : 1,
+            }}
           >
             {user.isBookmarked ? (
               <BookmarkCheck className="h-4 w-4" />
             ) : (
               <Bookmark className="h-4 w-4" />
             )}
-          </Button>
+          </button>
         )}
 
         {/* Edit / View Mode Button (only for own profile) */}
         {isOwnProfile && (
           isEditMode ? (
-            <Button
-              size="sm"
+            <button
               onClick={() => onEditModeChange(false)}
-              className="bg-black text-white hover:bg-black/90"
+              className="px-3 py-1.5 text-sm"
+              style={styles.button}
             >
               View mode
-            </Button>
+            </button>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={() => onEditModeChange(true)}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              className="p-2"
+              style={styles.buttonIcon}
             >
               <Pencil className="h-4 w-4" />
-            </Button>
+            </button>
           )
         )}
       </div>
 
       {/* Bio (collapsible) */}
       {showBio && user.bio && (
-        <div className="mt-4 p-4 rounded-lg bg-black/20 text-white/90">
+        <div className="mt-4 p-4" style={styles.card}>
           {String(user.bio)}
         </div>
       )}

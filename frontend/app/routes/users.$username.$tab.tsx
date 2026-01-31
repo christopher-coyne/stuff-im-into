@@ -8,7 +8,6 @@ import { DeleteTabModal } from "~/components/pages/media-list/delete-tab-modal";
 import { EditSidebar } from "~/components/pages/media-list/edit-sidebar";
 import { ProfileHeader } from "~/components/pages/media-list/profile-header";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
-import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { useAuth } from "~/lib/auth-context";
 import { useDebounce } from "~/hooks/use-debounce";
@@ -16,7 +15,7 @@ import { api } from "~/lib/api/client";
 import { loaderFetch } from "~/lib/api/loader-fetch";
 import type { CategoryDto, PaginatedReviewsDto } from "~/lib/api/api";
 import { getAuthHeaders } from "~/lib/supabase/server";
-import type { AestheticSlug } from "~/lib/theme/themes";
+import { getTheme, type AestheticSlug } from "~/lib/theme/themes";
 import type { Route } from "./+types/users.$username.$tab";
 
 export async function loader({ params, request }: Route.LoaderArgs) {
@@ -125,6 +124,10 @@ export default function MediaListPage() {
       palette: palette || "default",
     };
   });
+
+  // Resolve the full theme object
+  const theme = getTheme(currentTheme.aesthetic, currentTheme.palette);
+  const { styles } = theme;
 
   const saveThemeMutation = useMutation({
     mutationFn: async () => {
@@ -244,14 +247,17 @@ export default function MediaListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-6 pt-6">
+    <div>
+      {/* Themed content wrapper */}
+      <div className="min-h-screen" style={styles.page}>
+        <div className="max-w-3xl mx-auto px-6 pt-6">
         <ProfileHeader
           user={user}
           isOwnProfile={isOwnProfile}
           isEditMode={isEditMode}
           onEditModeChange={setIsEditMode}
           currentTheme={currentTheme}
+          theme={theme}
         />
 
         {/* Main content area */}
@@ -260,43 +266,44 @@ export default function MediaListPage() {
           <div>
             {/* Tabs */}
             {localTabs.length > 0 && (
-              <nav className="border-b border-border mb-6">
+              <nav className="mb-6" style={styles.tabBar}>
                 <div className="flex gap-1">
-                  {localTabs.map((tab) => (
-                    <div
-                      key={tab.id}
-                      draggable={isEditMode && isOwnProfile}
-                      onDragStart={(e) => handleDragStart(e, tab.id)}
-                      onDragOver={(e) => handleDragOver(e, tab.id)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, tab.id)}
-                      onDragEnd={handleDragEnd}
-                      className={`flex items-center transition-all ${
-                        draggedTabId === tab.id ? "opacity-50" : ""
-                      } ${
-                        dragOverTabId === tab.id ? "border-l-2 border-primary" : ""
-                      }`}
-                    >
-                      {isEditMode && isOwnProfile && (
-                        <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab mr-1" />
-                      )}
-                      <Link
-                        to={`/users/${user.username}/${tab.slug}`}
-                        className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                          currentTab?.id === tab.id
-                            ? "border-primary text-foreground"
-                            : "border-transparent text-muted-foreground hover:text-foreground"
+                  {localTabs.map((tab) => {
+                    const isActive = currentTab?.id === tab.id;
+                    return (
+                      <div
+                        key={tab.id}
+                        draggable={isEditMode && isOwnProfile}
+                        onDragStart={(e) => handleDragStart(e, tab.id)}
+                        onDragOver={(e) => handleDragOver(e, tab.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, tab.id)}
+                        onDragEnd={handleDragEnd}
+                        className={`flex items-center transition-all ${
+                          draggedTabId === tab.id ? "opacity-50" : ""
                         }`}
-                        onClick={(e) => {
-                          if (isEditMode) {
-                            e.preventDefault();
-                          }
+                        style={{
+                          borderLeft: dragOverTabId === tab.id ? `2px solid ${theme.colors.primary}` : undefined,
                         }}
                       >
-                        {tab.name}
-                      </Link>
-                    </div>
-                  ))}
+                        {isEditMode && isOwnProfile && (
+                          <GripVertical className="h-4 w-4 cursor-grab mr-1" style={styles.mutedText} />
+                        )}
+                        <Link
+                          to={`/users/${user.username}/${tab.slug}`}
+                          className="px-4 py-3 text-sm -mb-px transition-colors"
+                          style={styles.tab(isActive)}
+                          onClick={(e) => {
+                            if (isEditMode) {
+                              e.preventDefault();
+                            }
+                          }}
+                        >
+                          {tab.name}
+                        </Link>
+                      </div>
+                    );
+                  })}
                 </div>
               </nav>
             )}
@@ -304,13 +311,14 @@ export default function MediaListPage() {
             {/* Search and Filter */}
             <div className="flex gap-3 mb-6">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={styles.mutedText} />
+                <input
                   type="text"
                   placeholder="Search..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
+                  className="w-full pl-10 pr-4 py-2 text-sm"
+                  style={styles.input}
                 />
               </div>
               {categoriesData && categoriesData.length > 0 && (
@@ -331,15 +339,16 @@ export default function MediaListPage() {
             </div>
 
             {/* Reviews Grid */}
-            <ReviewsGrid reviews={reviews.items} />
+            <ReviewsGrid reviews={reviews.items} theme={theme} />
           </div>
         ) : (
           <p className="text-muted-foreground">No tabs yet</p>
         )}
         </main>
+        </div>
       </div>
 
-      {/* Floating Edit Sidebar */}
+      {/* Floating Edit Sidebar - outside themed wrapper */}
       {isEditMode && isOwnProfile && (
         <EditSidebar
           currentTab={currentTab}

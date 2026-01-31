@@ -6,6 +6,7 @@ export interface Palette {
   background: string;
   foreground: string;
   primary: string;
+  primaryForeground: string; // Text color for use on primary background
   secondary: string;
   muted: string;
   mutedForeground: string;
@@ -38,6 +39,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#ffffff",
         foreground: "#000000",
         primary: "#00ff00",
+        primaryForeground: "#000000",
         secondary: "#ffff00",
         muted: "#f0f0f0",
         mutedForeground: "#666666",
@@ -48,6 +50,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#fff0f5",
         foreground: "#1a1a1a",
         primary: "#ff1493",
+        primaryForeground: "#ffffff",
         secondary: "#ff69b4",
         muted: "#ffe4ec",
         mutedForeground: "#8b4563",
@@ -58,6 +61,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#0a0a0a",
         foreground: "#ffffff",
         primary: "#00ffff",
+        primaryForeground: "#000000",
         secondary: "#ff00ff",
         muted: "#1a1a1a",
         mutedForeground: "#888888",
@@ -79,6 +83,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#ffffff",
         foreground: "#171717",
         primary: "#171717",
+        primaryForeground: "#ffffff",
         secondary: "#525252",
         muted: "#f5f5f5",
         mutedForeground: "#737373",
@@ -89,6 +94,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#faf9f7",
         foreground: "#1c1917",
         primary: "#78716c",
+        primaryForeground: "#ffffff",
         secondary: "#a8a29e",
         muted: "#f5f5f4",
         mutedForeground: "#78716c",
@@ -99,6 +105,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#0a0a0a",
         foreground: "#fafafa",
         primary: "#fafafa",
+        primaryForeground: "#000000",
         secondary: "#a1a1aa",
         muted: "#18181b",
         mutedForeground: "#71717a",
@@ -120,6 +127,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#0d1f0d",
         foreground: "#4ade80",
         primary: "#22c55e",
+        primaryForeground: "#0d1f0d",
         secondary: "#16a34a",
         muted: "#14291a",
         mutedForeground: "#4ade80",
@@ -130,6 +138,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#1a1400",
         foreground: "#fbbf24",
         primary: "#f59e0b",
+        primaryForeground: "#1a1400",
         secondary: "#d97706",
         muted: "#292000",
         mutedForeground: "#fcd34d",
@@ -140,6 +149,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         background: "#001a1a",
         foreground: "#00ffff",
         primary: "#00d4d4",
+        primaryForeground: "#001a1a",
         secondary: "#00a3a3",
         muted: "#002929",
         mutedForeground: "#67e8f9",
@@ -153,16 +163,131 @@ export const AESTHETICS: Record<string, Aesthetic> = {
 export type AestheticSlug = keyof typeof AESTHETICS;
 export type PaletteName<T extends AestheticSlug> = keyof (typeof AESTHETICS)[T]["palettes"];
 
+// Pre-computed style objects for common UI elements
+export interface ThemeStyles {
+  // Page wrapper
+  page: React.CSSProperties;
+  // Profile header
+  header: React.CSSProperties;
+  headerText: React.CSSProperties;
+  headerTextMuted: React.CSSProperties;
+  // Avatar
+  avatar: React.CSSProperties;
+  avatarFallback: React.CSSProperties;
+  // Buttons
+  button: React.CSSProperties;
+  buttonIcon: React.CSSProperties;
+  // Inputs
+  input: React.CSSProperties;
+  // Tabs
+  tabBar: React.CSSProperties;
+  tab: (isActive: boolean) => React.CSSProperties;
+  // Cards/containers
+  card: React.CSSProperties;
+  cardMuted: React.CSSProperties;
+  // Tags
+  tag: React.CSSProperties;
+  // Text
+  mutedText: React.CSSProperties;
+}
+
 export interface ResolvedTheme extends Omit<Aesthetic, "palettes"> {
   slug: AestheticSlug;
   paletteName: string;
   colors: Palette;
+  styles: ThemeStyles;
 }
 
 export function getTheme(aestheticSlug: string, palette: string): ResolvedTheme {
   const aesthetic = AESTHETICS[aestheticSlug] ?? AESTHETICS.minimalist;
   const slug = (aestheticSlug in AESTHETICS ? aestheticSlug : "minimalist") as AestheticSlug;
   const colors = aesthetic.palettes[palette] ?? aesthetic.palettes.default;
+
+  // Shared border style
+  const border = `${aesthetic.borderWidth} solid ${colors.border}`;
+
+  // Pre-compute common styles
+  const styles: ThemeStyles = {
+    page: {
+      backgroundColor: colors.background,
+      color: colors.foreground,
+      fontFamily: aesthetic.fontFamily,
+    },
+    header: {
+      background: colors.primary,
+      borderRadius: aesthetic.borderRadius,
+      border,
+      boxShadow: aesthetic.shadowStyle,
+    },
+    headerText: {
+      color: colors.primaryForeground,
+      fontWeight: aesthetic.fontWeights.heading,
+    },
+    headerTextMuted: {
+      color: colors.primaryForeground,
+      opacity: 0.7,
+    },
+    avatar: {
+      borderRadius: aesthetic.borderRadius,
+      border,
+      backgroundColor: colors.background,
+    },
+    avatarFallback: {
+      color: colors.mutedForeground,
+      fontWeight: aesthetic.fontWeights.heading,
+    },
+    button: {
+      backgroundColor: colors.background,
+      color: colors.foreground,
+      border,
+      borderRadius: aesthetic.borderRadius,
+      fontWeight: aesthetic.fontWeights.body,
+      fontFamily: aesthetic.fontFamily,
+    },
+    buttonIcon: {
+      backgroundColor: colors.background,
+      color: colors.foreground,
+      border,
+      borderRadius: aesthetic.borderRadius,
+    },
+    input: {
+      backgroundColor: colors.muted,
+      color: colors.foreground,
+      border,
+      borderRadius: aesthetic.borderRadius,
+      fontFamily: aesthetic.fontFamily,
+    },
+    tabBar: {
+      borderBottom: border,
+    },
+    tab: (isActive: boolean) => ({
+      fontWeight: aesthetic.fontWeights.body,
+      borderBottom: `${aesthetic.borderWidth} solid ${isActive ? colors.primary : "transparent"}`,
+      color: isActive ? colors.foreground : colors.mutedForeground,
+    }),
+    card: {
+      backgroundColor: colors.background,
+      border,
+      borderRadius: aesthetic.borderRadius,
+      boxShadow: aesthetic.shadowStyle,
+    },
+    cardMuted: {
+      backgroundColor: colors.muted,
+      borderRadius: aesthetic.borderRadius,
+      border,
+    },
+    tag: {
+      backgroundColor: colors.secondary,
+      color: colors.background,
+      borderRadius: aesthetic.borderRadius,
+      border,
+      fontWeight: aesthetic.fontWeights.body,
+      fontFamily: aesthetic.fontFamily,
+    },
+    mutedText: {
+      color: colors.mutedForeground,
+    },
+  };
 
   return {
     slug,
@@ -175,6 +300,7 @@ export function getTheme(aestheticSlug: string, palette: string): ResolvedTheme 
     borderWidth: aesthetic.borderWidth,
     shadowStyle: aesthetic.shadowStyle,
     colors,
+    styles,
   };
 }
 

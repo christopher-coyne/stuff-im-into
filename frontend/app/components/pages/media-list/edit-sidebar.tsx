@@ -49,6 +49,7 @@ export function EditSidebar({
       : currentTab.name
     : null;
 
+
   return (
     <div className="fixed right-6 bottom-6 z-40 flex flex-col items-end">
       {/* Edit Panel */}

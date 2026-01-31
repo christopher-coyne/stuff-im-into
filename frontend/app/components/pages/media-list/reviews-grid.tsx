@@ -2,12 +2,14 @@ import { BookmarkCheck, ExternalLink, Music, Type, Video } from "lucide-react";
 import { Link } from "react-router";
 import type { ReviewListItemDto } from "~/lib/api/api";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
+import type { ResolvedTheme } from "~/lib/theme/themes";
 
 interface ReviewsGridProps {
   reviews: ReviewListItemDto[];
+  theme: ResolvedTheme;
 }
 
-function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
+function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme: ResolvedTheme }) {
   const mediaUrl = review.mediaUrl as string | undefined;
   const mediaConfig = review.mediaConfig as Record<string, unknown> | undefined;
 
@@ -50,7 +52,12 @@ function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
       <div className="w-full h-full p-3 overflow-hidden line-clamp-6">
         <MarkdownRenderer
           content={String(mediaConfig.content)}
-          className="text-sm leading-relaxed [&_*]:text-lg [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm"
+          className="text-sm leading-relaxed **:text-lg [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm"
+          style={{
+            "--tw-prose-body": theme.colors.foreground,
+            "--tw-prose-headings": theme.colors.foreground,
+            "--tw-prose-bold": theme.colors.foreground,
+          } as React.CSSProperties}
         />
       </div>
     );
@@ -68,15 +75,17 @@ function MediaThumbnail({ review }: { review: ReviewListItemDto }) {
   const Icon = iconMap[review.mediaType as keyof typeof iconMap] || Type;
 
   return (
-    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+    <div className="w-full h-full flex items-center justify-center" style={theme.styles.mutedText}>
       <Icon className="h-12 w-12" />
     </div>
   );
 }
 
-export function ReviewsGrid({ reviews }: ReviewsGridProps) {
+export function ReviewsGrid({ reviews, theme }: ReviewsGridProps) {
+  const { styles } = theme;
+
   if (reviews.length === 0) {
-    return <p className="text-muted-foreground text-center py-8">No reviews found</p>;
+    return <p className="text-center py-8" style={styles.mutedText}>No reviews found</p>;
   }
 
   return (
@@ -84,26 +93,47 @@ export function ReviewsGrid({ reviews }: ReviewsGridProps) {
       {reviews.map((review) => (
         <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}
-          <div className="relative aspect-square rounded-lg overflow-hidden bg-muted mb-2">
-            <MediaThumbnail review={review} />
+          <div
+            className="relative aspect-square overflow-hidden mb-2"
+            style={styles.cardMuted}
+          >
+            <MediaThumbnail review={review} theme={theme} />
             {/* Bookmark indicator */}
             {review.isBookmarked && (
-              <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-amber-500">
+              <div
+                className="absolute top-2 right-2 p-1.5"
+                style={{
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  borderRadius: theme.borderRadius,
+                  color: theme.colors.accent,
+                }}
+              >
                 <BookmarkCheck className="h-4 w-4" />
               </div>
             )}
           </div>
           {/* Title */}
-          <h3 className="font-medium text-sm line-clamp-2">{review.title}</h3>
+          <h3
+            className="text-sm line-clamp-2"
+            style={{ fontWeight: theme.fontWeights.body }}
+          >
+            {review.title}
+          </h3>
           {/* Author */}
           {review.author && (
-            <p className="text-xs text-muted-foreground line-clamp-1">{String(review.author)}</p>
+            <p className="text-xs line-clamp-1" style={styles.mutedText}>
+              {String(review.author)}
+            </p>
           )}
           {/* Tags */}
           {review.categories.length > 0 && (
             <div className="flex gap-1.5 mt-2 flex-wrap">
               {review.categories.map((cat) => (
-                <span key={cat.id} className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
+                <span
+                  key={cat.id}
+                  className="text-xs px-2 py-0.5"
+                  style={styles.tag}
+                >
                   {cat.name}
                 </span>
               ))}
