@@ -64,6 +64,7 @@ export interface TabDto {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
   sortOrder: number;
 }
 
@@ -108,6 +109,7 @@ export interface TabResponseDto {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
   sortOrder: number;
 }
 
@@ -117,6 +119,11 @@ export interface CreateTabDto {
    * @example "Movies"
    */
   name: string;
+  /**
+   * Short description of the tab (max 200 characters)
+   * @example "My favorite films and documentaries"
+   */
+  description?: string;
 }
 
 export interface ReorderTabsDto {
@@ -172,7 +179,12 @@ export interface UpdateTabDto {
    * New name for the tab
    * @example "Movies"
    */
-  name: string;
+  name?: string;
+  /**
+   * Short description of the tab (max 200 characters)
+   * @example "My favorite films and documentaries"
+   */
+  description?: string;
 }
 
 export interface MetaFieldDto {

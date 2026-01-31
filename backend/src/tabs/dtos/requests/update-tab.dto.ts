@@ -1,9 +1,22 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MinLength } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class UpdateTabDto {
-  @ApiProperty({ description: 'New name for the tab', example: 'Movies' })
+  @ApiPropertyOptional({
+    description: 'New name for the tab',
+    example: 'Movies',
+  })
+  @IsOptional()
   @IsString()
   @MinLength(1)
-  name: string;
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Short description of the tab (max 200 characters)',
+    example: 'My favorite films and documentaries',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  description?: string;
 }

@@ -19,6 +19,8 @@ interface AddTabModalProps {
   onSuccess: (newTab: TabDto) => void;
 }
 
+const DESCRIPTION_MAX_LENGTH = 200;
+
 export function AddTabModal({
   open,
   onOpenChange,
@@ -26,13 +28,14 @@ export function AddTabModal({
 }: AddTabModalProps) {
   const { session } = useAuth();
   const [tabName, setTabName] = useState("");
+  const [description, setDescription] = useState("");
   const [error, setError] = useState("");
 
   const createTabMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, description }: { name: string; description?: string }) => {
       if (!session) throw new Error("Not authenticated");
       const response = await api.tabs.tabsControllerCreateTab(
-        { name },
+        { name, description: description || undefined },
         { headers: { Authorization: `Bearer ${session.access_token}` } }
       );
       return response.data.data;
@@ -52,6 +55,7 @@ export function AddTabModal({
   const handleClose = () => {
     onOpenChange(false);
     setTabName("");
+    setDescription("");
     setError("");
     createTabMutation.reset();
   };
@@ -59,7 +63,10 @@ export function AddTabModal({
   const handleSubmit = () => {
     if (!tabName.trim()) return;
     setError("");
-    createTabMutation.mutate(tabName.trim());
+    createTabMutation.mutate({
+      name: tabName.trim(),
+      description: description.trim() || undefined,
+    });
   };
 
   return (
@@ -82,6 +89,18 @@ export function AddTabModal({
               }
             }}
           />
+          <div className="space-y-2">
+            <textarea
+              placeholder="Description (optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX_LENGTH))}
+              rows={2}
+              className="placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none resize-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {description.length} / {DESCRIPTION_MAX_LENGTH}
+            </p>
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={handleClose}>

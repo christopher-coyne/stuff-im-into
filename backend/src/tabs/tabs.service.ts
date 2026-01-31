@@ -37,6 +37,7 @@ export class TabsService {
         userId: user.id,
         name: dto.name,
         slug,
+        description: dto.description,
         sortOrder,
       },
     });
@@ -45,6 +46,7 @@ export class TabsService {
       id: tab.id,
       name: tab.name,
       slug: tab.slug,
+      description: tab.description,
       sortOrder: tab.sortOrder,
     };
   }
@@ -77,6 +79,7 @@ export class TabsService {
       id: tab.id,
       name: tab.name,
       slug: tab.slug,
+      description: tab.description,
       sortOrder: tab.sortOrder,
     }));
   }
@@ -246,7 +249,7 @@ export class TabsService {
     // Verify tab exists and belongs to the user
     const tab = await this.prisma.tab.findUnique({
       where: { id: tabId },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, name: true, slug: true },
     });
 
     if (!tab) {
@@ -259,37 +262,52 @@ export class TabsService {
       );
     }
 
-    // Generate new slug from name
-    const slug = dto.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+    // Build update data
+    const updateData: {
+      name?: string;
+      slug?: string;
+      description?: string | null;
+    } = {};
 
-    // Check if slug already exists for this user (excluding current tab)
-    const existing = await this.prisma.tab.findFirst({
-      where: {
-        userId: user.id,
-        slug,
-        id: { not: tabId },
-      },
-    });
+    // If name is being updated, regenerate slug and check for conflicts
+    if (dto.name !== undefined) {
+      const slug = dto.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
 
-    if (existing) {
-      throw new ConflictException('A tab with this name already exists');
+      // Check if slug already exists for this user (excluding current tab)
+      const existing = await this.prisma.tab.findFirst({
+        where: {
+          userId: user.id,
+          slug,
+          id: { not: tabId },
+        },
+      });
+
+      if (existing) {
+        throw new ConflictException('A tab with this name already exists');
+      }
+
+      updateData.name = dto.name;
+      updateData.slug = slug;
+    }
+
+    // Handle description update (can be set to null to clear it)
+    if (dto.description !== undefined) {
+      updateData.description = dto.description || null;
     }
 
     const updatedTab = await this.prisma.tab.update({
       where: { id: tabId },
-      data: {
-        name: dto.name,
-        slug,
-      },
+      data: updateData,
     });
 
     return {
       id: updatedTab.id,
       name: updatedTab.name,
       slug: updatedTab.slug,
+      description: updatedTab.description,
       sortOrder: updatedTab.sortOrder,
     };
   }

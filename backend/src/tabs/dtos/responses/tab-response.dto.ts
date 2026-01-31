@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TabResponseDto {
   @ApiProperty()
@@ -9,6 +9,9 @@ export class TabResponseDto {
 
   @ApiProperty()
   slug: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
+  description?: string | null;
 
   @ApiProperty()
   sortOrder: number;

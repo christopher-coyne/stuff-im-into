@@ -7,7 +7,7 @@ import { AddCategoryModal } from "~/components/pages/media-list/add-category-mod
 import { AddTabModal } from "~/components/pages/media-list/add-tab-modal";
 import { DeleteTabModal } from "~/components/pages/media-list/delete-tab-modal";
 import { EditSidebar } from "~/components/pages/media-list/edit-sidebar";
-import { RenameTabModal } from "~/components/pages/media-list/rename-tab-modal";
+import { EditTabModal } from "~/components/pages/media-list/edit-tab-modal";
 import { ProfileHeader } from "~/components/pages/media-list/profile-header";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
@@ -113,8 +113,8 @@ export default function MediaListPage() {
   // Delete tab modal state
   const [showDeleteTabModal, setShowDeleteTabModal] = useState(false);
 
-  // Rename tab modal state
-  const [showRenameTabModal, setShowRenameTabModal] = useState(false);
+  // Edit tab modal state
+  const [showEditTabModal, setShowEditTabModal] = useState(false);
 
   // Theme state
   const [currentTheme, setCurrentTheme] = useState<{
@@ -308,7 +308,7 @@ export default function MediaListPage() {
             )}
 
             {/* Search and Filter */}
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-3 mb-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={styles.mutedText} />
                 <input
@@ -347,6 +347,13 @@ export default function MediaListPage() {
               )}
             </div>
 
+            {/* Tab Description */}
+            {currentTab.description && (
+              <p className="text-sm mb-6" style={styles.mutedText}>
+                {currentTab.description}
+              </p>
+            )}
+
             {/* Reviews Grid */}
             <ReviewsGrid
               reviews={reviews.items}
@@ -380,7 +387,7 @@ export default function MediaListPage() {
           currentTab={currentTab}
           onExitEditMode={() => setIsEditMode(false)}
           onAddTab={() => setShowAddTabModal(true)}
-          onRenameTab={() => setShowRenameTabModal(true)}
+          onRenameTab={() => setShowEditTabModal(true)}
           onDeleteTab={() => setShowDeleteTabModal(true)}
           onAddCategory={() => setShowAddCategoryModal(true)}
           currentTheme={currentTheme}
@@ -414,11 +421,12 @@ export default function MediaListPage() {
       )}
 
       {currentTab && (
-        <RenameTabModal
-          open={showRenameTabModal}
-          onOpenChange={setShowRenameTabModal}
+        <EditTabModal
+          open={showEditTabModal}
+          onOpenChange={setShowEditTabModal}
           tabId={currentTab.id}
           currentName={currentTab.name}
+          currentDescription={currentTab.description}
           onSuccess={(newSlug) => navigate(`/users/${user.username}/${newSlug}`)}
         />
       )}

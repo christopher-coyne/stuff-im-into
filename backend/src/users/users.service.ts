@@ -42,7 +42,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
@@ -99,7 +99,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
@@ -201,7 +201,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
@@ -247,7 +247,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
@@ -298,7 +298,7 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, sortOrder: true },
+          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
