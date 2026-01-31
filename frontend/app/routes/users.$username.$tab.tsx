@@ -323,10 +323,20 @@ export default function MediaListPage() {
               </div>
               {categoriesData && categoriesData.length > 0 && (
                 <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-[200px]" style={styles.input}>
                     <SelectValue placeholder="All categories" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      color: theme.colors.foreground,
+                      borderColor: theme.colors.border,
+                      borderWidth: theme.borderWidth,
+                      borderRadius: theme.borderRadius,
+                      "--accent": theme.colors.muted,
+                      "--accent-foreground": theme.colors.foreground,
+                    } as React.CSSProperties}
+                  >
                     <SelectItem value="all">All categories</SelectItem>
                     {categoriesData.map((category) => (
                       <SelectItem key={category.id} value={category.slug}>

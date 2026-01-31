@@ -2,12 +2,32 @@
 // Backend stores: aesthetic slug + palette name
 // Frontend stores: all styling definitions
 
+/**
+ * Color palette for a theme variant.
+ *
+ * Naming convention:
+ * - `background` is the base color (for backgrounds, buttons, etc.)
+ * - `foreground` is the text color that sits on that background
+ *
+ * Example (minimalist default):
+ *   background: #ffffff (white page)
+ *   foreground: #171717 (dark text on white)
+ *
+ *   primary: #171717 (dark button/header background)
+ *   primaryForeground: #ffffff (white text on dark button)
+ *
+ *   muted: #f5f5f5 (light gray for subtle areas)
+ *   mutedForeground: #737373 (gray text for secondary info)
+ *
+ * The `accent` color is standalone (no foreground pair) - used for highlights like links.
+ */
 export interface Palette {
   background: string;
   foreground: string;
   primary: string;
-  primaryForeground: string; // Text color for use on primary background
+  primaryForeground: string;
   secondary: string;
+  secondaryForeground: string;
   muted: string;
   mutedForeground: string;
   border: string;
@@ -41,6 +61,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         primary: "#00ff00",
         primaryForeground: "#000000",
         secondary: "#ffff00",
+        secondaryForeground: "#000000",
         muted: "#f0f0f0",
         mutedForeground: "#666666",
         border: "#000000",
@@ -52,6 +73,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         primary: "#ff1493",
         primaryForeground: "#ffffff",
         secondary: "#ff69b4",
+        secondaryForeground: "#1a1a1a",
         muted: "#ffe4ec",
         mutedForeground: "#8b4563",
         border: "#1a1a1a",
@@ -63,6 +85,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         primary: "#00ffff",
         primaryForeground: "#000000",
         secondary: "#ff00ff",
+        secondaryForeground: "#ffffff",
         muted: "#1a1a1a",
         mutedForeground: "#888888",
         border: "#00ffff",
@@ -85,6 +108,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         primary: "#171717",
         primaryForeground: "#ffffff",
         secondary: "#525252",
+        secondaryForeground: "#ffffff",
         muted: "#f5f5f5",
         mutedForeground: "#737373",
         border: "#e5e5e5",
@@ -96,6 +120,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         primary: "#78716c",
         primaryForeground: "#ffffff",
         secondary: "#a8a29e",
+        secondaryForeground: "#1c1917",
         muted: "#f5f5f4",
         mutedForeground: "#78716c",
         border: "#e7e5e4",
@@ -107,6 +132,7 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         primary: "#fafafa",
         primaryForeground: "#000000",
         secondary: "#a1a1aa",
+        secondaryForeground: "#0a0a0a",
         muted: "#18181b",
         mutedForeground: "#71717a",
         border: "#27272a",
@@ -128,7 +154,8 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         foreground: "#4ade80",
         primary: "#22c55e",
         primaryForeground: "#0d1f0d",
-        secondary: "#16a34a",
+        secondary: "#fbbf24", // amber for contrast
+        secondaryForeground: "#0d1f0d",
         muted: "#14291a",
         mutedForeground: "#4ade80",
         border: "#22c55e",
@@ -139,7 +166,8 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         foreground: "#fbbf24",
         primary: "#f59e0b",
         primaryForeground: "#1a1400",
-        secondary: "#d97706",
+        secondary: "#4ade80", // green for contrast
+        secondaryForeground: "#1a1400",
         muted: "#292000",
         mutedForeground: "#fcd34d",
         border: "#f59e0b",
@@ -150,7 +178,8 @@ export const AESTHETICS: Record<string, Aesthetic> = {
         foreground: "#00ffff",
         primary: "#00d4d4",
         primaryForeground: "#001a1a",
-        secondary: "#00a3a3",
+        secondary: "#f472b6", // magenta/pink for cyberpunk feel
+        secondaryForeground: "#001a1a",
         muted: "#002929",
         mutedForeground: "#67e8f9",
         border: "#00d4d4",
@@ -278,7 +307,7 @@ export function getTheme(aestheticSlug: string, palette: string): ResolvedTheme 
     },
     tag: {
       backgroundColor: colors.secondary,
-      color: colors.background,
+      color: colors.secondaryForeground,
       borderRadius: aesthetic.borderRadius,
       border,
       fontWeight: aesthetic.fontWeights.body,

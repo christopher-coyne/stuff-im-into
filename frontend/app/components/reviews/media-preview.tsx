@@ -1,5 +1,6 @@
 import { ExternalLink, ImagePlus, Music, Type, Video } from "lucide-react";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
+import type { ResolvedTheme } from "~/lib/theme/themes";
 
 type MediaType = "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
 
@@ -21,6 +22,8 @@ interface MediaPreviewProps {
   className?: string;
   /** Render TEXT content as markdown (use on detail pages) */
   renderMarkdown?: boolean;
+  /** Optional theme for styled rendering */
+  theme?: ResolvedTheme;
 }
 
 export function MediaPreview({
@@ -30,6 +33,7 @@ export function MediaPreview({
   title,
   className = "",
   renderMarkdown = false,
+  theme,
 }: MediaPreviewProps) {
   const containerClass = `w-full h-full ${className}`;
 
@@ -45,7 +49,7 @@ export function MediaPreview({
           }}
         />
       ) : (
-        <MediaPlaceholder icon={ImagePlus} text="No image" />
+        <MediaPlaceholder icon={ImagePlus} text="No image" theme={theme} />
       );
 
     case "VIDEO": {
@@ -60,7 +64,7 @@ export function MediaPreview({
           className={containerClass}
         />
       ) : (
-        <MediaPlaceholder icon={Video} text="Enter YouTube URL" />
+        <MediaPlaceholder icon={Video} text="Enter YouTube URL" theme={theme} />
       );
     }
 
@@ -78,7 +82,7 @@ export function MediaPreview({
           />
         </div>
       ) : (
-        <MediaPlaceholder icon={Music} text="Enter Spotify URL" />
+        <MediaPlaceholder icon={Music} text="Enter Spotify URL" theme={theme} />
       );
     }
 
@@ -89,50 +93,75 @@ export function MediaPreview({
           href={mediaUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${containerClass} flex flex-col items-center justify-center bg-muted/50 hover:bg-muted transition-colors gap-2 p-6`}
+          className={`${containerClass} flex flex-col items-center justify-center hover:opacity-80 transition-opacity gap-2 p-6`}
+          style={theme ? { backgroundColor: theme.colors.muted } : undefined}
         >
-          <ExternalLink className="h-8 w-8 text-muted-foreground" />
-          <span className="text-sm font-medium text-center px-4 line-clamp-2">
+          <ExternalLink className="h-8 w-8" style={theme?.styles.mutedText} />
+          <span
+            className="text-sm text-center px-4 line-clamp-2"
+            style={theme ? { fontWeight: theme.fontWeights.body, color: theme.colors.foreground } : undefined}
+          >
             {mediaConfig?.title || domain || mediaUrl}
           </span>
           {domain && (
-            <span className="text-xs text-muted-foreground">{domain}</span>
+            <span className="text-xs" style={theme?.styles.mutedText}>{domain}</span>
           )}
         </a>
       ) : (
-        <MediaPlaceholder icon={ExternalLink} text="Enter URL" />
+        <MediaPlaceholder icon={ExternalLink} text="Enter URL" theme={theme} />
       );
     }
 
     case "TEXT": {
       const content = mediaConfig?.content;
       return content ? (
-        <div className={`${containerClass} p-6 overflow-auto bg-muted/30`}>
+        <div
+          className={`${containerClass} p-6 overflow-auto`}
+          style={theme ? { backgroundColor: theme.colors.muted } : undefined}
+        >
           {renderMarkdown ? (
-            <MarkdownRenderer content={content} />
+            <MarkdownRenderer
+              content={content}
+              style={theme ? {
+                "--tw-prose-body": theme.colors.foreground,
+                "--tw-prose-headings": theme.colors.foreground,
+                "--tw-prose-bold": theme.colors.foreground,
+                "--tw-prose-links": theme.colors.primary,
+              } as React.CSSProperties : undefined}
+            />
           ) : (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+            <p
+              className="text-sm leading-relaxed whitespace-pre-wrap"
+              style={theme ? { color: theme.colors.foreground } : undefined}
+            >
+              {content}
+            </p>
           )}
         </div>
       ) : (
-        <MediaPlaceholder icon={Type} text="Text only" />
+        <MediaPlaceholder icon={Type} text="Text only" theme={theme} />
       );
     }
 
     default:
-      return <MediaPlaceholder icon={Type} text="No media" />;
+      return <MediaPlaceholder icon={Type} text="No media" theme={theme} />;
   }
 }
 
 function MediaPlaceholder({
   icon: Icon,
   text,
+  theme,
 }: {
   icon: typeof ImagePlus;
   text: string;
+  theme?: ResolvedTheme;
 }) {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+    <div
+      className="w-full h-full flex flex-col items-center justify-center gap-2"
+      style={theme?.styles.mutedText}
+    >
       <Icon className="h-12 w-12" />
       <span className="text-sm">{text}</span>
     </div>

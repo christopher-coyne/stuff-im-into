@@ -103,9 +103,9 @@ export function ReviewsGrid({ reviews, theme }: ReviewsGridProps) {
               <div
                 className="absolute top-2 right-2 p-1.5"
                 style={{
-                  backgroundColor: "rgba(0,0,0,0.5)",
+                  backgroundColor: theme.colors.primary,
                   borderRadius: theme.borderRadius,
-                  color: theme.colors.accent,
+                  color: theme.colors.primaryForeground,
                 }}
               >
                 <BookmarkCheck className="h-4 w-4" />

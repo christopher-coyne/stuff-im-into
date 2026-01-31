@@ -11,6 +11,7 @@ import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { ReviewListItemDto, UpdateReviewDto } from "~/lib/api/api";
 import { getAuthHeaders } from "~/lib/supabase/server";
+import { getTheme, type AestheticSlug } from "~/lib/theme/themes";
 import type { Route } from "./+types/review.$id";
 
 function calculateReadTime(text: string | null | undefined): string {
@@ -47,6 +48,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Response("Review not found", { status: 404 });
   }
 
+  // Fetch the review owner's full profile to get their theme
+  const userResponse = await api.users.usersControllerFindByUsername(review.user.username, {
+    headers: authHeaders,
+  });
+  const reviewOwner = userResponse.data.data;
+
   // Fetch other reviews from the same categories
   const categoryReviews: Record<string, { name: string; reviews: ReviewListItemDto[] }> = {};
 
@@ -75,7 +82,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     }
   }
 
-  return { review, categoryReviews };
+  return { review, categoryReviews, reviewOwner };
 }
 
 export function meta({ data }: Route.MetaArgs) {
@@ -94,7 +101,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export default function ReviewDetailPage() {
-  const { review, categoryReviews } = useLoaderData<typeof loader>();
+  const { review, categoryReviews, reviewOwner } = useLoaderData<typeof loader>();
   const { user: loggedInUser, session } = useAuth();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
@@ -102,6 +109,14 @@ export default function ReviewDetailPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const isOwner = loggedInUser?.id === review.user.id;
+
+  // Get theme from the review owner's settings
+  const userTheme = reviewOwner?.userTheme as { aesthetic?: { slug?: string }; palette?: string } | null;
+  const theme = getTheme(
+    (userTheme?.aesthetic?.slug as AestheticSlug) || "minimalist",
+    userTheme?.palette || "default"
+  );
+  const { styles, colors } = theme;
 
   // Delete mutation
   const deleteReviewMutation = useMutation({
@@ -249,22 +264,29 @@ export default function ReviewDetailPage() {
           )}
         </div>
 
-        {/* Header with gradient */}
-        <header className="bg-gradient-to-b from-zinc-700 to-zinc-900 rounded-xl px-6 py-6">
+        {/* Header - themed */}
+        <header className="px-6 py-6" style={styles.header}>
           {/* Title */}
-          <h1 className="text-3xl font-bold text-white mb-1">{review.title}</h1>
+          <h1 className="text-3xl mb-1" style={styles.headerText}>{review.title}</h1>
 
           {/* Author */}
           {review.author && (
-            <p className="text-lg text-white/80 mb-3">{String(review.author)}</p>
+            <p className="text-lg mb-3" style={styles.headerTextMuted}>{String(review.author)}</p>
           )}
 
           {/* User info */}
           <Link
             to={`/users/${review.user.username}`}
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
+            style={styles.headerTextMuted}
           >
-            <div className="h-7 w-7 rounded-full bg-amber-500 overflow-hidden flex items-center justify-center">
+            <div
+              className="h-7 w-7 overflow-hidden flex items-center justify-center"
+              style={{
+                borderRadius: theme.borderRadius,
+                backgroundColor: colors.secondary,
+              }}
+            >
               {review.user.avatarUrl ? (
                 <img
                   src={String(review.user.avatarUrl)}
@@ -272,7 +294,10 @@ export default function ReviewDetailPage() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="text-white text-xs font-bold">
+                <span
+                  className="text-xs"
+                  style={{ color: colors.secondaryForeground, fontWeight: theme.fontWeights.heading }}
+                >
                   {review.user.username.charAt(0).toUpperCase()}
                 </span>
               )}
