@@ -42,6 +42,10 @@ export function EditSidebar({
   const [activeTab, setActiveTab] = useState<SidebarTab>("content");
   const aestheticSlugs = getAestheticSlugs();
   const currentPalettes = getPaletteNames(currentTheme.aesthetic);
+  // If the user's palette doesn't exist, treat the first palette as selected
+  const effectivePalette = currentPalettes.includes(currentTheme.palette)
+    ? currentTheme.palette
+    : currentPalettes[0];
 
   const truncatedTabName = currentTab
     ? currentTab.name.length > 20
@@ -54,9 +58,9 @@ export function EditSidebar({
     <div className="fixed right-6 bottom-6 z-40 flex flex-col items-end">
       {/* Edit Panel */}
       {isOpen && (
-        <div className="bg-background border border-border rounded-lg shadow-lg overflow-hidden mb-2 w-72">
+        <div className="bg-background border border-border rounded-lg shadow-lg overflow-hidden mb-2 w-72 max-h-[70vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <span className="text-sm font-semibold">Edit Mode</span>
             <button
               onClick={onExitEditMode}
@@ -67,7 +71,7 @@ export function EditSidebar({
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-border">
+          <div className="flex border-b border-border shrink-0">
             <button
               onClick={() => setActiveTab("content")}
               className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
@@ -91,7 +95,7 @@ export function EditSidebar({
           </div>
 
           {/* Content */}
-          <div className="p-4">
+          <div className="p-4 overflow-y-auto flex-1">
             {activeTab === "content" && (
               <div className="space-y-5">
                 {/* Tabs Section */}
@@ -160,9 +164,10 @@ export function EditSidebar({
                       return (
                         <button
                           key={slug}
-                          onClick={() =>
-                            onThemeChange({ aesthetic: slug, palette: "default" })
-                          }
+                          onClick={() => {
+                            const firstPalette = getPaletteNames(slug)[0];
+                            onThemeChange({ aesthetic: slug, palette: firstPalette });
+                          }}
                           className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition-colors ${
                             isSelected
                               ? "bg-primary/10 text-primary"
@@ -191,7 +196,7 @@ export function EditSidebar({
                     {currentPalettes.map((paletteName) => {
                       const palette =
                         AESTHETICS[currentTheme.aesthetic].palettes[paletteName];
-                      const isSelected = currentTheme.palette === paletteName;
+                      const isSelected = effectivePalette === paletteName;
                       return (
                         <button
                           key={paletteName}

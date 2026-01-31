@@ -30,6 +30,26 @@ const AESTHETICS = [
     name: 'Terminal',
     description: 'Hacker aesthetic. Monospace fonts, dark backgrounds, and glowing text.',
   },
+  {
+    slug: 'lavaLamp',
+    name: 'Lava Lamp',
+    description: 'Groovy, psychedelic vibes. Gradient backgrounds and bubbly shapes.',
+  },
+  {
+    slug: 'pastelDream',
+    name: 'Pastel Dream',
+    description: 'Soft, calming, and gentle. Light pastels and rounded corners.',
+  },
+  {
+    slug: 'editorial',
+    name: 'Editorial',
+    description: 'Classic print aesthetic. Serif fonts and refined, readable layouts.',
+  },
+  {
+    slug: 'darkForest',
+    name: 'Dark Forest',
+    description: 'Deep, earthy, and mysterious. Dark greens and natural tones.',
+  },
 ];
 
 async function main() {

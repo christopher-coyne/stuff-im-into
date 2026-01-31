@@ -2,6 +2,8 @@
 // Backend stores: aesthetic slug + palette name
 // Frontend stores: all styling definitions
 
+import { AESTHETICS } from "./theme-definitions";
+
 /**
  * Color palette for a theme variant.
  *
@@ -32,6 +34,7 @@ export interface Palette {
   mutedForeground: string;
   border: string;
   accent: string;
+  headerGradient?: string;
 }
 
 export interface Aesthetic {
@@ -45,149 +48,8 @@ export interface Aesthetic {
   palettes: Record<string, Palette>;
 }
 
-export const AESTHETICS: Record<string, Aesthetic> = {
-  neobrutalist: {
-    name: "Neobrutalist",
-    description: "Bold, loud, and unapologetic",
-    fontFamily: "'Space Grotesk', sans-serif",
-    fontWeights: { heading: "700", body: "500" },
-    borderRadius: "0",
-    borderWidth: "3px",
-    shadowStyle: "4px 4px 0px",
-    palettes: {
-      default: {
-        background: "#ffffff",
-        foreground: "#000000",
-        primary: "#00ff00",
-        primaryForeground: "#000000",
-        secondary: "#ffff00",
-        secondaryForeground: "#000000",
-        muted: "#f0f0f0",
-        mutedForeground: "#666666",
-        border: "#000000",
-        accent: "#ff00ff",
-      },
-      hotPink: {
-        background: "#fff0f5",
-        foreground: "#1a1a1a",
-        primary: "#ff1493",
-        primaryForeground: "#ffffff",
-        secondary: "#ff69b4",
-        secondaryForeground: "#1a1a1a",
-        muted: "#ffe4ec",
-        mutedForeground: "#8b4563",
-        border: "#1a1a1a",
-        accent: "#ff00ff",
-      },
-      electric: {
-        background: "#0a0a0a",
-        foreground: "#ffffff",
-        primary: "#00ffff",
-        primaryForeground: "#000000",
-        secondary: "#ff00ff",
-        secondaryForeground: "#ffffff",
-        muted: "#1a1a1a",
-        mutedForeground: "#888888",
-        border: "#00ffff",
-        accent: "#ffff00",
-      },
-    },
-  },
-  minimalist: {
-    name: "Minimalist",
-    description: "Clean, spacious, and refined",
-    fontFamily: "'Inter', sans-serif",
-    fontWeights: { heading: "600", body: "400" },
-    borderRadius: "8px",
-    borderWidth: "1px",
-    shadowStyle: "0 1px 3px rgba(0,0,0,0.1)",
-    palettes: {
-      default: {
-        background: "#ffffff",
-        foreground: "#171717",
-        primary: "#171717",
-        primaryForeground: "#ffffff",
-        secondary: "#525252",
-        secondaryForeground: "#ffffff",
-        muted: "#f5f5f5",
-        mutedForeground: "#737373",
-        border: "#e5e5e5",
-        accent: "#3b82f6",
-      },
-      warm: {
-        background: "#faf9f7",
-        foreground: "#1c1917",
-        primary: "#78716c",
-        primaryForeground: "#ffffff",
-        secondary: "#a8a29e",
-        secondaryForeground: "#1c1917",
-        muted: "#f5f5f4",
-        mutedForeground: "#78716c",
-        border: "#e7e5e4",
-        accent: "#ea580c",
-      },
-      dark: {
-        background: "#0a0a0a",
-        foreground: "#fafafa",
-        primary: "#fafafa",
-        primaryForeground: "#000000",
-        secondary: "#a1a1aa",
-        secondaryForeground: "#0a0a0a",
-        muted: "#18181b",
-        mutedForeground: "#71717a",
-        border: "#27272a",
-        accent: "#6366f1",
-      },
-    },
-  },
-  terminal: {
-    name: "Terminal",
-    description: "Hacker vibes, dark forest green",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontWeights: { heading: "600", body: "400" },
-    borderRadius: "0",
-    borderWidth: "1px",
-    shadowStyle: "none",
-    palettes: {
-      default: {
-        background: "#0d1f0d",
-        foreground: "#4ade80",
-        primary: "#22c55e",
-        primaryForeground: "#0d1f0d",
-        secondary: "#fbbf24", // amber for contrast
-        secondaryForeground: "#0d1f0d",
-        muted: "#14291a",
-        mutedForeground: "#4ade80",
-        border: "#22c55e",
-        accent: "#86efac",
-      },
-      amber: {
-        background: "#1a1400",
-        foreground: "#fbbf24",
-        primary: "#f59e0b",
-        primaryForeground: "#1a1400",
-        secondary: "#4ade80", // green for contrast
-        secondaryForeground: "#1a1400",
-        muted: "#292000",
-        mutedForeground: "#fcd34d",
-        border: "#f59e0b",
-        accent: "#fde68a",
-      },
-      phosphor: {
-        background: "#001a1a",
-        foreground: "#00ffff",
-        primary: "#00d4d4",
-        primaryForeground: "#001a1a",
-        secondary: "#f472b6", // magenta/pink for cyberpunk feel
-        secondaryForeground: "#001a1a",
-        muted: "#002929",
-        mutedForeground: "#67e8f9",
-        border: "#00d4d4",
-        accent: "#a5f3fc",
-      },
-    },
-  },
-};
+// Re-export AESTHETICS for convenience
+export { AESTHETICS };
 
 export type AestheticSlug = keyof typeof AESTHETICS;
 export type PaletteName<T extends AestheticSlug> = keyof (typeof AESTHETICS)[T]["palettes"];
@@ -230,7 +92,9 @@ export interface ResolvedTheme extends Omit<Aesthetic, "palettes"> {
 export function getTheme(aestheticSlug: string, palette: string): ResolvedTheme {
   const aesthetic = AESTHETICS[aestheticSlug] ?? AESTHETICS.minimalist;
   const slug = (aestheticSlug in AESTHETICS ? aestheticSlug : "minimalist") as AestheticSlug;
-  const colors = aesthetic.palettes[palette] ?? aesthetic.palettes.default;
+  const paletteNames = Object.keys(aesthetic.palettes);
+  const firstPalette = paletteNames[0];
+  const colors = aesthetic.palettes[palette] ?? aesthetic.palettes[firstPalette];
 
   // Shared border style
   const border = `${aesthetic.borderWidth} solid ${colors.border}`;
@@ -243,7 +107,7 @@ export function getTheme(aestheticSlug: string, palette: string): ResolvedTheme 
       fontFamily: aesthetic.fontFamily,
     },
     header: {
-      background: colors.primary,
+      background: colors.headerGradient || colors.primary,
       borderRadius: aesthetic.borderRadius,
       border,
       boxShadow: aesthetic.shadowStyle,
@@ -320,7 +184,7 @@ export function getTheme(aestheticSlug: string, palette: string): ResolvedTheme 
 
   return {
     slug,
-    paletteName: palette in aesthetic.palettes ? palette : "default",
+    paletteName: palette in aesthetic.palettes ? palette : firstPalette,
     name: aesthetic.name,
     description: aesthetic.description,
     fontFamily: aesthetic.fontFamily,
@@ -334,13 +198,13 @@ export function getTheme(aestheticSlug: string, palette: string): ResolvedTheme 
 }
 
 export function getDefaultTheme(): ResolvedTheme {
-  return getTheme("minimalist", "default");
+  return getTheme("minimalist", "light");
 }
 
 // Get all palette names for an aesthetic
 export function getPaletteNames(aestheticSlug: string): string[] {
   const aesthetic = AESTHETICS[aestheticSlug];
-  if (!aesthetic) return ["default"];
+  if (!aesthetic) return [];
   return Object.keys(aesthetic.palettes);
 }
 
