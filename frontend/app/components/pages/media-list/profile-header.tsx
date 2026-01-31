@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Bookmark, BookmarkCheck, Pencil } from "lucide-react";
 import { useState } from "react";
 import { useRevalidator } from "react-router";
+import { toast } from "sonner";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
@@ -55,6 +56,12 @@ export function ProfileHeader({
     },
     onSuccess: () => {
       revalidator.revalidate();
+    },
+    onError: (error) => {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to update bookmark";
+      toast.error(message);
     },
   });
 

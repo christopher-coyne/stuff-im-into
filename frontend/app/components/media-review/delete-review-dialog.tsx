@@ -14,6 +14,7 @@ interface DeleteReviewDialogProps {
   title: string;
   onConfirm: () => void;
   isPending: boolean;
+  error?: string | null;
 }
 
 export function DeleteReviewDialog({
@@ -22,6 +23,7 @@ export function DeleteReviewDialog({
   title,
   onConfirm,
   isPending,
+  error,
 }: DeleteReviewDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,6 +34,7 @@ export function DeleteReviewDialog({
             Are you sure you want to delete &quot;{title}&quot;? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter>
           <Button
             variant="outline"

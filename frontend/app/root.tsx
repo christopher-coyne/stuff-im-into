@@ -14,6 +14,7 @@ import { AuthProvider } from "./lib/auth-context";
 import { QueryProvider } from "./lib/query-provider";
 import { api } from "./lib/api/client";
 import { getAuthHeaders } from "./lib/supabase/server";
+import { Toaster } from "./components/ui/sonner";
 import "./app.css";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -85,6 +86,7 @@ export default function App() {
       <AuthProvider initialUser={user}>
         <Navbar />
         <Outlet />
+        <Toaster />
       </AuthProvider>
     </QueryProvider>
   );

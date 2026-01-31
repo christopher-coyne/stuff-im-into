@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -29,6 +30,7 @@ export function DeleteTabModal({
   onSuccess,
 }: DeleteTabModalProps) {
   const { session } = useAuth();
+  const [error, setError] = useState("");
 
   const deleteTabMutation = useMutation({
     mutationFn: async () => {
@@ -41,10 +43,20 @@ export function DeleteTabModal({
       onOpenChange(false);
       onSuccess();
     },
+    onError: (err: unknown) => {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      setError(axiosError.response?.data?.message || "Failed to delete tab");
+    },
   });
 
+  const handleClose = () => {
+    onOpenChange(false);
+    setError("");
+    deleteTabMutation.reset();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Tab</DialogTitle>
@@ -52,10 +64,11 @@ export function DeleteTabModal({
             Are you sure you want to delete &quot;{tabName}&quot;? This will permanently delete the tab and all {reviewCount} review{reviewCount !== 1 ? "s" : ""} within it. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={handleClose}
             disabled={deleteTabMutation.isPending}
           >
             Cancel

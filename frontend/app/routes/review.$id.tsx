@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, Clock, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
+import { toast } from "sonner";
 import { CategoryReviewsSection, DeleteReviewDialog } from "~/components/media-review";
 import { ReviewForm, type ReviewFormData } from "~/components/reviews";
 import { MediaPreview } from "~/components/reviews/media-preview";
@@ -140,6 +141,11 @@ export default function ReviewDetailPage() {
     },
   });
 
+  const deleteReviewError = deleteReviewMutation.error
+    ? (deleteReviewMutation.error as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message || "Failed to delete review"
+    : null;
+
   const handleDeleteConfirm = () => {
     deleteReviewMutation.mutate();
   };
@@ -160,6 +166,12 @@ export default function ReviewDetailPage() {
     },
     onSuccess: () => {
       revalidator.revalidate();
+    },
+    onError: (error) => {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to update bookmark";
+      toast.error(message);
     },
   });
 
@@ -413,6 +425,7 @@ export default function ReviewDetailPage() {
         title={review.title}
         onConfirm={handleDeleteConfirm}
         isPending={deleteReviewMutation.isPending}
+        error={deleteReviewError}
       />
     </div>
   );

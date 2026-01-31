@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { ChevronRight, LogOut, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Link, redirect, useLoaderData, useNavigate } from "react-router";
+import { toast } from "sonner";
 import { AvatarUpload } from "~/components/profile/avatar-upload";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
@@ -87,6 +88,12 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       refreshUser();
+    },
+    onError: (error) => {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to update avatar";
+      toast.error(message);
     },
   });
 

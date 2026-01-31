@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { GripVertical, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
+import { toast } from "sonner";
 import { AddCategoryModal } from "~/components/pages/media-list/add-category-modal";
 import { AddTabModal } from "~/components/pages/media-list/add-tab-modal";
 import { DeleteTabModal } from "~/components/pages/media-list/delete-tab-modal";
@@ -137,6 +138,12 @@ export default function MediaListPage() {
         { headers: { Authorization: `Bearer ${session.access_token}` } }
       );
     },
+    onError: (error) => {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to save theme";
+      toast.error(message);
+    },
   });
 
   // React Query for categories
@@ -160,9 +167,13 @@ export default function MediaListPage() {
         { headers: { Authorization: `Bearer ${session.access_token}` } }
       );
     },
-    onError: () => {
+    onError: (error) => {
       // Revert on error
       setLocalTabs(user.tabs);
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to reorder tabs";
+      toast.error(message);
     },
   });
 
