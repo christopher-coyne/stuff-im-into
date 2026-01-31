@@ -13,11 +13,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiStandardResponse, StandardResponse } from '../dto';
 import { SupabaseAuthGuard, SupabaseService } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
-import {
-  AuthDto,
-  AuthResponseDto,
-  MeResponseDto,
-} from './auth.dto';
+import { AuthDto, AuthResponseDto, MeResponseDto } from './auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -27,7 +23,9 @@ export class AuthController {
   @Post('signup')
   @ApiOperation({ summary: 'Create a new account' })
   @ApiStandardResponse(AuthResponseDto, 201)
-  async signUp(@Body() dto: AuthDto): Promise<StandardResponse<AuthResponseDto>> {
+  async signUp(
+    @Body() dto: AuthDto,
+  ): Promise<StandardResponse<AuthResponseDto>> {
     const { data, error } = await this.supabaseService
       .getClient()
       .auth.signUp({ email: dto.email, password: dto.password });
@@ -46,7 +44,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiStandardResponse(AuthResponseDto)
-  async login(@Body() dto: AuthDto): Promise<StandardResponse<AuthResponseDto>> {
+  async login(
+    @Body() dto: AuthDto,
+  ): Promise<StandardResponse<AuthResponseDto>> {
     const { data, error } = await this.supabaseService
       .getClient()
       .auth.signInWithPassword({ email: dto.email, password: dto.password });

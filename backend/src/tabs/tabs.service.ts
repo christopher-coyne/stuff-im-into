@@ -1,7 +1,21 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma';
-import { CategoryDto, CreateCategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto, UpdateTabDto } from './dtos';
+import {
+  CategoryDto,
+  CreateCategoryDto,
+  CreateTabDto,
+  GetReviewsQueryDto,
+  PaginatedReviewsDto,
+  ReorderTabsDto,
+  TabResponseDto,
+  UpdateTabDto,
+} from './dtos';
 
 @Injectable()
 export class TabsService {
@@ -51,7 +65,10 @@ export class TabsService {
     };
   }
 
-  async reorderTabs(user: User, dto: ReorderTabsDto): Promise<TabResponseDto[]> {
+  async reorderTabs(
+    user: User,
+    dto: ReorderTabsDto,
+  ): Promise<TabResponseDto[]> {
     // Verify all tabs belong to the user
     const userTabs = await this.prisma.tab.findMany({
       where: { userId: user.id },
@@ -105,7 +122,11 @@ export class TabsService {
     return categories;
   }
 
-  async createCategory(user: User, tabId: string, dto: CreateCategoryDto): Promise<CategoryDto> {
+  async createCategory(
+    user: User,
+    tabId: string,
+    dto: CreateCategoryDto,
+  ): Promise<CategoryDto> {
     // Verify tab exists and belongs to the user
     const tab = await this.prisma.tab.findUnique({
       where: { id: tabId },
@@ -117,7 +138,9 @@ export class TabsService {
     }
 
     if (tab.userId !== user.id) {
-      throw new ForbiddenException(`You do not have permission to add categories to this tab`);
+      throw new ForbiddenException(
+        `You do not have permission to add categories to this tab`,
+      );
     }
 
     // Generate slug from name
@@ -132,7 +155,9 @@ export class TabsService {
     });
 
     if (existing) {
-      throw new ConflictException('A category with this name already exists in this tab');
+      throw new ConflictException(
+        'A category with this name already exists in this tab',
+      );
     }
 
     const category = await this.prisma.category.create({

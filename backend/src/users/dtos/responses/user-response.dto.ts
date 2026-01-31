@@ -16,7 +16,10 @@ export class UserResponseDto {
   @ApiPropertyOptional()
   avatarUrl: string | null;
 
-  @ApiPropertyOptional({ type: UserThemeDto, description: 'User theme settings (null if not set)' })
+  @ApiPropertyOptional({
+    type: UserThemeDto,
+    description: 'User theme settings (null if not set)',
+  })
   userTheme: UserThemeDto | null;
 
   @ApiProperty({ enum: UserRole })
@@ -34,7 +37,9 @@ export class UserResponseDto {
   @ApiProperty({ type: [TabDto] })
   tabs: TabDto[];
 
-  @ApiProperty({ description: 'Whether the current user has bookmarked this user' })
+  @ApiProperty({
+    description: 'Whether the current user has bookmarked this user',
+  })
   isBookmarked: boolean;
 }
 

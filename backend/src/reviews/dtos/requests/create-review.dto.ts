@@ -18,13 +18,19 @@ export class MetaFieldInputDto {
   @MinLength(1)
   label: string;
 
-  @ApiProperty({ description: 'Value for the meta field', example: 'Denis Villeneuve' })
+  @ApiProperty({
+    description: 'Value for the meta field',
+    example: 'Denis Villeneuve',
+  })
   @IsString()
   value: string;
 }
 
 export class CreateReviewDto {
-  @ApiProperty({ description: 'Title of the review', example: 'Blade Runner 2049' })
+  @ApiProperty({
+    description: 'Title of the review',
+    example: 'Blade Runner 2049',
+  })
   @IsString()
   @MinLength(1)
   title: string;
@@ -38,12 +44,19 @@ export class CreateReviewDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ description: 'Author/creator of the media', example: 'Christopher Nolan' })
+  @ApiPropertyOptional({
+    description: 'Author/creator of the media',
+    example: 'Christopher Nolan',
+  })
   @IsOptional()
   @IsString()
   author?: string;
 
-  @ApiProperty({ description: 'Type of media', enum: MediaType, example: 'VIDEO' })
+  @ApiProperty({
+    description: 'Type of media',
+    enum: MediaType,
+    example: 'VIDEO',
+  })
   @IsEnum(MediaType)
   mediaType: MediaType;
 
@@ -53,7 +66,8 @@ export class CreateReviewDto {
   mediaUrl?: string;
 
   @ApiPropertyOptional({
-    description: 'Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify)',
+    description:
+      'Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify)',
   })
   @IsOptional()
   @IsObject()
@@ -65,14 +79,19 @@ export class CreateReviewDto {
   @IsUUID('4', { each: true })
   categoryIds?: string[];
 
-  @ApiPropertyOptional({ description: 'Meta fields (key-value pairs)', type: [MetaFieldInputDto] })
+  @ApiPropertyOptional({
+    description: 'Meta fields (key-value pairs)',
+    type: [MetaFieldInputDto],
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MetaFieldInputDto)
   metaFields?: MetaFieldInputDto[];
 
-  @ApiPropertyOptional({ description: 'Whether to publish immediately (default: false)' })
+  @ApiPropertyOptional({
+    description: 'Whether to publish immediately (default: false)',
+  })
   @IsOptional()
   publish?: boolean;
 }

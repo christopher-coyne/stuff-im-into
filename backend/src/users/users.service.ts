@@ -19,7 +19,10 @@ import {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: GetUsersQueryDto, currentUserId?: string): Promise<UserResponseDto[]> {
+  async findAll(
+    query: GetUsersQueryDto,
+    currentUserId?: string,
+  ): Promise<UserResponseDto[]> {
     const { search, sortBy = UserSortBy.MOST_POPULAR } = query;
     const orderBy = this.getOrderBy(sortBy);
 
@@ -42,7 +45,13 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            sortOrder: true,
+          },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
@@ -86,7 +95,10 @@ export class UsersService {
     }));
   }
 
-  async findByUsername(username: string, currentUserId?: string): Promise<UserResponseDto> {
+  async findByUsername(
+    username: string,
+    currentUserId?: string,
+  ): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { username },
       include: {
@@ -99,7 +111,13 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            sortOrder: true,
+          },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
@@ -201,7 +219,13 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            sortOrder: true,
+          },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
@@ -247,7 +271,13 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            sortOrder: true,
+          },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {
@@ -298,7 +328,13 @@ export class UsersService {
           },
         },
         tabs: {
-          select: { id: true, name: true, slug: true, description: true, sortOrder: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            sortOrder: true,
+          },
           orderBy: { sortOrder: 'asc' },
         },
         userTheme: {

@@ -26,11 +26,17 @@ function extractYouTubeId(url: string): string | null {
 function extractSpotifyEmbed(
   url: string,
 ): { type: 'track' | 'album' | 'playlist'; id: string } | null {
-  const match = url.match(/spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/);
+  const match = url.match(
+    /spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/,
+  );
   if (match) {
     return { type: match[1] as 'track' | 'album' | 'playlist', id: match[2] };
   }
   return null;
+}
+
+interface SpotifyOEmbedResponse {
+  thumbnail_url?: string;
 }
 
 async function fetchSpotifyThumbnail(url: string): Promise<string | null> {
@@ -38,8 +44,8 @@ async function fetchSpotifyThumbnail(url: string): Promise<string | null> {
     const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
     const response = await fetch(oembedUrl);
     if (!response.ok) return null;
-    const data = await response.json();
-    return data.thumbnail_url || null;
+    const data = (await response.json()) as SpotifyOEmbedResponse;
+    return data.thumbnail_url ?? null;
   } catch {
     return null;
   }
@@ -150,7 +156,9 @@ export class ReviewsService {
     }
 
     if (tab.userId !== user.id) {
-      throw new ForbiddenException('You do not have permission to add reviews to this tab');
+      throw new ForbiddenException(
+        'You do not have permission to add reviews to this tab',
+      );
     }
 
     // Verify all category IDs belong to this tab
@@ -164,7 +172,9 @@ export class ReviewsService {
       });
 
       if (categories.length !== dto.categoryIds.length) {
-        throw new NotFoundException('One or more categories not found in this tab');
+        throw new NotFoundException(
+          'One or more categories not found in this tab',
+        );
       }
     }
 

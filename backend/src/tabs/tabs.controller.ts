@@ -1,12 +1,41 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import {
   ApiStandardArrayResponse,
   ApiStandardResponse,
   StandardResponse,
 } from '../dto';
-import { OptionalAuthGuard, SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
-import { CategoryDto, CreateCategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto, UpdateTabDto } from './dtos';
+import {
+  OptionalAuthGuard,
+  SupabaseAuthGuard,
+  type AuthenticatedRequest,
+} from '../supabase';
+import {
+  CategoryDto,
+  CreateCategoryDto,
+  CreateTabDto,
+  GetReviewsQueryDto,
+  PaginatedReviewsDto,
+  ReorderTabsDto,
+  TabResponseDto,
+  UpdateTabDto,
+} from './dtos';
 import { TabsService } from './tabs.service';
 
 @ApiTags('Tabs')
@@ -69,7 +98,11 @@ export class TabsController {
     if (!req.user) {
       throw new Error('User profile not found');
     }
-    const category = await this.tabsService.createCategory(req.user, tabId, dto);
+    const category = await this.tabsService.createCategory(
+      req.user,
+      tabId,
+      dto,
+    );
     return StandardResponse.created(category);
   }
 
@@ -83,7 +116,11 @@ export class TabsController {
     @Query() query: GetReviewsQueryDto,
     @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<PaginatedReviewsDto>> {
-    const result = await this.tabsService.findReviewsForTab(tabId, query, req.user?.id);
+    const result = await this.tabsService.findReviewsForTab(
+      tabId,
+      query,
+      req.user?.id,
+    );
     return StandardResponse.ok(result);
   }
 

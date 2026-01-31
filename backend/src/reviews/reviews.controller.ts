@@ -1,7 +1,26 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ApiStandardResponse, StandardResponse } from '../dto';
-import { OptionalAuthGuard, SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
+import {
+  OptionalAuthGuard,
+  SupabaseAuthGuard,
+  type AuthenticatedRequest,
+} from '../supabase';
 import { CreateReviewDto, ReviewDetailDto, UpdateReviewDto } from './dtos';
 import { ReviewsService } from './reviews.service';
 

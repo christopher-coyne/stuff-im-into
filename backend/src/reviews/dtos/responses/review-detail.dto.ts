@@ -93,7 +93,9 @@ export class ReviewDetailDto {
   @ApiProperty({ type: [RelatedReviewDto] })
   relatedReviews: RelatedReviewDto[];
 
-  @ApiProperty({ description: 'Whether the current user has bookmarked this review' })
+  @ApiProperty({
+    description: 'Whether the current user has bookmarked this review',
+  })
   isBookmarked: boolean;
 
   constructor(

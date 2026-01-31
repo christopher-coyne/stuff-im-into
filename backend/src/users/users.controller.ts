@@ -17,7 +17,13 @@ import {
 } from '../dto';
 import { OptionalAuthGuard, SupabaseAuthGuard } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
-import { CreateUserDto, GetUsersQueryDto, UpdateThemeDto, UpdateUserDto, UserResponseDto } from './users.dto';
+import {
+  CreateUserDto,
+  GetUsersQueryDto,
+  UpdateThemeDto,
+  UpdateUserDto,
+  UserResponseDto,
+} from './users.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
@@ -59,7 +65,10 @@ export class UsersController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateUserDto,
   ): Promise<StandardResponse<UserResponseDto>> {
-    const user = await this.usersService.upsertCurrentUser(req.supabaseUser.id, dto);
+    const user = await this.usersService.upsertCurrentUser(
+      req.supabaseUser.id,
+      dto,
+    );
     return StandardResponse.ok(user);
   }
 
