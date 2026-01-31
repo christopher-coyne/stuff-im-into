@@ -1,7 +1,7 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma';
-import { CategoryDto, CreateCategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto } from './dtos';
+import { CategoryDto, CreateCategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto, UpdateTabDto } from './dtos';
 
 @Injectable()
 export class TabsService {
@@ -238,6 +238,62 @@ export class TabsService {
     };
   }
 
+  async updateTab(
+    user: User,
+    tabId: string,
+    dto: UpdateTabDto,
+  ): Promise<TabResponseDto> {
+    // Verify tab exists and belongs to the user
+    const tab = await this.prisma.tab.findUnique({
+      where: { id: tabId },
+      select: { id: true, userId: true },
+    });
+
+    if (!tab) {
+      throw new NotFoundException('Tab not found');
+    }
+
+    if (tab.userId !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to update this tab',
+      );
+    }
+
+    // Generate new slug from name
+    const slug = dto.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    // Check if slug already exists for this user (excluding current tab)
+    const existing = await this.prisma.tab.findFirst({
+      where: {
+        userId: user.id,
+        slug,
+        id: { not: tabId },
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException('A tab with this name already exists');
+    }
+
+    const updatedTab = await this.prisma.tab.update({
+      where: { id: tabId },
+      data: {
+        name: dto.name,
+        slug,
+      },
+    });
+
+    return {
+      id: updatedTab.id,
+      name: updatedTab.name,
+      slug: updatedTab.slug,
+      sortOrder: updatedTab.sortOrder,
+    };
+  }
+
   async deleteTab(user: User, tabId: string): Promise<void> {
     // Verify tab exists and belongs to the user
     const tab = await this.prisma.tab.findUnique({
@@ -250,7 +306,9 @@ export class TabsService {
     }
 
     if (tab.userId !== user.id) {
-      throw new ForbiddenException('You do not have permission to delete this tab');
+      throw new ForbiddenException(
+        'You do not have permission to delete this tab',
+      );
     }
 
     // Delete the tab (cascades will handle reviews, categories, etc.)

@@ -1,6 +1,10 @@
-import { Check, ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Check, ChevronDown, ChevronUp, Pencil, PencilLine, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
+import { toast } from "sonner";
+import { api } from "~/lib/api/client";
+import { useAuth } from "~/lib/auth-context";
 import {
   AESTHETICS,
   getAestheticSlugs,
@@ -17,12 +21,11 @@ interface EditSidebarProps {
   currentTab: { id: string; name: string } | null;
   onExitEditMode: () => void;
   onAddTab: () => void;
+  onRenameTab: () => void;
   onDeleteTab: () => void;
   onAddCategory: () => void;
   currentTheme: ThemeSelection;
   onThemeChange: (theme: ThemeSelection) => void;
-  onSaveTheme: () => void;
-  isSavingTheme?: boolean;
 }
 
 type SidebarTab = "content" | "theme";
@@ -31,17 +34,36 @@ export function EditSidebar({
   currentTab,
   onExitEditMode,
   onAddTab,
+  onRenameTab,
   onDeleteTab,
   onAddCategory,
   currentTheme,
   onThemeChange,
-  onSaveTheme,
-  isSavingTheme,
 }: EditSidebarProps) {
+  const { session } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<SidebarTab>("content");
   const aestheticSlugs = getAestheticSlugs();
   const currentPalettes = getPaletteNames(currentTheme.aesthetic);
+
+  const saveThemeMutation = useMutation({
+    mutationFn: async () => {
+      if (!session) throw new Error("Not authenticated");
+      await api.users.usersControllerUpdateTheme(
+        { aestheticSlug: currentTheme.aesthetic, palette: currentTheme.palette },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+    },
+    onSuccess: () => {
+      toast.success("Theme saved");
+    },
+    onError: (error) => {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to save theme";
+      toast.error(message);
+    },
+  });
   // If the user's palette doesn't exist, treat the first palette as selected
   const effectivePalette = currentPalettes.includes(currentTheme.palette)
     ? currentTheme.palette
@@ -55,10 +77,24 @@ export function EditSidebar({
 
 
   return (
-    <div className="fixed right-6 bottom-6 z-40 flex flex-col items-end">
+    <div className="fixed right-6 top-20 z-40 flex flex-col items-end">
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-white border-2 border-black text-black rounded-xl px-6 py-2.5 hover:bg-emerald-100 transition-colors shadow-lg flex items-center gap-2 mb-2"
+      >
+        <Pencil className="h-4 w-4" />
+        <span className="text-base font-semibold">Edit</span>
+        {isOpen ? (
+          <ChevronUp className="h-4 w-4" />
+        ) : (
+          <ChevronDown className="h-4 w-4" />
+        )}
+      </button>
+
       {/* Edit Panel */}
       {isOpen && (
-        <div className="bg-background border border-border rounded-lg shadow-lg overflow-hidden mb-2 w-72 max-h-[70vh] flex flex-col">
+        <div className="bg-background border border-border rounded-lg shadow-lg overflow-hidden w-72 max-h-[70vh] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <span className="text-sm font-semibold">Edit Mode</span>
@@ -113,6 +149,15 @@ export function EditSidebar({
                       <Plus className="h-4 w-4" />
                       Add Tab
                     </button>
+                    {currentTab && (
+                      <button
+                        onClick={onRenameTab}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted transition-colors"
+                      >
+                        <PencilLine className="h-4 w-4" />
+                        Rename Tab
+                      </button>
+                    )}
                     <button
                       onClick={onDeleteTab}
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted text-destructive transition-colors"
@@ -237,30 +282,17 @@ export function EditSidebar({
 
                 {/* Save Button */}
                 <button
-                  onClick={onSaveTheme}
-                  disabled={isSavingTheme}
+                  onClick={() => saveThemeMutation.mutate()}
+                  disabled={saveThemeMutation.isPending}
                   className="w-full mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSavingTheme ? "Saving..." : "Save Theme"}
+                  {saveThemeMutation.isPending ? "Saving..." : "Save Theme"}
                 </button>
               </div>
             )}
           </div>
         </div>
       )}
-
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-background border border-border rounded-lg px-4 py-2 hover:bg-muted transition-colors shadow-lg flex items-center gap-2"
-      >
-        <span className="text-sm font-medium">Edit</span>
-        {isOpen ? (
-          <ChevronDown className="h-4 w-4" />
-        ) : (
-          <ChevronUp className="h-4 w-4" />
-        )}
-      </button>
     </div>
   );
 }

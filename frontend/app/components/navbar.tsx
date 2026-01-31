@@ -74,9 +74,19 @@ export function Navbar() {
             {user ? (
               <Link
                 to="/profile"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="h-8 w-8 rounded-full overflow-hidden bg-muted flex items-center justify-center hover:ring-2 hover:ring-primary/50 transition-all"
               >
-                @{user.username}
+                {user.avatarUrl ? (
+                  <img
+                    src={String(user.avatarUrl)}
+                    alt={user.username}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {user.username.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </Link>
             ) : (
               <div className="flex items-center gap-2">

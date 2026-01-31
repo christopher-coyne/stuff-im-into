@@ -145,10 +145,11 @@ export function ProfileHeader({
           ) : (
             <button
               onClick={() => onEditModeChange(true)}
-              className="p-2"
-              style={styles.buttonIcon}
+              className="px-3 py-1.5 text-sm flex items-center gap-1.5"
+              style={styles.button}
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil className="h-3.5 w-3.5" />
+              Edit mode
             </button>
           )
         )}

@@ -167,6 +167,14 @@ export interface PaginatedReviewsDto {
   meta: PaginationMetaDto;
 }
 
+export interface UpdateTabDto {
+  /**
+   * New name for the tab
+   * @example "Movies"
+   */
+  name: string;
+}
+
 export interface MetaFieldDto {
   label: string;
   value: string;
@@ -940,6 +948,37 @@ export class Api<
         method: "GET",
         query: query,
         secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Tabs
+     * @name TabsControllerUpdateTab
+     * @summary Update a tab
+     * @request PATCH:/tabs/{tabId}
+     * @secure
+     */
+    tabsControllerUpdateTab: (
+      tabId: string,
+      data: UpdateTabDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: TabResponseDto;
+        },
+        any
+      >({
+        path: `/tabs/${tabId}`,
+        method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

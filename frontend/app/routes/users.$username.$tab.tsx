@@ -7,6 +7,7 @@ import { AddCategoryModal } from "~/components/pages/media-list/add-category-mod
 import { AddTabModal } from "~/components/pages/media-list/add-tab-modal";
 import { DeleteTabModal } from "~/components/pages/media-list/delete-tab-modal";
 import { EditSidebar } from "~/components/pages/media-list/edit-sidebar";
+import { RenameTabModal } from "~/components/pages/media-list/rename-tab-modal";
 import { ProfileHeader } from "~/components/pages/media-list/profile-header";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
@@ -112,6 +113,9 @@ export default function MediaListPage() {
   // Delete tab modal state
   const [showDeleteTabModal, setShowDeleteTabModal] = useState(false);
 
+  // Rename tab modal state
+  const [showRenameTabModal, setShowRenameTabModal] = useState(false);
+
   // Theme state
   const [currentTheme, setCurrentTheme] = useState<{
     aesthetic: AestheticSlug;
@@ -129,22 +133,6 @@ export default function MediaListPage() {
   // Resolve the full theme object
   const theme = getTheme(currentTheme.aesthetic, currentTheme.palette);
   const { styles } = theme;
-
-  const saveThemeMutation = useMutation({
-    mutationFn: async () => {
-      if (!session) throw new Error("Not authenticated");
-      await api.users.usersControllerUpdateTheme(
-        { aestheticSlug: currentTheme.aesthetic, palette: currentTheme.palette },
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-    },
-    onError: (error) => {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to save theme";
-      toast.error(message);
-    },
-  });
 
   // React Query for categories
   const { data: categoriesData } = useQuery({
@@ -392,12 +380,11 @@ export default function MediaListPage() {
           currentTab={currentTab}
           onExitEditMode={() => setIsEditMode(false)}
           onAddTab={() => setShowAddTabModal(true)}
+          onRenameTab={() => setShowRenameTabModal(true)}
           onDeleteTab={() => setShowDeleteTabModal(true)}
           onAddCategory={() => setShowAddCategoryModal(true)}
           currentTheme={currentTheme}
           onThemeChange={setCurrentTheme}
-          onSaveTheme={() => saveThemeMutation.mutate()}
-          isSavingTheme={saveThemeMutation.isPending}
         />
       )}
 
@@ -423,6 +410,16 @@ export default function MediaListPage() {
           tabName={currentTab.name}
           reviewCount={reviews.items.length}
           onSuccess={() => navigate(`/users/${user.username}`)}
+        />
+      )}
+
+      {currentTab && (
+        <RenameTabModal
+          open={showRenameTabModal}
+          onOpenChange={setShowRenameTabModal}
+          tabId={currentTab.id}
+          currentName={currentTab.name}
+          onSuccess={(newSlug) => navigate(`/users/${user.username}/${newSlug}`)}
         />
       )}
     </div>

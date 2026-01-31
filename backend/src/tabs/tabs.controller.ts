@@ -6,7 +6,7 @@ import {
   StandardResponse,
 } from '../dto';
 import { OptionalAuthGuard, SupabaseAuthGuard, type AuthenticatedRequest } from '../supabase';
-import { CategoryDto, CreateCategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto } from './dtos';
+import { CategoryDto, CreateCategoryDto, CreateTabDto, GetReviewsQueryDto, PaginatedReviewsDto, ReorderTabsDto, TabResponseDto, UpdateTabDto } from './dtos';
 import { TabsService } from './tabs.service';
 
 @ApiTags('Tabs')
@@ -85,6 +85,23 @@ export class TabsController {
   ): Promise<StandardResponse<PaginatedReviewsDto>> {
     const result = await this.tabsService.findReviewsForTab(tabId, query, req.user?.id);
     return StandardResponse.ok(result);
+  }
+
+  @Patch(':tabId')
+  @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a tab' })
+  @ApiStandardResponse(TabResponseDto)
+  async updateTab(
+    @Param('tabId') tabId: string,
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateTabDto,
+  ): Promise<StandardResponse<TabResponseDto>> {
+    if (!req.user) {
+      throw new Error('User profile not found');
+    }
+    const tab = await this.tabsService.updateTab(req.user, tabId, dto);
+    return StandardResponse.ok(tab);
   }
 
   @Delete(':tabId')

@@ -109,6 +109,7 @@ export default function ProfilePage() {
     onSuccess: () => {
       refreshUser();
       setIsEditing(false);
+      toast.success("Profile updated");
     },
   });
 
