@@ -5,13 +5,35 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import { Navbar } from "./components/navbar";
 import { AuthProvider } from "./lib/auth-context";
 import { QueryProvider } from "./lib/query-provider";
+import { api } from "./lib/api/client";
+import { getAuthHeaders } from "./lib/supabase/server";
 import "./app.css";
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const authHeaders = await getAuthHeaders(request);
+
+  // Not authenticated - no user to fetch
+  if (!("Authorization" in authHeaders)) {
+    return { user: null };
+  }
+
+  try {
+    const response = await api.auth.authControllerMe({
+      headers: authHeaders,
+    });
+    return { user: response.data.data?.user ?? null };
+  } catch {
+    // Auth failed or user not found - return null
+    return { user: null };
+  }
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -56,9 +78,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { user } = useLoaderData<typeof loader>();
+
   return (
     <QueryProvider>
-      <AuthProvider>
+      <AuthProvider initialUser={user}>
         <Navbar />
         <Outlet />
       </AuthProvider>

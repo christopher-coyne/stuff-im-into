@@ -1,18 +1,45 @@
 import { useMutation } from "@tanstack/react-query";
-import { ChevronRight, Loader2, LogOut, Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { ChevronRight, LogOut, Pencil } from "lucide-react";
+import { useState } from "react";
+import { Link, redirect, useLoaderData, useNavigate } from "react-router";
 import { AvatarUpload } from "~/components/profile/avatar-upload";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
+import { loaderFetch } from "~/lib/api/loader-fetch";
+import { getAuthHeaders } from "~/lib/supabase/server";
+import type { Route } from "./+types/profile";
 
 export function meta() {
   return [
     { title: "Profile | Stuffiminto" },
     { name: "description", content: "Manage your account and bookmarks" },
   ];
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const authHeaders = await getAuthHeaders(request);
+
+  // Check if user is authenticated by looking for Authorization header
+  if (!("Authorization" in authHeaders)) {
+    throw redirect("/");
+  }
+
+  // Fetch both user and review bookmarks in parallel
+  const [usersRes, reviewsRes] = await Promise.all([
+    loaderFetch(() =>
+      api.bookmarks.bookmarksControllerGetUserBookmarks({ headers: authHeaders })
+    ).catch(() => null),
+    loaderFetch(() =>
+      api.bookmarks.bookmarksControllerGetReviewBookmarks({ headers: authHeaders })
+    ).catch(() => null),
+  ]);
+
+  return {
+    bookmarkedUsers: (usersRes?.data?.data || []) as BookmarkedUser[],
+    bookmarkedReviews: (reviewsRes?.data?.data || []) as BookmarkedReview[],
+  };
 }
 
 interface BookmarkedUser {
@@ -41,14 +68,13 @@ interface BookmarkedReview {
 type BookmarkTab = "users" | "reviews";
 
 export default function ProfilePage() {
-  const { isAuthenticated, isLoading, logout, user, session, refreshUser } = useAuth();
+  const { bookmarkedUsers, bookmarkedReviews } = useLoaderData<typeof loader>();
+  const { logout, user, session, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
   const [editBio, setEditBio] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
 
   // Avatar upload mutation
   const updateAvatarMutation = useMutation({
@@ -64,57 +90,25 @@ export default function ProfilePage() {
     },
   });
 
-  // Bookmarks state
+  // Bio update mutation
+  const updateBioMutation = useMutation({
+    mutationFn: async (bio: string) => {
+      if (!session) throw new Error("Not authenticated");
+      await api.users.usersControllerUpdateMe(
+        { bio },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+    },
+    onSuccess: () => {
+      refreshUser();
+      setIsEditing(false);
+    },
+  });
+
+  // Bookmarks tab state
   const [bookmarkTab, setBookmarkTab] = useState<BookmarkTab>("users");
-  const [bookmarkedUsers, setBookmarkedUsers] = useState<BookmarkedUser[]>([]);
-  const [bookmarkedReviews, setBookmarkedReviews] = useState<BookmarkedReview[]>([]);
-  const [loadingBookmarks, setLoadingBookmarks] = useState(true);
 
   const BIO_MAX_LENGTH = 160;
-
-  // Fetch bookmarks
-  useEffect(() => {
-    const fetchBookmarks = async () => {
-      if (!session) return;
-
-      setLoadingBookmarks(true);
-      try {
-        const headers = { Authorization: `Bearer ${session.access_token}` };
-
-        // Fetch both user and review bookmarks
-        const [usersRes, reviewsRes] = await Promise.all([
-          api.bookmarks?.bookmarksControllerGetUserBookmarks?.({ headers }).catch(() => null),
-          api.bookmarks?.bookmarksControllerGetReviewBookmarks?.({ headers }).catch(() => null),
-        ]);
-
-        if (usersRes?.data?.data) {
-          setBookmarkedUsers(usersRes.data.data as unknown as BookmarkedUser[]);
-        }
-        if (reviewsRes?.data?.data) {
-          setBookmarkedReviews(reviewsRes.data.data as unknown as BookmarkedReview[]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch bookmarks:", error);
-      } finally {
-        setLoadingBookmarks(false);
-      }
-    };
-
-    fetchBookmarks();
-  }, [session]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    navigate("/", { replace: true });
-    return null;
-  }
 
   const handleLogout = async () => {
     await logout();
@@ -123,41 +117,14 @@ export default function ProfilePage() {
 
   const handleStartEdit = () => {
     setEditBio(String(user?.bio || ""));
-    setSaveError("");
+    updateBioMutation.reset();
     setIsEditing(true);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditBio("");
-    setSaveError("");
-  };
-
-  const handleSaveBio = async () => {
-    if (!session) {
-      setSaveError("No session");
-      return;
-    }
-
-    setIsSaving(true);
-    setSaveError("");
-
-    try {
-      console.log("Saving bio:", editBio);
-      const response = await api.users.usersControllerUpdateMe(
-        { bio: editBio },
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-      console.log("Save response:", response);
-      await refreshUser();
-      setIsEditing(false);
-    } catch (error: unknown) {
-      console.error("Save error:", error);
-      const err = error as { response?: { data?: { message?: string } } };
-      setSaveError(err.response?.data?.message || "Failed to save changes");
-    } finally {
-      setIsSaving(false);
-    }
+    updateBioMutation.reset();
   };
 
   const formatJoinDate = (dateString: string) => {
@@ -248,23 +215,26 @@ export default function ProfilePage() {
                           {editBio.length} / {BIO_MAX_LENGTH}
                         </p>
                       </div>
-                      {saveError && (
-                        <p className="text-sm text-destructive">{saveError}</p>
+                      {updateBioMutation.error && (
+                        <p className="text-sm text-destructive">
+                          {(updateBioMutation.error as { response?: { data?: { message?: string } } })
+                            ?.response?.data?.message || "Failed to save changes"}
+                        </p>
                       )}
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
-                          onClick={handleSaveBio}
-                          disabled={isSaving}
+                          onClick={() => updateBioMutation.mutate(editBio)}
+                          disabled={updateBioMutation.isPending}
                           className="bg-amber-500 hover:bg-amber-600 text-white"
                         >
-                          {isSaving ? "Saving..." : "Save"}
+                          {updateBioMutation.isPending ? "Saving..." : "Save"}
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={handleCancelEdit}
-                          disabled={isSaving}
+                          disabled={updateBioMutation.isPending}
                         >
                           Cancel
                         </Button>
@@ -344,11 +314,7 @@ export default function ProfilePage() {
 
               {/* Bookmark List */}
               <div className="divide-y divide-border">
-                {loadingBookmarks ? (
-                  <div className="p-8 flex justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : bookmarkTab === "users" ? (
+                {bookmarkTab === "users" ? (
                   bookmarkedUsers.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
                       No bookmarked users yet

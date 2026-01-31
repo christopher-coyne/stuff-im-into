@@ -34,7 +34,7 @@ function ThemeToggle() {
 }
 
 export function Navbar() {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [signupModalOpen, setSignupModalOpen] = useState(false);
 
@@ -45,6 +45,7 @@ export function Navbar() {
   const switchToLogin = () => setLoginModalOpen(true);
 
   console.log('user ', user, ' is auth ', isAuthenticated)
+  console.log('isloading ', isLoading)
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-4">
@@ -59,7 +60,7 @@ export function Navbar() {
 
           {/* Right - Auth & Theme */}
           <div className="flex items-center gap-2">
-            {isAuthenticated && user && (
+            {user && (
               <Link
                 to={`/users/${user.username}`}
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -70,9 +71,7 @@ export function Navbar() {
 
             <ThemeToggle />
 
-            {isLoading ? (
-              <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-            ) : isAuthenticated && user ? (
+            {user ? (
               <Link
                 to="/profile"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"

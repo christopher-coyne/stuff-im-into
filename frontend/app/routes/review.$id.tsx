@@ -9,6 +9,7 @@ import { Button } from "~/components/ui/button";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
+import { loaderFetch } from "~/lib/api/loader-fetch";
 import type { ReviewListItemDto, UpdateReviewDto } from "~/lib/api/api";
 import { getAuthHeaders } from "~/lib/supabase/server";
 import { getTheme, type AestheticSlug } from "~/lib/theme/themes";
@@ -39,9 +40,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   // Get auth headers from cookies (for SSR)
   const authHeaders = await getAuthHeaders(request);
 
-  const response = await api.reviews.reviewsControllerFindById(id, {
-    headers: authHeaders,
-  });
+  const response = await loaderFetch(() =>
+    api.reviews.reviewsControllerFindById(id, {
+      headers: authHeaders,
+    })
+  );
   const review = response.data.data;
 
   if (!review) {
@@ -49,9 +52,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 
   // Fetch the review owner's full profile to get their theme
-  const userResponse = await api.users.usersControllerFindByUsername(review.user.username, {
-    headers: authHeaders,
-  });
+  const userResponse = await loaderFetch(() =>
+    api.users.usersControllerFindByUsername(review.user.username, {
+      headers: authHeaders,
+    })
+  );
   const reviewOwner = userResponse.data.data;
 
   // Fetch other reviews from the same categories
@@ -59,12 +64,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   if (review.categories.length > 0) {
     const categoryFetches = review.categories.map(async (category) => {
-      const res = await api.tabs.tabsControllerFindReviewsForTab(review.tab.id, {
-        categoryId: category.id,
-        limit: 5,
-      }, {
-        headers: authHeaders,
-      });
+      const res = await loaderFetch(() =>
+        api.tabs.tabsControllerFindReviewsForTab(review.tab.id, {
+          categoryId: category.id,
+          limit: 5,
+        }, {
+          headers: authHeaders,
+        })
+      );
       return { category, reviews: res.data.data?.items || [] };
     });
 

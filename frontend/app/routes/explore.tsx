@@ -21,6 +21,7 @@ import {
 } from "~/components/ui/select";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
+import { loaderFetch } from "~/lib/api/loader-fetch";
 import type { UserResponseDto } from "~/lib/api/api";
 import { getAuthHeaders } from "~/lib/supabase/server";
 import type { Route } from "./+types/explore";
@@ -44,9 +45,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const authHeaders = await getAuthHeaders(request);
 
-  const response = await api.users.usersControllerFindAll(
-    { search, sortBy, page, limit: PAGE_SIZE },
-    { headers: authHeaders }
+  const response = await loaderFetch(() =>
+    api.users.usersControllerFindAll(
+      { search, sortBy, page, limit: PAGE_SIZE },
+      { headers: authHeaders }
+    )
   );
 
   return {

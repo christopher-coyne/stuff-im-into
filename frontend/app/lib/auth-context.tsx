@@ -33,9 +33,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+interface AuthProviderProps {
+  children: ReactNode;
+  initialUser?: UserProfileDto | null;
+}
+
+export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
-  const [user, setUser] = useState<UserProfileDto | null>(null);
+  const [user, setUser] = useState<UserProfileDto | null>(initialUser ?? null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -84,7 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (currentSession) {
           setSession(currentSession);
           setSupabaseUser(currentSession.user);
-          await fetchUserProfile(currentSession.access_token);
+          // Only fetch user profile if not provided by loader
+          if (initialUser === undefined) {
+            await fetchUserProfile(currentSession.access_token);
+          }
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
