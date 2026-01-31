@@ -97,6 +97,13 @@ export interface UpdateUserDto {
   avatarUrl?: string;
 }
 
+export interface UpdateThemeDto {
+  /** Slug of the aesthetic (e.g., "minimalist", "neobrutalist", "terminal") */
+  aestheticSlug: string;
+  /** Palette name (e.g., "default", "warm", "electric") */
+  palette: string;
+}
+
 export interface TabResponseDto {
   id: string;
   name: string;
@@ -709,6 +716,36 @@ export class Api<
       >({
         path: `/users/me`,
         method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Users
+     * @name UsersControllerUpdateTheme
+     * @summary Update current user theme
+     * @request PUT:/users/me/theme
+     * @secure
+     */
+    usersControllerUpdateTheme: (
+      data: UpdateThemeDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: UserResponseDto;
+        },
+        any
+      >({
+        path: `/users/me/theme`,
+        method: "PUT",
         body: data,
         secure: true,
         type: ContentType.Json,

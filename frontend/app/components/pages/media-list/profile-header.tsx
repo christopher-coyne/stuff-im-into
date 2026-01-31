@@ -6,12 +6,14 @@ import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
+import { AESTHETICS, type AestheticSlug } from "~/lib/theme/themes";
 
 interface ProfileHeaderProps {
   user: UserResponseDto;
   isOwnProfile: boolean;
   isEditMode: boolean;
   onEditModeChange: (editing: boolean) => void;
+  currentTheme?: { aesthetic: AestheticSlug; palette: string };
 }
 
 export function ProfileHeader({
@@ -19,6 +21,7 @@ export function ProfileHeader({
   isOwnProfile,
   isEditMode,
   onEditModeChange,
+  currentTheme,
 }: ProfileHeaderProps) {
   const { session } = useAuth();
   const revalidator = useRevalidator();
@@ -28,6 +31,12 @@ export function ProfileHeader({
     month: "long",
     year: "numeric",
   });
+
+  // Get theme display name
+  const themeName = currentTheme
+    ? AESTHETICS[currentTheme.aesthetic]?.name ?? "Unknown"
+    : null;
+  const paletteName = currentTheme?.palette ?? "default";
 
   const bookmarkUserMutation = useMutation({
     mutationFn: async (shouldBookmark: boolean) => {
@@ -69,6 +78,11 @@ export function ProfileHeader({
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-white">@{user.username}</h1>
           <p className="text-white/70 text-sm">Joined {joinDate}</p>
+          {themeName && (
+            <p className="text-white/50 text-xs mt-1">
+              {themeName} · <span className="capitalize">{paletteName}</span>
+            </p>
+          )}
         </div>
 
         {/* About Button */}

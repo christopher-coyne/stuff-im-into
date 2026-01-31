@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { GripVertical, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
@@ -16,6 +16,7 @@ import { api } from "~/lib/api/client";
 import { loaderFetch } from "~/lib/api/loader-fetch";
 import type { CategoryDto, PaginatedReviewsDto } from "~/lib/api/api";
 import { getAuthHeaders } from "~/lib/supabase/server";
+import type { AestheticSlug } from "~/lib/theme/themes";
 import type { Route } from "./+types/users.$username.$tab";
 
 export async function loader({ params, request }: Route.LoaderArgs) {
@@ -111,6 +112,30 @@ export default function MediaListPage() {
   // Delete tab modal state
   const [showDeleteTabModal, setShowDeleteTabModal] = useState(false);
 
+  // Theme state
+  const [currentTheme, setCurrentTheme] = useState<{
+    aesthetic: AestheticSlug;
+    palette: string;
+  }>(() => {
+    // Initialize from user's theme if available
+    const aesthetic = user.userTheme?.aesthetic?.slug;
+    const palette = user.userTheme?.palette;
+    return {
+      aesthetic: (aesthetic as AestheticSlug) || "minimalist",
+      palette: palette || "default",
+    };
+  });
+
+  const saveThemeMutation = useMutation({
+    mutationFn: async () => {
+      if (!session) throw new Error("Not authenticated");
+      await api.users.usersControllerUpdateTheme(
+        { aestheticSlug: currentTheme.aesthetic, palette: currentTheme.palette },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+    },
+  });
+
   // React Query for categories
   const { data: categoriesData } = useQuery({
     queryKey: ["categories", currentTab?.id],
@@ -121,6 +146,21 @@ export default function MediaListPage() {
     },
     initialData: categories,
     enabled: !!currentTab,
+  });
+
+  // Reorder tabs mutation
+  const reorderTabsMutation = useMutation({
+    mutationFn: async (tabIds: string[]) => {
+      if (!session) throw new Error("Not authenticated");
+      await api.tabs.tabsControllerReorderTabs(
+        { tabIds },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+    },
+    onError: () => {
+      // Revert on error
+      setLocalTabs(user.tabs);
+    },
   });
 
   // Drag and drop state
@@ -175,7 +215,7 @@ export default function MediaListPage() {
     setDragOverTabId(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, targetTabId: string) => {
+  const handleDrop = (e: React.DragEvent, targetTabId: string) => {
     e.preventDefault();
     if (!draggedTabId || draggedTabId === targetTabId || !session) return;
 
@@ -195,16 +235,7 @@ export default function MediaListPage() {
     setDragOverTabId(null);
 
     // Save to backend
-    try {
-      await api.tabs.tabsControllerReorderTabs(
-        { tabIds: newTabs.map((t) => t.id) },
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-    } catch (error) {
-      console.error("Failed to reorder tabs:", error);
-      // Revert on error
-      setLocalTabs(user.tabs);
-    }
+    reorderTabsMutation.mutate(newTabs.map((t) => t.id));
   };
 
   const handleDragEnd = () => {
@@ -220,6 +251,7 @@ export default function MediaListPage() {
           isOwnProfile={isOwnProfile}
           isEditMode={isEditMode}
           onEditModeChange={setIsEditMode}
+          currentTheme={currentTheme}
         />
 
         {/* Main content area */}
@@ -315,6 +347,10 @@ export default function MediaListPage() {
           onAddTab={() => setShowAddTabModal(true)}
           onDeleteTab={() => setShowDeleteTabModal(true)}
           onAddCategory={() => setShowAddCategoryModal(true)}
+          currentTheme={currentTheme}
+          onThemeChange={setCurrentTheme}
+          onSaveTheme={() => saveThemeMutation.mutate()}
+          isSavingTheme={saveThemeMutation.isPending}
         />
       )}
 

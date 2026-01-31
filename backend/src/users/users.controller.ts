@@ -17,7 +17,7 @@ import {
 } from '../dto';
 import { OptionalAuthGuard, SupabaseAuthGuard } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
-import { CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponseDto } from './users.dto';
+import { CreateUserDto, GetUsersQueryDto, UpdateThemeDto, UpdateUserDto, UserResponseDto } from './users.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
@@ -73,6 +73,19 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ): Promise<StandardResponse<UserResponseDto>> {
     const user = await this.usersService.updateCurrentUser(req.user, dto);
+    return StandardResponse.ok(user);
+  }
+
+  @Put('me/theme')
+  @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update current user theme' })
+  @ApiStandardResponse(UserResponseDto)
+  async updateTheme(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateThemeDto,
+  ): Promise<StandardResponse<UserResponseDto>> {
+    const user = await this.usersService.updateTheme(req.user, dto);
     return StandardResponse.ok(user);
   }
 

@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma';
 import {
   CreateUserDto,
   GetUsersQueryDto,
+  UpdateThemeDto,
   UpdateUserDto,
   UserResponseDto,
   UserSortBy,
@@ -328,6 +329,41 @@ export class UsersService {
       tabs: user.tabs,
       isBookmarked: false,
     };
+  }
+
+  async updateTheme(
+    user: User | null,
+    dto: UpdateThemeDto,
+  ): Promise<UserResponseDto> {
+    if (!user) {
+      throw new ForbiddenException('Not authenticated');
+    }
+
+    // Find the aesthetic by slug
+    const aesthetic = await this.prisma.aesthetic.findUnique({
+      where: { slug: dto.aestheticSlug },
+    });
+
+    if (!aesthetic) {
+      throw new NotFoundException(`Aesthetic "${dto.aestheticSlug}" not found`);
+    }
+
+    // Upsert the user theme
+    await this.prisma.userTheme.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        aestheticId: aesthetic.id,
+        palette: dto.palette,
+      },
+      update: {
+        aestheticId: aesthetic.id,
+        palette: dto.palette,
+      },
+    });
+
+    // Return the updated user
+    return this.findById(user.id);
   }
 
   private getOrderBy(sortBy: UserSortBy) {
