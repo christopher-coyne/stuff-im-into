@@ -12,6 +12,7 @@ import { Input } from "~/components/ui/input";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 
+const TAB_NAME_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 200;
 
 interface EditTabModalProps {
@@ -115,7 +116,8 @@ export function EditTabModal({
           <Input
             placeholder="Tab name"
             value={tabName}
-            onChange={(e) => setTabName(e.target.value)}
+            maxLength={TAB_NAME_MAX_LENGTH}
+            onChange={(e) => setTabName(e.target.value.slice(0, TAB_NAME_MAX_LENGTH))}
             onKeyDown={(e) => {
               if (e.key === "Enter" && tabName.trim()) {
                 handleSubmit();

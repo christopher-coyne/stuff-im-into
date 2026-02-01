@@ -74,7 +74,8 @@ export function AddCategoryModal({
           <Input
             placeholder="Category name (e.g., Favorites, Sci-Fi, Must Watch)"
             value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
+            maxLength={100}
+            onChange={(e) => setCategoryName(e.target.value.slice(0, 100))}
             onKeyDown={(e) => {
               if (e.key === "Enter" && categoryName.trim()) {
                 handleSubmit();

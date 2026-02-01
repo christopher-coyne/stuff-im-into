@@ -13,6 +13,7 @@ interface MarkdownEditorProps<T extends FieldValues> {
   placeholder?: string;
   minHeight?: number;
   className?: string;
+  maxLength?: number;
 }
 
 function EditorFallback({ minHeight }: { minHeight: number }) {
@@ -92,6 +93,7 @@ export function MarkdownEditor<T extends FieldValues>({
   placeholder,
   minHeight = 200,
   className,
+  maxLength,
 }: MarkdownEditorProps<T>) {
   const [colorMode, setColorMode] = useState<"light" | "dark">("light");
   const [isMounted, setIsMounted] = useState(false);
@@ -132,27 +134,43 @@ export function MarkdownEditor<T extends FieldValues>({
     <Controller
       name={name}
       control={control}
-      render={({ field: { onChange, value }, fieldState: { error } }) => (
-        <div
-          className={cn(
-            "rounded-xl overflow-hidden border border-border",
-            className
-          )}
-        >
-          <MDEditorWrapper
-            value={value || ""}
-            onChange={onChange}
-            placeholder={placeholder}
-            minHeight={minHeight}
-            colorMode={colorMode}
-          />
-          {error && (
-            <p className="text-sm text-destructive mt-1 px-3 pb-2">
-              {error.message}
-            </p>
-          )}
-        </div>
-      )}
+      render={({ field: { onChange, value }, fieldState: { error } }) => {
+        const currentLength = (value || "").length;
+        const handleChange = (val: string) => {
+          if (maxLength && val.length > maxLength) {
+            onChange(val.slice(0, maxLength));
+          } else {
+            onChange(val);
+          }
+        };
+
+        return (
+          <div
+            className={cn(
+              "rounded-xl overflow-hidden border border-border",
+              className
+            )}
+          >
+            <MDEditorWrapper
+              value={value || ""}
+              onChange={handleChange}
+              placeholder={placeholder}
+              minHeight={minHeight}
+              colorMode={colorMode}
+            />
+            {maxLength && (
+              <p className="text-xs text-muted-foreground text-right px-3 py-1 border-t border-border">
+                {currentLength} / {maxLength}
+              </p>
+            )}
+            {error && (
+              <p className="text-sm text-destructive mt-1 px-3 pb-2">
+                {error.message}
+              </p>
+            )}
+          </div>
+        );
+      }}
     />
   );
 }

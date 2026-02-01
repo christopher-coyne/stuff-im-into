@@ -218,7 +218,8 @@ export function ReviewForm({
             <input
               type="text"
               placeholder="Enter title..."
-              {...register("title", { required: true })}
+              maxLength={200}
+              {...register("title", { required: true, maxLength: 200 })}
               className="w-full text-3xl font-bold text-white bg-transparent border-none outline-none placeholder:text-white/50 mb-1"
             />
 
@@ -226,7 +227,8 @@ export function ReviewForm({
             <input
               type="text"
               placeholder="Author (optional)"
-              {...register("author")}
+              maxLength={300}
+              {...register("author", { maxLength: 300 })}
               className="w-full text-lg text-white/80 bg-transparent border-none outline-none placeholder:text-white/40 mb-3"
             />
 
@@ -276,6 +278,7 @@ export function ReviewForm({
                     control={control}
                     placeholder="Write your text content here..."
                     minHeight={250}
+                    maxLength={50000}
                     className="bg-muted/30"
                   />
                 </div>
@@ -369,13 +372,15 @@ export function ReviewForm({
                   <div key={field.id} className="flex items-center gap-2 group">
                     <input
                       placeholder="Label"
-                      {...register(`metaFields.${index}.label`)}
+                      maxLength={50}
+                      {...register(`metaFields.${index}.label`, { maxLength: 50 })}
                       className="w-20 bg-transparent border-b border-dashed border-muted-foreground/50 text-muted-foreground outline-none focus:border-foreground"
                     />
                     <span className="text-muted-foreground">:</span>
                     <input
                       placeholder="Value"
-                      {...register(`metaFields.${index}.value`)}
+                      maxLength={500}
+                      {...register(`metaFields.${index}.value`, { maxLength: 500 })}
                       className="w-32 bg-transparent border-b border-dashed border-muted-foreground/50 text-foreground outline-none focus:border-foreground"
                     />
                     <button
@@ -431,6 +436,7 @@ export function ReviewForm({
                 control={control}
                 placeholder="Write your review..."
                 minHeight={300}
+                maxLength={50000}
               />
             </div>
 

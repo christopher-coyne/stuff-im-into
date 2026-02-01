@@ -19,6 +19,7 @@ interface AddTabModalProps {
   onSuccess: (newTab: TabDto) => void;
 }
 
+const TAB_NAME_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 200;
 
 export function AddTabModal({
@@ -82,7 +83,8 @@ export function AddTabModal({
           <Input
             placeholder="Tab name (e.g., Movies, Books, Music)"
             value={tabName}
-            onChange={(e) => setTabName(e.target.value)}
+            maxLength={TAB_NAME_MAX_LENGTH}
+            onChange={(e) => setTabName(e.target.value.slice(0, TAB_NAME_MAX_LENGTH))}
             onKeyDown={(e) => {
               if (e.key === "Enter" && tabName.trim()) {
                 handleSubmit();
