@@ -10,6 +10,15 @@ import { EditSidebar } from "~/components/pages/media-list/edit-sidebar";
 import { EditTabModal } from "~/components/pages/media-list/edit-tab-modal";
 import { ProfileHeader } from "~/components/pages/media-list/profile-header";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "~/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { useAuth } from "~/lib/auth-context";
 import { useDebounce } from "~/hooks/use-debounce";
@@ -20,11 +29,14 @@ import { getAuthHeaders } from "~/lib/supabase/server";
 import { getTheme, type AestheticSlug } from "~/lib/theme/themes";
 import type { Route } from "./+types/users.$username.$tab";
 
+const REVIEWS_PER_PAGE = 9;
+
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { username, tab: tabSlug } = params;
   const url = new URL(request.url);
   const search = url.searchParams.get("search") || undefined;
   const categorySlug = url.searchParams.get("category") || undefined;
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
 
   if (!username) {
     throw new Response("Username is required", { status: 400 });
@@ -55,13 +67,13 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   let categories: CategoryDto[] = [];
   let reviews: PaginatedReviewsDto = {
     items: [],
-    meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
+    meta: { page: 1, limit: REVIEWS_PER_PAGE, total: 0, totalPages: 0 },
   };
 
   if (currentTab) {
     const [categoriesResponse, reviewsResponse] = await Promise.all([
       loaderFetch(() => api.tabs.tabsControllerFindCategoriesForTab(currentTab.id)),
-      loaderFetch(() => api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search }, { headers: authHeaders })),
+      loaderFetch(() => api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, page, limit: REVIEWS_PER_PAGE }, { headers: authHeaders })),
     ]);
     categories = categoriesResponse.data.data?.items || [];
 
@@ -73,7 +85,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     // Re-fetch reviews with category filter if needed
     if (categoryId) {
       const filteredResponse = await loaderFetch(() =>
-        api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId }, { headers: authHeaders })
+        api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId, page, limit: REVIEWS_PER_PAGE }, { headers: authHeaders })
       );
       reviews = filteredResponse.data.data || reviews;
     } else {
@@ -189,6 +201,8 @@ export default function MediaListPage() {
     } else {
       searchParams.delete("search");
     }
+    // Reset to page 1 when search changes
+    searchParams.delete("page");
     setSearchParams(searchParams, { replace: true });
   }, [debouncedSearch]);
 
@@ -198,7 +212,20 @@ export default function MediaListPage() {
     } else {
       searchParams.set("category", value);
     }
+    // Reset to page 1 when changing category
+    searchParams.delete("page");
     setSearchParams(searchParams);
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page === 1) {
+      searchParams.delete("page");
+    } else {
+      searchParams.set("page", String(page));
+    }
+    setSearchParams(searchParams);
+    // Scroll to top of reviews
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDragStart = (e: React.DragEvent, tabId: string) => {
@@ -349,7 +376,8 @@ export default function MediaListPage() {
 
             {/* Tab Description */}
             {currentTab.description && (
-              <p className="text-sm mb-6" style={styles.mutedText}>
+              <p className="text-sm mb-6 pl-4" style={styles.mutedText}>
+                <span className="mr-2">•</span>
                 {currentTab.description}
               </p>
             )}
@@ -361,6 +389,78 @@ export default function MediaListPage() {
               isOwner={isOwnProfile}
               currentTabId={currentTab?.id}
             />
+
+            {/* Pagination */}
+            {reviews.meta.totalPages > 1 && (
+              <Pagination className="mt-8">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => handlePageChange(reviews.meta.page - 1)}
+                      disabled={reviews.meta.page <= 1}
+                      style={styles.mutedText}
+                    />
+                  </PaginationItem>
+
+                  {/* Page numbers */}
+                  {(() => {
+                    const currentPage = reviews.meta.page;
+                    const totalPages = reviews.meta.totalPages;
+                    const pages: (number | "ellipsis")[] = [];
+
+                    if (totalPages <= 7) {
+                      // Show all pages if 7 or fewer
+                      for (let i = 1; i <= totalPages; i++) pages.push(i);
+                    } else {
+                      // Always show first page
+                      pages.push(1);
+
+                      if (currentPage > 3) {
+                        pages.push("ellipsis");
+                      }
+
+                      // Show pages around current
+                      const start = Math.max(2, currentPage - 1);
+                      const end = Math.min(totalPages - 1, currentPage + 1);
+                      for (let i = start; i <= end; i++) pages.push(i);
+
+                      if (currentPage < totalPages - 2) {
+                        pages.push("ellipsis");
+                      }
+
+                      // Always show last page
+                      pages.push(totalPages);
+                    }
+
+                    return pages.map((page, idx) =>
+                      page === "ellipsis" ? (
+                        <PaginationItem key={`ellipsis-${idx}`}>
+                          <PaginationEllipsis style={styles.mutedText} />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={page === currentPage}
+                            style={page === currentPage ? styles.button : styles.mutedText}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    );
+                  })()}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => handlePageChange(reviews.meta.page + 1)}
+                      disabled={reviews.meta.page >= reviews.meta.totalPages}
+                      style={styles.mutedText}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </div>
         ) : (
           <div className="p-8 text-center" style={styles.card}>

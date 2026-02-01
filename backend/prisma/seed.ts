@@ -333,6 +333,311 @@ Walter White's transformation from mild-mannered chemistry teacher to drug kingp
         },
       },
     }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'The Matrix',
+        description: `A revolutionary film that redefined action cinema and philosophical sci-fi.
+
+The Wachowskis created a world that still resonates today. The bullet-time effects were groundbreaking, but it's the ideas about reality and choice that make this a classic.`,
+        mediaType: MediaType.VIDEO,
+        mediaUrl: 'https://www.youtube.com/watch?v=vKQi3bBA1y8',
+        metaFields: [
+          { label: 'Director', value: 'The Wachowskis' },
+          { label: 'Year', value: '1999' },
+        ],
+        sortOrder: 2,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[1].id }, // Sci-Fi
+            { categoryId: filmfanaticMoviesCategories[3].id }, // Must Watch
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Arrival',
+        description: `A thoughtful sci-fi film about language, time, and what it means to be human.
+
+Amy Adams delivers a powerhouse performance. The twist recontextualizes everything you've seen in the most beautiful way.`,
+        mediaType: MediaType.VIDEO,
+        mediaUrl: 'https://www.youtube.com/watch?v=tFMo3UJ4B4g',
+        metaFields: [
+          { label: 'Director', value: 'Denis Villeneuve' },
+          { label: 'Year', value: '2016' },
+        ],
+        sortOrder: 3,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[1].id }, // Sci-Fi
+            { categoryId: filmfanaticMoviesCategories[2].id }, // Mind-Bending
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Interstellar',
+        description: `Nolan's most ambitious film - a space epic grounded in real science and raw emotion.
+
+The docking scene set to "No Time for Diligence" is peak cinema. Hans Zimmer's organ-heavy score is unforgettable.`,
+        mediaType: MediaType.VIDEO,
+        mediaUrl: 'https://www.youtube.com/watch?v=zSWdZVtXT7E',
+        metaFields: [
+          { label: 'Director', value: 'Christopher Nolan' },
+          { label: 'Year', value: '2014' },
+          { label: 'Runtime', value: '169 min' },
+        ],
+        sortOrder: 4,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[1].id }, // Sci-Fi
+            { categoryId: filmfanaticMoviesCategories[0].id }, // Favorites
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Parasite',
+        description: `Bong Joon-ho's masterpiece that defies genre classification.
+
+Equal parts thriller, comedy, and social commentary. The way it shifts tones is masterful. Deserved every Oscar it won.`,
+        mediaType: MediaType.IMAGE,
+        mediaUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba',
+        metaFields: [
+          { label: 'Director', value: 'Bong Joon-ho' },
+          { label: 'Year', value: '2019' },
+          { label: 'Country', value: 'South Korea' },
+        ],
+        sortOrder: 5,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[0].id }, // Favorites
+            { categoryId: filmfanaticMoviesCategories[3].id }, // Must Watch
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'The Prestige',
+        description: `A twisty tale of obsession and rivalry between two magicians.
+
+Nolan at his puzzle-box best. The final reveal rewards repeat viewings. Both Jackman and Bale are phenomenal.`,
+        mediaType: MediaType.VIDEO,
+        mediaUrl: 'https://www.youtube.com/watch?v=ijXruSzfGEc',
+        metaFields: [
+          { label: 'Director', value: 'Christopher Nolan' },
+          { label: 'Year', value: '2006' },
+        ],
+        sortOrder: 6,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[2].id }, // Mind-Bending
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Ex Machina',
+        description: `A taut, cerebral thriller about AI that asks uncomfortable questions.
+
+Oscar Isaac is magnetic as the eccentric billionaire. The film's claustrophobic setting amplifies the tension.`,
+        mediaType: MediaType.VIDEO,
+        mediaUrl: 'https://www.youtube.com/watch?v=EoQuVnKhxaM',
+        metaFields: [
+          { label: 'Director', value: 'Alex Garland' },
+          { label: 'Year', value: '2014' },
+        ],
+        sortOrder: 7,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[1].id }, // Sci-Fi
+            { categoryId: filmfanaticMoviesCategories[2].id }, // Mind-Bending
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Dune (2021)',
+        description: `The adaptation we always deserved. Villeneuve brings Herbert's world to life.
+
+The scale is immense but never loses sight of the characters. The sandworm reveal gave me chills.`,
+        mediaType: MediaType.VIDEO,
+        mediaUrl: 'https://www.youtube.com/watch?v=8g18jFHCLXk',
+        metaFields: [
+          { label: 'Director', value: 'Denis Villeneuve' },
+          { label: 'Year', value: '2021' },
+          { label: 'Runtime', value: '155 min' },
+        ],
+        sortOrder: 8,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[1].id }, // Sci-Fi
+            { categoryId: filmfanaticMoviesCategories[3].id }, // Must Watch
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Eternal Sunshine of the Spotless Mind',
+        description: `A beautiful, heartbreaking exploration of love and memory.
+
+Charlie Kaufman's script is genius. Jim Carrey proves he can do dramatic work with the best of them.`,
+        mediaType: MediaType.IMAGE,
+        mediaUrl: 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9',
+        metaFields: [
+          { label: 'Director', value: 'Michel Gondry' },
+          { label: 'Year', value: '2004' },
+        ],
+        sortOrder: 9,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[0].id }, // Favorites
+            { categoryId: filmfanaticMoviesCategories[2].id }, // Mind-Bending
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Mad Max: Fury Road',
+        description: `Pure adrenaline distilled into film form. A two-hour chase scene that never lets up.
+
+George Miller returned to his franchise and showed everyone how action movies should be made. Practical effects FTW.`,
+        mediaType: MediaType.VIDEO,
+        mediaUrl: 'https://www.youtube.com/watch?v=hEJnMQG9ev8',
+        metaFields: [
+          { label: 'Director', value: 'George Miller' },
+          { label: 'Year', value: '2015' },
+        ],
+        sortOrder: 10,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[3].id }, // Must Watch
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Her',
+        description: `A surprisingly tender love story between a man and an AI.
+
+Spike Jonze crafts a near-future that feels eerily plausible. Joaquin Phoenix carries the film with vulnerability and warmth.`,
+        mediaType: MediaType.TEXT,
+        mediaConfig: { content: `What makes *Her* special is how it treats its premise with complete sincerity. There's no mockery, no easy jokes about falling in love with an operating system.
+
+Instead, it asks: what is connection? What is love? Does the medium matter if the feelings are real?
+
+Scarlett Johansson's voice-only performance as Samantha is remarkable - she creates a fully realized character without ever appearing on screen.` },
+        metaFields: [
+          { label: 'Director', value: 'Spike Jonze' },
+          { label: 'Year', value: '2013' },
+        ],
+        sortOrder: 11,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[1].id }, // Sci-Fi
+            { categoryId: filmfanaticMoviesCategories[0].id }, // Favorites
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[0].id, // Movies
+        title: 'Prisoners',
+        description: `A dark, gripping thriller that keeps you guessing until the final frame.
+
+Hugh Jackman and Jake Gyllenhaal deliver career-best performances. Villeneuve knows how to build unbearable tension.`,
+        mediaType: MediaType.IMAGE,
+        mediaUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401',
+        metaFields: [
+          { label: 'Director', value: 'Denis Villeneuve' },
+          { label: 'Year', value: '2013' },
+          { label: 'Runtime', value: '153 min' },
+        ],
+        sortOrder: 12,
+        publishedAt: new Date(),
+        categories: {
+          create: [
+            { categoryId: filmfanaticMoviesCategories[3].id }, // Must Watch
+          ],
+        },
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[2].id, // Documentaries
+        title: 'Free Solo',
+        description: `Watching Alex Honnold climb El Capitan without ropes is the most stressful movie experience I've ever had.
+
+My palms were sweating the entire final act. A testament to human determination and what's possible when fear is overcome.`,
+        mediaType: MediaType.VIDEO,
+        mediaUrl: 'https://www.youtube.com/watch?v=urRVZ4SW7WU',
+        metaFields: [
+          { label: 'Directors', value: 'Chai Vasarhelyi, Jimmy Chin' },
+          { label: 'Year', value: '2018' },
+        ],
+        sortOrder: 0,
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.review.create({
+      data: {
+        userId: users[0].id,
+        tabId: filmfanaticTabs[2].id, // Documentaries
+        title: 'Jiro Dreams of Sushi',
+        description: `A meditation on craft, dedication, and the pursuit of perfection.
+
+Jiro's 85+ years of making sushi is humbling. It makes you question: what would it mean to devote your entire life to one thing?`,
+        mediaType: MediaType.IMAGE,
+        mediaUrl: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c',
+        metaFields: [
+          { label: 'Director', value: 'David Gelb' },
+          { label: 'Year', value: '2011' },
+        ],
+        sortOrder: 1,
+        publishedAt: new Date(),
+      },
+    }),
   ]);
 
   // Create reviews for bookworm_jane

@@ -3,7 +3,7 @@ import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, Clock, ExternalLink, Penc
 import { useState } from "react";
 import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import { toast } from "sonner";
-import { CategoryReviewsSection, DeleteReviewDialog } from "~/components/media-review";
+import { DeleteReviewDialog } from "~/components/media-review";
 import { ReviewForm, type ReviewFormData } from "~/components/reviews";
 import { MediaPreview } from "~/components/reviews/media-preview";
 import { Button } from "~/components/ui/button";
@@ -11,25 +11,12 @@ import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import { loaderFetch } from "~/lib/api/loader-fetch";
-import type { ReviewListItemDto, UpdateReviewDto } from "~/lib/api/api";
+import type { UpdateReviewDto } from "~/lib/api/api";
+import { formatDate } from "~/lib/format-date";
 import { getAuthHeaders } from "~/lib/supabase/server";
-import { getTheme, type AestheticSlug } from "~/lib/theme/themes";
+import { calculateReadTime } from "~/lib/text-utils";
+import { getTheme } from "~/lib/theme/themes";
 import type { Route } from "./+types/review.$id";
-
-function calculateReadTime(text: string | null | undefined): string {
-  if (!text) return "1 min read";
-  const words = String(text).trim().split(/\s+/).length;
-  const minutes = Math.max(1, Math.ceil(words / 200));
-  return `${minutes} min read`;
-}
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { id } = params;
@@ -60,37 +47,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   );
   const reviewOwner = userResponse.data.data;
 
-  // Fetch other reviews from the same categories
-  const categoryReviews: Record<string, { name: string; reviews: ReviewListItemDto[] }> = {};
-
-  if (review.categories.length > 0) {
-    const categoryFetches = review.categories.map(async (category) => {
-      const res = await loaderFetch(() =>
-        api.tabs.tabsControllerFindReviewsForTab(review.tab.id, {
-          categoryId: category.id,
-          limit: 5,
-        }, {
-          headers: authHeaders,
-        })
-      );
-      return { category, reviews: res.data.data?.items || [] };
-    });
-
-    const results = await Promise.all(categoryFetches);
-
-    for (const { category, reviews: catReviews } of results) {
-      // Filter out the current review and limit to 4
-      const otherReviews = catReviews.filter((r) => r.id !== review.id).slice(0, 4);
-      if (otherReviews.length > 0) {
-        categoryReviews[category.id] = {
-          name: category.name,
-          reviews: otherReviews,
-        };
-      }
-    }
-  }
-
-  return { review, categoryReviews, reviewOwner };
+  return { review, reviewOwner };
 }
 
 export function meta({ data }: Route.MetaArgs) {
@@ -109,7 +66,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export default function ReviewDetailPage() {
-  const { review, categoryReviews, reviewOwner } = useLoaderData<typeof loader>();
+  const { review, reviewOwner } = useLoaderData<typeof loader>();
   const { user: loggedInUser, session } = useAuth();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
@@ -119,12 +76,12 @@ export default function ReviewDetailPage() {
   const isOwner = loggedInUser?.id === review.user.id;
 
   // Get theme from the review owner's settings
-  const userTheme = reviewOwner?.userTheme as { aesthetic?: { slug?: string }; palette?: string } | null;
+  const userTheme = reviewOwner?.userTheme
   const theme = getTheme(
-    (userTheme?.aesthetic?.slug as AestheticSlug) || "minimalist",
+    (userTheme?.aesthetic?.slug) || "minimalist",
     userTheme?.palette || "default"
   );
-  const { styles, colors } = theme;
+  const { styles } = theme;
 
   // Delete mutation
   const deleteReviewMutation = useMutation({
@@ -286,51 +243,40 @@ export default function ReviewDetailPage() {
         </div>
 
         {/* Header - themed */}
-        <header className="px-6 py-6" style={styles.header}>
+        <header className="relative px-6 py-6" style={styles.header}>
+          {/* Bookmark button */}
+          <button
+            onClick={() => {
+              if (session) {
+                bookmarkMutation.mutate(!review.isBookmarked);
+              }
+            }}
+            disabled={!session || bookmarkMutation.isPending}
+            className={`absolute top-4 right-4 h-9 w-9 rounded-full bg-white border-2 border-black flex items-center justify-center transition-colors ${
+              !session ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"
+            }`}
+            title={session ? (review.isBookmarked ? "Remove bookmark" : "Bookmark") : "Log in to bookmark"}
+          >
+            {review.isBookmarked ? (
+              <BookmarkCheck className="h-5 w-5 text-emerald-500" />
+            ) : (
+              <Bookmark className="h-5 w-5 text-black" />
+            )}
+          </button>
+
           {/* Title */}
-          <h1 className="text-3xl mb-1" style={styles.headerText}>{review.title}</h1>
+          <h1 className="text-3xl mb-1 pr-12" style={styles.headerText}>{review.title}</h1>
 
           {/* Author */}
           {review.author && (
-            <p className="text-lg mb-3" style={styles.headerTextMuted}>{String(review.author)}</p>
+            <p className="text-lg" style={styles.headerTextMuted}>{String(review.author)}</p>
           )}
-
-          {/* User info */}
-          <Link
-            to={`/users/${review.user.username}`}
-            className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
-            style={styles.headerTextMuted}
-          >
-            <div
-              className="h-7 w-7 overflow-hidden flex items-center justify-center"
-              style={{
-                borderRadius: theme.borderRadius,
-                backgroundColor: colors.secondary,
-              }}
-            >
-              {review.user.avatarUrl ? (
-                <img
-                  src={String(review.user.avatarUrl)}
-                  alt={review.user.username}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span
-                  className="text-xs"
-                  style={{ color: colors.secondaryForeground, fontWeight: theme.fontWeights.heading }}
-                >
-                  {review.user.username.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-            <span className="text-sm">@{review.user.username}</span>
-          </Link>
         </header>
 
         {/* Main content */}
         <main className="py-6">
         {/* Media embed */}
-        <div className={`rounded-xl overflow-hidden bg-muted mb-6 ${review.mediaType === "TEXT" ? "min-h-[200px]" : "aspect-video"}`}>
+        <div className={`rounded-xl overflow-hidden bg-muted mb-4 ${review.mediaType === "TEXT" ? "min-h-[200px]" : "aspect-video"}`}>
           <MediaPreview
             mediaType={review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT"}
             mediaUrl={review.mediaUrl as string | null | undefined}
@@ -340,86 +286,96 @@ export default function ReviewDetailPage() {
           />
         </div>
 
-        {/* Info card */}
-        <div className="border border-border rounded-lg p-4 mb-6 text-sm">
-          {/* Top row: date, read time, link, bookmark */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                {formatDate(review.publishedAt)}
-              </span>
-              <span className="text-border">·</span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                {calculateReadTime(review.description as unknown as string)}
-              </span>
-              {review.link && (
-                <>
-                  <span className="text-border">·</span>
-                  <a
-                    href={String(review.link)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    {(() => {
-                      try {
-                        return new URL(String(review.link)).hostname;
-                      } catch {
-                        return "Link";
-                      }
-                    })()}
-                  </a>
-                </>
+        {/* User info + Action bar */}
+        <div className="flex items-center justify-between mb-4">
+          <Link
+            to={`/users/${review.user.username}`}
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <div className="h-7 w-7 rounded-full overflow-hidden flex items-center justify-center bg-secondary">
+              {review.user.avatarUrl ? (
+                <img
+                  src={String(review.user.avatarUrl)}
+                  alt={review.user.username}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs font-medium text-secondary-foreground">
+                  {review.user.username.charAt(0).toUpperCase()}
+                </span>
               )}
             </div>
-            <button
-              onClick={() => {
-                if (session) {
-                  bookmarkMutation.mutate(!review.isBookmarked);
-                }
-              }}
-              disabled={!session || bookmarkMutation.isPending}
-              className={`text-muted-foreground hover:text-foreground transition-colors ${
-                review.isBookmarked ? "text-emerald-500" : ""
-              } ${!session ? "opacity-50 cursor-not-allowed" : ""}`}
-              title={session ? (review.isBookmarked ? "Remove bookmark" : "Bookmark") : "Log in to bookmark"}
-            >
-              {review.isBookmarked ? (
-                <BookmarkCheck className="h-4 w-4" />
-              ) : (
-                <Bookmark className="h-4 w-4" />
-              )}
-            </button>
-          </div>
+            <span className="text-sm">@{review.user.username}</span>
+          </Link>
 
-          {/* Meta fields row */}
-          {review.metaFields && review.metaFields.length > 0 && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 pt-3 border-t border-border text-muted-foreground">
+          <div className="flex items-center gap-3 text-muted-foreground text-sm">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" />
+              {formatDate(review.publishedAt)}
+            </span>
+            <span className="text-border">·</span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              {calculateReadTime(review.description as unknown as string)}
+            </span>
+            {review.link && (
+              <>
+                <span className="text-border">·</span>
+                <a
+                  href={String(review.link)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  {(() => {
+                    try {
+                      return new URL(String(review.link)).hostname;
+                    } catch {
+                      return "Link";
+                    }
+                  })()}
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Categories */}
+        {review.categories.length > 0 && (
+          <div className="flex gap-1.5 flex-wrap mb-4">
+            {review.categories.map((cat) => (
+              <span
+                key={cat.id}
+                className="text-xs px-2.5 py-0.5"
+                style={{
+                  ...styles.tag,
+                  borderRadius: theme.borderRadius,
+                }}
+              >
+                {cat.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Meta fields */}
+        {review.metaFields && review.metaFields.length > 0 && (
+          <div className="border border-border rounded-lg px-4 py-3 mb-6 text-sm">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
               {review.metaFields.map((field, index) => (
                 <span key={index}>
                   {field.label}: <span className="text-foreground">{field.value}</span>
                 </span>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Categories row */}
-          {review.categories.length > 0 && (
-            <div className="flex gap-1.5 flex-wrap mt-3 pt-3 border-t border-border">
-              {review.categories.map((cat) => (
-                <span
-                  key={cat.id}
-                  className="text-xs px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground"
-                >
-                  {cat.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Divider */}
+        {review.description && (
+          <hr className="border-border mb-6" />
+        )}
 
         {/* Description */}
         {review.description && (
@@ -429,8 +385,6 @@ export default function ReviewDetailPage() {
           />
         )}
 
-        {/* Other reviews by category */}
-        <CategoryReviewsSection categoryReviews={categoryReviews} />
         </main>
       </div>
 
