@@ -34,7 +34,7 @@ function ThemeToggle() {
 }
 
 export function Navbar() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user } = useAuth();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [signupModalOpen, setSignupModalOpen] = useState(false);
 
@@ -44,8 +44,6 @@ export function Navbar() {
   const switchToSignup = () => setSignupModalOpen(true);
   const switchToLogin = () => setLoginModalOpen(true);
 
-  console.log('user ', user, ' is auth ', isAuthenticated)
-  console.log('isloading ', isLoading)
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-4">
@@ -53,7 +51,7 @@ export function Navbar() {
           {/* Left - Logo/Home link */}
           <Link
             to="/"
-            className="text-lg font-semibold bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+            className="text-lg font-semibold text-foreground hover:opacity-80 transition-opacity"
           >
             stuff i'm into
           </Link>

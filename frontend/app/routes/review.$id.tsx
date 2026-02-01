@@ -359,7 +359,7 @@ export default function ReviewDetailPage() {
               }}
               disabled={!session || bookmarkMutation.isPending}
               className={`hover:text-foreground transition-colors ${
-                review.isBookmarked ? "text-amber-500" : ""
+                review.isBookmarked ? "text-emerald-500" : ""
               } ${!session ? "opacity-50 cursor-not-allowed" : ""}`}
               title={session ? (review.isBookmarked ? "Remove bookmark" : "Bookmark") : "Log in to bookmark"}
             >

@@ -1,8 +1,6 @@
 import { BookmarkCheck, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useSearchParams } from "react-router";
-import { Badge } from "~/components/ui/badge";
-import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import {
   Pagination,
@@ -67,61 +65,62 @@ function UserCard({ user }: { user: UserResponseDto }) {
   });
 
   return (
-    <Link to={`/users/${user.username}`} className="block">
-      <Card className="p-4 hover:border-zinc-700 transition-colors">
+    <Link to={`/users/${user.username}`} className="group block">
+      <div className="relative p-5 rounded-sm bg-card shadow-sm hover:shadow-md transition-all duration-200 border border-transparent hover:border-emerald-500">
         <div className="flex gap-4">
           {/* Avatar */}
-          <div
-            className="h-12 w-12 rounded-full bg-linear-to-br from-zinc-700 to-zinc-900 shrink-0"
-          >
-            {user.avatarUrl && (
+          <div className="h-12 w-12 rounded-full bg-linear-to-br from-zinc-700 to-zinc-900 shrink-0 overflow-hidden ring-2 ring-border">
+            {user.avatarUrl ? (
               <img
                 src={String(user.avatarUrl)}
                 alt={user.username}
-                className="h-full w-full rounded-full object-cover"
+                className="h-full w-full object-cover"
               />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center text-white font-medium">
+                {user.username.charAt(0).toUpperCase()}
+              </div>
             )}
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold">@{user.username}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-medium">@{user.username}</h3>
+              {user.isBookmarked && (
+                <BookmarkCheck className="h-4 w-4 text-emerald-500" />
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               {user.reviewCount} reviews · Joined {joinDate}
             </p>
             {user.bio && (
-              <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+              <p className="mt-2 text-sm text-muted-foreground/80 line-clamp-2">
                 {String(user.bio)}
               </p>
             )}
 
-            {/* Footer */}
-            <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {user.isBookmarked && (
-                  <div className="flex items-center gap-1 text-amber-500 text-sm">
-                    <BookmarkCheck className="h-4 w-4" />
-                  </div>
+            {/* Tabs */}
+            {user.tabs.length > 0 && (
+              <div className="mt-3 flex gap-2 flex-wrap">
+                {user.tabs.slice(0, 3).map((tab) => (
+                  <span
+                    key={tab.id}
+                    className="px-2.5 py-0.5 text-xs rounded-full bg-muted text-muted-foreground"
+                  >
+                    {tab.name}
+                  </span>
+                ))}
+                {user.tabs.length > 3 && (
+                  <span className="text-xs text-muted-foreground/60">
+                    +{user.tabs.length - 3}
+                  </span>
                 )}
               </div>
-              {user.tabs.length > 0 && (
-                <div className="flex gap-1.5 flex-wrap justify-end">
-                  {user.tabs.slice(0, 3).map((tab) => (
-                    <Badge key={tab.id} variant="secondary">
-                      {tab.name}
-                    </Badge>
-                  ))}
-                  {user.tabs.length > 3 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{user.tabs.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }
@@ -170,43 +169,37 @@ export default function ExplorePage() {
       <div className="max-w-2xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            <span className="bg-linear-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent">
-              Explore
-            </span>
-          </h1>
-          <p className="text-muted-foreground">
-            Discover people and their curated collections
-          </p>
-        </div>
+          <h1 className="text-3xl font-bold">Explore</h1>
+          <p className="text-sm text-muted-foreground mt-1 mb-6">Discover people and their curated collections</p>
 
-        {/* Controls */}
-        <div className="flex gap-3 mb-6">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search users..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-10"
-            />
+          {/* Controls */}
+          <div className="flex gap-3">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search users..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="pl-12 pr-4 py-4 text-lg! rounded-lg"
+              />
+            </div>
+
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-auto px-4 py-2 text-base rounded-lg">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
-          {/* Sort */}
-          <Select value={sortBy} onValueChange={handleSortChange}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         {/* User List */}
