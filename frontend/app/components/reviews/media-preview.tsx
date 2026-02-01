@@ -1,15 +1,14 @@
-import { ExternalLink, ImagePlus, Music, Type, Video } from "lucide-react";
+import { ImagePlus, Music, Type, Video } from "lucide-react";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 import type { ResolvedTheme } from "~/lib/theme/themes";
 
-type MediaType = "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
+type MediaType = "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
 
 interface MediaConfig {
   videoId?: string;
   startTime?: number;
   embedType?: "track" | "album" | "playlist";
   embedId?: string;
-  domain?: string;
   title?: string;
   content?: string; // For TEXT type
 }
@@ -83,32 +82,6 @@ export function MediaPreview({
         </div>
       ) : (
         <MediaPlaceholder icon={Music} text="Enter Spotify URL" theme={theme} />
-      );
-    }
-
-    case "EXTERNAL_LINK": {
-      const domain = mediaConfig?.domain;
-      return mediaUrl ? (
-        <a
-          href={mediaUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`${containerClass} flex flex-col items-center justify-center hover:opacity-80 transition-opacity gap-2 p-6`}
-          style={theme ? { backgroundColor: theme.colors.muted } : undefined}
-        >
-          <ExternalLink className="h-8 w-8" style={theme?.styles.mutedText} />
-          <span
-            className="text-sm text-center px-4 line-clamp-2"
-            style={theme ? { fontWeight: theme.fontWeights.body, color: theme.colors.foreground } : undefined}
-          >
-            {mediaConfig?.title || domain || mediaUrl}
-          </span>
-          {domain && (
-            <span className="text-xs" style={theme?.styles.mutedText}>{domain}</span>
-          )}
-        </a>
-      ) : (
-        <MediaPlaceholder icon={ExternalLink} text="Enter URL" theme={theme} />
       );
     }
 

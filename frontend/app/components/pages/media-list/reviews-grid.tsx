@@ -1,4 +1,4 @@
-import { BookmarkCheck, ExternalLink, Music, Plus, Type, Video } from "lucide-react";
+import { BookmarkCheck, Music, Plus, Type, Video } from "lucide-react";
 import { Link } from "react-router";
 import type { ReviewListItemDto } from "~/lib/api/api";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
@@ -69,7 +69,6 @@ function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme: R
   const iconMap = {
     VIDEO: Video,
     SPOTIFY: Music,
-    EXTERNAL_LINK: ExternalLink,
     TEXT: Type,
     IMAGE: Type, // fallback if no URL
   };

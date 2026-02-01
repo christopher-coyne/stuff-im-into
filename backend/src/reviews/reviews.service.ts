@@ -84,16 +84,6 @@ async function buildMediaConfig(
         ...existingConfig,
       };
     }
-    case 'EXTERNAL_LINK': {
-      try {
-        const parsedUrl = new URL(mediaUrl);
-        return { domain: parsedUrl.hostname, ...existingConfig };
-      } catch {
-        throw new BadRequestException(
-          'Invalid URL. Please provide a valid external link.',
-        );
-      }
-    }
     case 'TEXT':
       // For TEXT type, preserve the content from existingConfig
       return existingConfig || null;
@@ -204,6 +194,7 @@ export class ReviewsService {
         mediaType: dto.mediaType,
         mediaUrl: dto.mediaUrl,
         mediaConfig: mediaConfig as Prisma.InputJsonValue,
+        link: dto.link,
         metaFields: dto.metaFields as unknown as Prisma.InputJsonValue,
         sortOrder,
         publishedAt: dto.publish ? new Date() : null,
@@ -274,6 +265,7 @@ export class ReviewsService {
     if (dto.author !== undefined) updateData.author = dto.author;
     if (dto.mediaType !== undefined) updateData.mediaType = dto.mediaType;
     if (dto.mediaUrl !== undefined) updateData.mediaUrl = dto.mediaUrl;
+    if (dto.link !== undefined) updateData.link = dto.link || null;
     if (dto.metaFields !== undefined) {
       updateData.metaFields =
         dto.metaFields as unknown as Prisma.InputJsonValue;

@@ -79,6 +79,15 @@ export class CreateReviewDto {
   @IsObject()
   mediaConfig?: Record<string, unknown>;
 
+  @ApiPropertyOptional({
+    description: 'Optional external link related to this review',
+    example: 'https://example.com/article',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  link?: string;
+
   @ApiPropertyOptional({ description: 'Category IDs to assign to this review' })
   @IsOptional()
   @IsArray()

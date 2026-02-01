@@ -18,7 +18,6 @@ enum MediaType {
   SPOTIFY
   IMAGE
   TEXT
-  EXTERNAL_LINK
 }
 
 enum UserRole {
@@ -130,6 +129,9 @@ model Review {
   mediaType   MediaType
   mediaUrl    String?
   mediaConfig Json? // Type-specific config (e.g., { startTime: 30 } for videos)
+
+  // Optional external link (separate from media)
+  link        String?   @db.VarChar(2000)
 
   // Meta fields (user-defined key/value pairs like "Director: Denis Villeneuve")
   metaFields Json? // Array of { label: string, value: string }

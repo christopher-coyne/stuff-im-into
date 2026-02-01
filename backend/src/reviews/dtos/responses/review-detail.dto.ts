@@ -75,6 +75,9 @@ export class ReviewDetailDto {
   @ApiPropertyOptional({ type: Object })
   mediaConfig: object | null;
 
+  @ApiPropertyOptional({ description: 'Optional external link' })
+  link: string | null;
+
   @ApiPropertyOptional({ type: [MetaFieldDto] })
   metaFields: MetaFieldDto[] | null;
 
@@ -115,6 +118,7 @@ export class ReviewDetailDto {
       mediaType: review.mediaType,
       mediaUrl: review.mediaUrl,
       mediaConfig: review.mediaConfig,
+      link: review.link,
       metaFields: review.metaFields,
       publishedAt: review.publishedAt,
       user: {

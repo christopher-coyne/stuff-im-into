@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, Clock, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Bookmark, BookmarkCheck, Calendar, Clock, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import { toast } from "sonner";
@@ -204,6 +204,7 @@ export default function ReviewDetailPage() {
       mediaType: data.mediaType as UpdateReviewDto["mediaType"],
       mediaUrl: data.mediaUrl.trim() || undefined,
       mediaConfig,
+      link: data.link.trim() || undefined,
       categoryIds: data.categoryIds.length > 0 ? data.categoryIds : [],
       metaFields: validMetaFields.length > 0 ? validMetaFields : [],
       publish: data.publish,
@@ -227,9 +228,10 @@ export default function ReviewDetailPage() {
           tabId: review.tab.id,
           description: review.description ? String(review.description) : "",
           author: review.author ? String(review.author) : "",
-          mediaType: review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK",
+          mediaType: review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT",
           mediaUrl: review.mediaUrl ? String(review.mediaUrl) : "",
           textContent: mediaConfig?.content ? String(mediaConfig.content) : "",
+          link: review.link ? String(review.link) : "",
           categoryIds: review.categories.map((c) => c.id),
           metaFields: (review.metaFields || []).map((f) => ({
             label: f.label,
@@ -330,7 +332,7 @@ export default function ReviewDetailPage() {
         {/* Media embed */}
         <div className={`rounded-xl overflow-hidden bg-muted mb-6 ${review.mediaType === "TEXT" ? "min-h-[200px]" : "aspect-video"}`}>
           <MediaPreview
-            mediaType={review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK"}
+            mediaType={review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT"}
             mediaUrl={review.mediaUrl as string | null | undefined}
             mediaConfig={review.mediaConfig as Record<string, unknown> | null}
             title={review.title}
@@ -338,19 +340,41 @@ export default function ReviewDetailPage() {
           />
         </div>
 
-        {/* Action bar */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4 text-muted-foreground text-sm">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" />
-              <span>{formatDate(review.publishedAt)}</span>
+        {/* Info card */}
+        <div className="border border-border rounded-lg p-4 mb-6 text-sm">
+          {/* Top row: date, read time, link, bookmark */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
+                {formatDate(review.publishedAt)}
+              </span>
+              <span className="text-border">·</span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                {calculateReadTime(review.description as unknown as string)}
+              </span>
+              {review.link && (
+                <>
+                  <span className="text-border">·</span>
+                  <a
+                    href={String(review.link)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    {(() => {
+                      try {
+                        return new URL(String(review.link)).hostname;
+                      } catch {
+                        return "Link";
+                      }
+                    })()}
+                  </a>
+                </>
+              )}
             </div>
-            <div className="text-border">|</div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
-              <span>{calculateReadTime(review.description as unknown as string)}</span>
-            </div>
-            <div className="text-border">|</div>
             <button
               onClick={() => {
                 if (session) {
@@ -358,52 +382,44 @@ export default function ReviewDetailPage() {
                 }
               }}
               disabled={!session || bookmarkMutation.isPending}
-              className={`hover:text-foreground transition-colors ${
+              className={`text-muted-foreground hover:text-foreground transition-colors ${
                 review.isBookmarked ? "text-emerald-500" : ""
               } ${!session ? "opacity-50 cursor-not-allowed" : ""}`}
               title={session ? (review.isBookmarked ? "Remove bookmark" : "Bookmark") : "Log in to bookmark"}
             >
               {review.isBookmarked ? (
-                <BookmarkCheck className="h-5 w-5" />
+                <BookmarkCheck className="h-4 w-4" />
               ) : (
-                <Bookmark className="h-5 w-5" />
+                <Bookmark className="h-4 w-4" />
               )}
             </button>
           </div>
-        </div>
 
-        {/* Meta fields */}
-        {review.metaFields && review.metaFields.length > 0 && (
-          <div className="mb-4 text-sm">
-            <div className="flex flex-wrap gap-x-6 gap-y-1">
+          {/* Meta fields row */}
+          {review.metaFields && review.metaFields.length > 0 && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 pt-3 border-t border-border text-muted-foreground">
               {review.metaFields.map((field, index) => (
                 <span key={index}>
-                  <span className="text-muted-foreground">{field.label}:</span>{" "}
-                  <span className="text-foreground">{field.value}</span>
+                  {field.label}: <span className="text-foreground">{field.value}</span>
                 </span>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Categories */}
-        {review.categories.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-6">
-            {review.categories.map((cat) => (
-              <span
-                key={cat.id}
-                className="text-sm px-3 py-1 rounded-full bg-secondary text-secondary-foreground"
-              >
-                {cat.name}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Divider */}
-        {review.categories.length > 0 && review.description && (
-          <hr className="border-border mb-6" />
-        )}
+          {/* Categories row */}
+          {review.categories.length > 0 && (
+            <div className="flex gap-1.5 flex-wrap mt-3 pt-3 border-t border-border">
+              {review.categories.map((cat) => (
+                <span
+                  key={cat.id}
+                  className="text-xs px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground"
+                >
+                  {cat.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Description */}
         {review.description && (

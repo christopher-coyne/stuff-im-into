@@ -263,6 +263,7 @@ export class TabsService {
         mediaType: review.mediaType,
         mediaUrl: review.mediaUrl,
         mediaConfig: review.mediaConfig as object | null,
+        link: review.link,
         publishedAt: review.publishedAt!,
         categories: (
           review.categories as Array<{

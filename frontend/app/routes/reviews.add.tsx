@@ -42,6 +42,7 @@ export default function AddReviewPage() {
       mediaType: data.mediaType as CreateReviewDto["mediaType"],
       mediaUrl: data.mediaUrl.trim() || undefined,
       mediaConfig,
+      link: data.link.trim() || undefined,
       categoryIds: data.categoryIds.length > 0 ? data.categoryIds : undefined,
       metaFields: validMetaFields.length > 0 ? validMetaFields : undefined,
       publish: data.publish,

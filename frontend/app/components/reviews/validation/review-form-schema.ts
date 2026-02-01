@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const mediaTypes = ["VIDEO", "SPOTIFY", "IMAGE", "TEXT", "EXTERNAL_LINK"] as const;
+export const mediaTypes = ["VIDEO", "SPOTIFY", "IMAGE", "TEXT"] as const;
 export type MediaType = (typeof mediaTypes)[number];
 
 export const reviewFormSchema = z.object({
@@ -22,6 +22,9 @@ export const reviewFormSchema = z.object({
   textContent: z
     .string()
     .max(50000, "Text content must be 50,000 characters or less"),
+  link: z
+    .string()
+    .max(2000, "Link must be 2,000 characters or less"),
   categoryIds: z.array(z.string()),
   metaFields: z.array(
     z.object({

@@ -21,6 +21,9 @@ export class ReviewListItemDto {
   @ApiPropertyOptional({ type: Object })
   mediaConfig: object | null;
 
+  @ApiPropertyOptional({ description: 'Optional external link' })
+  link: string | null;
+
   @ApiProperty()
   publishedAt: Date;
 

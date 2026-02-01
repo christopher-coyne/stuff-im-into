@@ -178,9 +178,11 @@ export interface ReviewListItemDto {
   id: string;
   title: string;
   author?: object;
-  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
   mediaUrl?: object;
   mediaConfig?: object;
+  /** Optional external link */
+  link?: object;
   /** @format date-time */
   publishedAt: string;
   categories: CategoryDto[];
@@ -240,9 +242,11 @@ export interface ReviewDetailDto {
   title: string;
   description?: object;
   author?: object;
-  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
   mediaUrl?: object;
   mediaConfig?: object;
+  /** Optional external link */
+  link?: object;
   metaFields?: MetaFieldDto[];
   /** @format date-time */
   publishedAt: string;
@@ -286,11 +290,16 @@ export interface CreateReviewDto {
    * Type of media
    * @example "VIDEO"
    */
-  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
   /** URL of the media */
   mediaUrl?: string;
   /** Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify) */
   mediaConfig?: object;
+  /**
+   * Optional external link related to this review
+   * @example "https://example.com/article"
+   */
+  link?: string;
   /** Category IDs to assign to this review */
   categoryIds?: string[];
   /** Meta fields (key-value pairs) */
@@ -316,11 +325,16 @@ export interface UpdateReviewDto {
    * Type of media
    * @example "VIDEO"
    */
-  mediaType?: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
+  mediaType?: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
   /** URL of the media */
   mediaUrl?: string;
   /** Type-specific media configuration (e.g., videoId for YouTube, embedId for Spotify) */
   mediaConfig?: object;
+  /**
+   * Optional external link related to this review
+   * @example "https://example.com/article"
+   */
+  link?: string;
   /** Category IDs to assign to this review */
   categoryIds?: string[];
   /** Meta fields (key-value pairs) */
@@ -339,7 +353,7 @@ export interface BookmarkedReviewDto {
   id: string;
   title: string;
   description?: object;
-  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
+  mediaType: "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT";
   mediaUrl?: object;
   /** @format date-time */
   bookmarkedAt: string;

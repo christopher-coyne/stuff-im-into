@@ -58,14 +58,6 @@ function buildPreviewConfig(mediaType: MediaType, mediaUrl: string): Record<stri
       const embed = extractSpotifyEmbed(mediaUrl);
       return embed ? { embedType: embed.embedType, embedId: embed.embedId } : null;
     }
-    case "EXTERNAL_LINK": {
-      try {
-        const parsedUrl = new URL(mediaUrl);
-        return { domain: parsedUrl.hostname };
-      } catch {
-        return null;
-      }
-    }
     default:
       return null;
   }
@@ -77,7 +69,6 @@ const mediaTypeOptions: { value: MediaType; label: string }[] = [
   { value: "IMAGE", label: "Image" },
   { value: "VIDEO", label: "YouTube" },
   { value: "SPOTIFY", label: "Spotify" },
-  { value: "EXTERNAL_LINK", label: "Link" },
   { value: "TEXT", label: "Text Only" },
 ];
 
@@ -123,6 +114,7 @@ export function ReviewForm({
       mediaType: initialValues?.mediaType ?? "IMAGE",
       mediaUrl: initialValues?.mediaUrl ?? "",
       textContent: initialValues?.textContent ?? "",
+      link: initialValues?.link ?? "",
       categoryIds: initialValues?.categoryIds ?? [],
       metaFields: initialValues?.metaFields ?? [],
       publish: initialValues?.publish ?? true,
@@ -357,14 +349,22 @@ export function ReviewForm({
                     className="flex-1"
                   />
                 )}
-                {watchedMediaType === "EXTERNAL_LINK" && (
-                  <Input
-                    placeholder="URL (e.g., https://example.com/article)"
-                    {...register("mediaUrl")}
-                    className="flex-1"
-                  />
-                )}
               </div>
+            </div>
+
+            {/* Link field (optional) */}
+            <div className="mb-6">
+              <label htmlFor="link" className="block text-sm font-medium text-muted-foreground mb-2">
+                External Link (optional)
+              </label>
+              <Input
+                id="link"
+                placeholder="https://example.com/article"
+                {...register("link")}
+              />
+              {errors.link && (
+                <p className="text-sm text-destructive mt-1">{errors.link.message}</p>
+              )}
             </div>
 
             {/* Meta fields section */}
