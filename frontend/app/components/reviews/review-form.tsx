@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Plus, X } from "lucide-react";
 import { useEffect, useMemo } from "react";
@@ -16,8 +17,12 @@ import {
 import { api } from "~/lib/api/client";
 import { ImageUpload } from "./image-upload";
 import { MediaPreview } from "./media-preview";
-
-type MediaType = "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT" | "EXTERNAL_LINK";
+import {
+  type MediaType,
+  type ReviewFormData,
+  mediaTypes,
+  reviewFormSchema,
+} from "./validation/review-form-schema";
 
 // Helper functions to parse URLs for preview
 function extractYouTubeId(url: string): string | null {
@@ -66,18 +71,7 @@ function buildPreviewConfig(mediaType: MediaType, mediaUrl: string): Record<stri
   }
 }
 
-export interface ReviewFormData {
-  title: string;
-  tabId: string;
-  description: string;
-  author: string;
-  mediaType: MediaType;
-  mediaUrl: string;
-  textContent: string; // For TEXT media type - stored in mediaConfig.content
-  categoryIds: string[];
-  metaFields: { label: string; value: string }[];
-  publish: boolean;
-}
+export type { ReviewFormData };
 
 const mediaTypeOptions: { value: MediaType; label: string }[] = [
   { value: "IMAGE", label: "Image" },
@@ -118,7 +112,9 @@ export function ReviewForm({
     handleSubmit,
     watch,
     setValue,
+    formState: { errors },
   } = useForm<ReviewFormData>({
+    resolver: zodResolver(reviewFormSchema),
     defaultValues: {
       title: initialValues?.title ?? "",
       tabId: initialValues?.tabId ?? initialTabId ?? "",
@@ -219,18 +215,24 @@ export function ReviewForm({
               type="text"
               placeholder="Enter title..."
               maxLength={200}
-              {...register("title", { required: true, maxLength: 200 })}
-              className="w-full text-3xl font-bold text-white bg-transparent border-none outline-none placeholder:text-white/50 mb-1"
+              {...register("title")}
+              className={`w-full text-3xl font-bold text-white bg-transparent border-none outline-none placeholder:text-white/50 ${errors.title ? "mb-0" : "mb-1"}`}
             />
+            {errors.title && (
+              <p className="text-red-300 text-sm mb-1">{errors.title.message}</p>
+            )}
 
             {/* Author Input */}
             <input
               type="text"
               placeholder="Author (optional)"
               maxLength={300}
-              {...register("author", { maxLength: 300 })}
-              className="w-full text-lg text-white/80 bg-transparent border-none outline-none placeholder:text-white/40 mb-3"
+              {...register("author")}
+              className={`w-full text-lg text-white/80 bg-transparent border-none outline-none placeholder:text-white/40 ${errors.author ? "mb-0" : "mb-3"}`}
             />
+            {errors.author && (
+              <p className="text-red-300 text-sm mb-3">{errors.author.message}</p>
+            )}
 
             {/* User info & Tab selector */}
             <div className="flex items-center gap-4">
@@ -373,14 +375,14 @@ export function ReviewForm({
                     <input
                       placeholder="Label"
                       maxLength={50}
-                      {...register(`metaFields.${index}.label`, { maxLength: 50 })}
+                      {...register(`metaFields.${index}.label`)}
                       className="w-20 bg-transparent border-b border-dashed border-muted-foreground/50 text-muted-foreground outline-none focus:border-foreground"
                     />
                     <span className="text-muted-foreground">:</span>
                     <input
                       placeholder="Value"
                       maxLength={500}
-                      {...register(`metaFields.${index}.value`, { maxLength: 500 })}
+                      {...register(`metaFields.${index}.value`)}
                       className="w-32 bg-transparent border-b border-dashed border-muted-foreground/50 text-foreground outline-none focus:border-foreground"
                     />
                     <button
@@ -440,9 +442,16 @@ export function ReviewForm({
               />
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <p className="text-sm text-destructive mb-4">{error}</p>
+            {/* Error Messages */}
+            {(error || errors.tabId) && (
+              <div className="space-y-1 mb-4">
+                {error && (
+                  <p className="text-sm text-destructive">{error}</p>
+                )}
+                {errors.tabId && (
+                  <p className="text-sm text-destructive">{errors.tabId.message}</p>
+                )}
+              </div>
             )}
 
             {/* Action bar */}
@@ -460,7 +469,7 @@ export function ReviewForm({
               </div>
               <Button
                 type="submit"
-                disabled={!watchedTabId || isSubmitting}
+                disabled={isSubmitting}
               >
                 {isSubmitting
                   ? "Saving..."
