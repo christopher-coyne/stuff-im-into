@@ -279,7 +279,7 @@ export default function ProfilePage() {
             to={user ? `/users/${user.username}` : "/"}
             className="px-6 py-2.5 rounded-full bg-foreground text-background font-medium hover:opacity-90 hover:-translate-y-0.5 transition-all"
           >
-            View Profile
+            View Media List
           </Link>
         </div>
       </div>

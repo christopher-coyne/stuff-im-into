@@ -45,6 +45,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   const isAuthenticated = !!session;
+  // user was created in supabase, but failed to create in our db
   const needsOnboarding = isAuthenticated && !user;
 
   // Fetch app user profile from our backend (used on initial load)
