@@ -5,6 +5,7 @@ export class CreateTabDto {
   @ApiProperty({ description: 'Name of the tab', example: 'Movies' })
   @IsString()
   @MinLength(1)
+  @MaxLength(100)
   name: string;
 
   @ApiPropertyOptional({

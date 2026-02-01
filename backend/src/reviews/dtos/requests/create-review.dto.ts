@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -16,6 +17,7 @@ export class MetaFieldInputDto {
   @ApiProperty({ description: 'Label for the meta field', example: 'Director' })
   @IsString()
   @MinLength(1)
+  @MaxLength(50)
   label: string;
 
   @ApiProperty({
@@ -23,6 +25,7 @@ export class MetaFieldInputDto {
     example: 'Denis Villeneuve',
   })
   @IsString()
+  @MaxLength(500)
   value: string;
 }
 
@@ -33,6 +36,7 @@ export class CreateReviewDto {
   })
   @IsString()
   @MinLength(1)
+  @MaxLength(200)
   title: string;
 
   @ApiProperty({ description: 'Tab ID this review belongs to' })
@@ -42,6 +46,7 @@ export class CreateReviewDto {
   @ApiPropertyOptional({ description: 'Markdown description/content' })
   @IsOptional()
   @IsString()
+  @MaxLength(50000)
   description?: string;
 
   @ApiPropertyOptional({
@@ -50,6 +55,7 @@ export class CreateReviewDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(300)
   author?: string;
 
   @ApiProperty({

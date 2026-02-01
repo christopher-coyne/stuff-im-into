@@ -32,9 +32,9 @@ enum UserRole {
 
 model User {
   id        String   @id // Supabase Auth UUID
-  username  String   @unique
-  bio       String?
-  avatarUrl String?
+  username  String   @unique @db.VarChar(50)
+  bio       String?  @db.VarChar(160)
+  avatarUrl String?  @db.VarChar(500)
   role      UserRole @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -91,7 +91,7 @@ model UserTheme {
 
 model Tab {
   id          String   @id @default(uuid())
-  name        String
+  name        String   @db.VarChar(100)
   slug        String // URL-friendly version of name (auto-generated)
   description String?  @db.VarChar(200) // Optional short description (max 200 chars)
   sortOrder   Int      @default(0)
@@ -114,9 +114,9 @@ model Tab {
 
 model Review {
   id          String   @id @default(uuid())
-  title       String
-  description String? // Markdown content
-  author      String? // Optional author/creator of the media
+  title       String   @db.VarChar(200)
+  description String?  @db.VarChar(50000) // Markdown content
+  author      String?  @db.VarChar(300) // Optional author/creator of the media
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -159,7 +159,7 @@ model Review {
 
 model Category {
   id        String   @id @default(uuid())
-  name      String
+  name      String   @db.VarChar(100)
   slug      String // URL-friendly version of name (auto-generated)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
