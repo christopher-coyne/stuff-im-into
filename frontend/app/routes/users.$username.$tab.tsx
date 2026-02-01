@@ -63,7 +63,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       loaderFetch(() => api.tabs.tabsControllerFindCategoriesForTab(currentTab.id)),
       loaderFetch(() => api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search }, { headers: authHeaders })),
     ]);
-    categories = categoriesResponse.data.data || [];
+    categories = categoriesResponse.data.data?.items || [];
 
     // If category slug is provided, find the category ID
     const categoryId = categorySlug
@@ -140,7 +140,7 @@ export default function MediaListPage() {
     queryFn: async () => {
       if (!currentTab) return [];
       const response = await api.tabs.tabsControllerFindCategoriesForTab(currentTab.id);
-      return response.data.data || [];
+      return response.data.data?.items || [];
     },
     initialData: categories,
     enabled: !!currentTab,

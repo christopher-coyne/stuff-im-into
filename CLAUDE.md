@@ -13,6 +13,7 @@ IMPORTANT: make sure you fix eslint and typescript issues before you think a fea
 - Tailwind CSS 4 + Radix UI
 - Supabase Auth
 - TypeScript + Vite
+- NOTES: use the Api.ts for types, avoid casting or using unknown/any if the types are available int he api.ts
 
 ### Backend (`/backend`)
 - NestJS 11

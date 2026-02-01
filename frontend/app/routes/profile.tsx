@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Link, redirect, useLoaderData, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { AvatarUpload } from "~/components/profile/avatar-upload";
+import { BookmarksList } from "~/components/profile/bookmarks-list";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
+import type { PaginationMetaDto } from "~/lib/api/api";
 import { loaderFetch } from "~/lib/api/loader-fetch";
 import { getAuthHeaders } from "~/lib/supabase/server";
 import type { Route } from "./+types/profile";
@@ -29,13 +31,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [usersRes, reviewsRes] = await Promise.all([
     loaderFetch(() =>
       api.bookmarks.bookmarksControllerGetUserBookmarks(
-        { page: 1, limit: 10 },
+        { page: 1, limit: 5 },
         { headers: authHeaders }
       )
     ),
     loaderFetch(() =>
       api.bookmarks.bookmarksControllerGetReviewBookmarks(
-        { page: 1, limit: 10 },
+        { page: 1, limit: 5 },
         { headers: authHeaders }
       )
     )
@@ -44,53 +46,18 @@ export async function loader({ request }: Route.LoaderArgs) {
   const usersData = usersRes?.data?.data;
   const reviewsData = reviewsRes?.data?.data;
 
+  const defaultMeta: PaginationMetaDto = { page: 1, limit: 10, total: 0, totalPages: 0 };
+
   return {
-    bookmarkedUsers: (usersData?.items),
-    bookmarkedReviews: (reviewsData?.items),
-    usersMeta: usersData?.meta,
-    reviewsMeta: reviewsData?.meta,
+    bookmarkedUsers: usersData?.items ?? [],
+    bookmarkedReviews: reviewsData?.items ?? [],
+    usersMeta: usersData?.meta ?? defaultMeta,
+    reviewsMeta: reviewsData?.meta ?? defaultMeta,
   };
-}
-
-interface BookmarkedUser {
-  id: string;
-  username: string;
-  bio?: string | null;
-  avatarUrl?: string | null;
-  reviewCount: number;
-  bookmarkedAt: string;
-}
-
-interface BookmarkedReview {
-  id: string;
-  title: string;
-  description?: string | null;
-  mediaType: string;
-  mediaUrl?: string | null;
-  bookmarkedAt: string;
-  user: {
-    id: string;
-    username: string;
-    avatarUrl?: string | null;
-  };
-}
-
-type BookmarkTab = "users" | "reviews";
-
-interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
 }
 
 export default function ProfilePage() {
-  const { bookmarkedUsers, bookmarkedReviews, usersMeta, reviewsMeta } = useLoaderData<typeof loader>() as {
-    bookmarkedUsers: BookmarkedUser[];
-    bookmarkedReviews: BookmarkedReview[];
-    usersMeta: PaginationMeta;
-    reviewsMeta: PaginationMeta;
-  };
+  const { bookmarkedUsers, bookmarkedReviews, usersMeta, reviewsMeta } = useLoaderData<typeof loader>();
   const { logout, user, session, refreshUser } = useAuth();
   const navigate = useNavigate();
 
@@ -133,9 +100,6 @@ export default function ProfilePage() {
       toast.success("Profile updated");
     },
   });
-
-  // Bookmarks tab state
-  const [bookmarkTab, setBookmarkTab] = useState<BookmarkTab>("users");
 
   const BIO_MAX_LENGTH = 160;
 
@@ -293,118 +257,12 @@ export default function ProfilePage() {
             Bookmarks
           </h2>
 
-          <div className="rounded-sm bg-card overflow-hidden">
-            {/* Pill Tabs */}
-            <div className="flex gap-2 p-4">
-              <button
-                onClick={() => setBookmarkTab("users")}
-                className={`flex-1 px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 rounded-full transition-all ${
-                  bookmarkTab === "users"
-                    ? "bg-emerald-500 text-white shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                Users
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs ${
-                    bookmarkTab === "users"
-                      ? "bg-white/20 text-white"
-                      : "bg-background text-muted-foreground"
-                  }`}
-                >
-                  {usersMeta.total}
-                </span>
-              </button>
-              <button
-                onClick={() => setBookmarkTab("reviews")}
-                className={`flex-1 px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 rounded-full transition-all ${
-                  bookmarkTab === "reviews"
-                    ? "bg-emerald-500 text-white shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                Reviews
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs ${
-                    bookmarkTab === "reviews"
-                      ? "bg-white/20 text-white"
-                      : "bg-background text-muted-foreground"
-                  }`}
-                >
-                  {reviewsMeta.total}
-                </span>
-              </button>
-            </div>
-
-            {/* Bookmark List */}
-            <div className="px-4 pb-4 space-y-2">
-              {bookmarkTab === "users" ? (
-                bookmarkedUsers.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    No bookmarked users yet
-                  </div>
-                ) : (
-                  bookmarkedUsers.map((bookmarkedUser) => (
-                    <Link
-                      key={bookmarkedUser.id}
-                      to={`/users/${bookmarkedUser.username}`}
-                      className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-all hover:-translate-y-0.5"
-                    >
-                      <div className="h-11 w-11 rounded-lg bg-linear-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-base font-semibold text-white shrink-0 overflow-hidden">
-                        {bookmarkedUser.avatarUrl ? (
-                          <img
-                            src={bookmarkedUser.avatarUrl}
-                            alt={bookmarkedUser.username}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          bookmarkedUser.username.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">@{bookmarkedUser.username}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {bookmarkedUser.reviewCount} reviews
-                        </p>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-                    </Link>
-                  ))
-                )
-              ) : bookmarkedReviews.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  No bookmarked reviews yet
-                </div>
-              ) : (
-                bookmarkedReviews.map((review) => (
-                  <Link
-                    key={review.id}
-                    to={`/review/${review.id}`}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-all hover:-translate-y-0.5"
-                  >
-                    <div className="h-11 w-11 rounded-lg bg-linear-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-base font-semibold text-white shrink-0 overflow-hidden">
-                      {review.user.avatarUrl ? (
-                        <img
-                          src={review.user.avatarUrl}
-                          alt={review.user.username}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        review.user.username.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{review.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        by @{review.user.username}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-                  </Link>
-                ))
-              )}
-            </div>
-          </div>
+          <BookmarksList
+            initialUsers={bookmarkedUsers}
+            initialReviews={bookmarkedReviews}
+            initialUsersMeta={usersMeta}
+            initialReviewsMeta={reviewsMeta}
+          />
         </div>
 
         {/* Footer Actions */}

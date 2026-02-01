@@ -172,7 +172,7 @@ export function ReviewForm({
     queryFn: async () => {
       if (!watchedTabId) return [];
       const response = await api.tabs.tabsControllerFindCategoriesForTab(watchedTabId);
-      return response.data.data || [];
+      return response.data.data?.items || [];
     },
     enabled: !!watchedTabId,
   });
