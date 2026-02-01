@@ -35,6 +35,18 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "most_reviews", label: "Most reviews" },
 ];
 
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface PaginatedUsers {
+  items: UserResponseDto[];
+  meta: PaginationMeta;
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
@@ -50,9 +62,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     )
   );
 
+  const data = response.data.data as unknown as PaginatedUsers | undefined;
+
   return {
-    users: response.data.data || [],
-    page,
+    users: data?.items || [],
+    meta: data?.meta || { page, limit: PAGE_SIZE, total: 0, totalPages: 0 },
     search: search || "",
     sortBy,
   };
@@ -126,7 +140,7 @@ function UserCard({ user }: { user: UserResponseDto }) {
 }
 
 export default function ExplorePage() {
-  const { users, page, search: initialSearch, sortBy } = useLoaderData<typeof loader>();
+  const { users, meta, search: initialSearch, sortBy } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Local state for search input (for debouncing)
@@ -161,8 +175,8 @@ export default function ExplorePage() {
     setSearchParams(newParams);
   };
 
-  const hasNextPage = users.length === PAGE_SIZE;
-  const hasPrevPage = page > 1;
+  const hasNextPage = meta.page < meta.totalPages;
+  const hasPrevPage = meta.page > 1;
 
   return (
     <div className="min-h-screen bg-background">
@@ -230,16 +244,16 @@ export default function ExplorePage() {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => handlePageChange(page - 1)}
+                  onClick={() => handlePageChange(meta.page - 1)}
                   disabled={!hasPrevPage}
                 />
               </PaginationItem>
               <PaginationItem>
-                <PaginationLink isActive>{page}</PaginationLink>
+                <PaginationLink isActive>{meta.page}</PaginationLink>
               </PaginationItem>
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => handlePageChange(page + 1)}
+                  onClick={() => handlePageChange(meta.page + 1)}
                   disabled={!hasNextPage}
                 />
               </PaginationItem>

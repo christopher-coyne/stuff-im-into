@@ -4,33 +4,54 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { User } from '@prisma/client';
+import { PaginationDto } from '../dto';
 import { PrismaService } from '../prisma';
-import { BookmarkedReviewDto, BookmarkedUserDto } from './dtos';
+import {
+  PaginatedBookmarkedReviewsDto,
+  PaginatedBookmarkedUsersDto,
+} from './dtos';
 
 @Injectable()
 export class BookmarksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getReviewBookmarks(user: User | null): Promise<BookmarkedReviewDto[]> {
+  async getReviewBookmarks(
+    user: User | null,
+    query: PaginationDto,
+  ): Promise<PaginatedBookmarkedReviewsDto> {
     if (!user) {
       throw new ForbiddenException('Not authenticated');
     }
 
-    const bookmarks = await this.prisma.reviewBookmark.findMany({
-      where: { ownerId: user.id },
-      include: {
-        review: {
-          include: {
-            user: true,
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+
+    const where = {
+      ownerId: user.id,
+      review: {
+        publishedAt: { not: null },
+      },
+    };
+
+    const [bookmarks, total] = await Promise.all([
+      this.prisma.reviewBookmark.findMany({
+        where,
+        include: {
+          review: {
+            include: {
+              user: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: query.skip,
+        take: query.take,
+      }),
+      this.prisma.reviewBookmark.count({ where }),
+    ]);
 
-    return bookmarks
-      .filter((b) => b.review.publishedAt !== null)
-      .map((b) => ({
+    return {
+      items: bookmarks.map((b) => ({
         id: b.review.id,
         title: b.review.title,
         description: b.review.description,
@@ -42,40 +63,68 @@ export class BookmarksService {
           username: b.review.user.username,
           avatarUrl: b.review.user.avatarUrl,
         },
-      }));
+      })),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  async getUserBookmarks(user: User | null): Promise<BookmarkedUserDto[]> {
+  async getUserBookmarks(
+    user: User | null,
+    query: PaginationDto,
+  ): Promise<PaginatedBookmarkedUsersDto> {
     if (!user) {
       throw new ForbiddenException('Not authenticated');
     }
 
-    const bookmarks = await this.prisma.userBookmark.findMany({
-      where: { ownerId: user.id },
-      include: {
-        bookmarkedUser: {
-          include: {
-            _count: {
-              select: {
-                reviews: {
-                  where: { publishedAt: { not: null } },
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+
+    const where = { ownerId: user.id };
+
+    const [bookmarks, total] = await Promise.all([
+      this.prisma.userBookmark.findMany({
+        where,
+        include: {
+          bookmarkedUser: {
+            include: {
+              _count: {
+                select: {
+                  reviews: {
+                    where: { publishedAt: { not: null } },
+                  },
                 },
               },
             },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: query.skip,
+        take: query.take,
+      }),
+      this.prisma.userBookmark.count({ where }),
+    ]);
 
-    return bookmarks.map((b) => ({
-      id: b.bookmarkedUser.id,
-      username: b.bookmarkedUser.username,
-      bio: b.bookmarkedUser.bio,
-      avatarUrl: b.bookmarkedUser.avatarUrl,
-      reviewCount: b.bookmarkedUser._count.reviews,
-      bookmarkedAt: b.createdAt,
-    }));
+    return {
+      items: bookmarks.map((b) => ({
+        id: b.bookmarkedUser.id,
+        username: b.bookmarkedUser.username,
+        bio: b.bookmarkedUser.bio,
+        avatarUrl: b.bookmarkedUser.avatarUrl,
+        reviewCount: b.bookmarkedUser._count.reviews,
+        bookmarkedAt: b.createdAt,
+      })),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async bookmarkReview(user: User | null, reviewId: string): Promise<void> {

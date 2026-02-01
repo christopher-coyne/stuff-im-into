@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma';
 import {
   CreateUserDto,
   GetUsersQueryDto,
+  PaginatedUsersDto,
   UpdateThemeDto,
   UpdateUserDto,
   UserResponseDto,
@@ -22,77 +23,92 @@ export class UsersService {
   async findAll(
     query: GetUsersQueryDto,
     currentUserId?: string,
-  ): Promise<UserResponseDto[]> {
+  ): Promise<PaginatedUsersDto> {
     const { search, sortBy = UserSortBy.MOST_POPULAR } = query;
     const orderBy = this.getOrderBy(sortBy);
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
 
-    const users = await this.prisma.user.findMany({
-      where: search
-        ? {
-            username: {
-              contains: search,
-              mode: 'insensitive',
+    const where = search
+      ? {
+          username: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        }
+      : undefined;
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        include: {
+          _count: {
+            select: {
+              reviews: {
+                where: { publishedAt: { not: null } },
+              },
+              bookmarkedBy: true,
             },
-          }
-        : undefined,
-      include: {
-        _count: {
-          select: {
-            reviews: {
-              where: { publishedAt: { not: null } },
+          },
+          tabs: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              sortOrder: true,
             },
-            bookmarkedBy: true,
+            orderBy: { sortOrder: 'asc' },
           },
-        },
-        tabs: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            description: true,
-            sortOrder: true,
+          userTheme: {
+            include: {
+              aesthetic: true,
+            },
           },
-          orderBy: { sortOrder: 'asc' },
+          bookmarkedBy: currentUserId
+            ? {
+                where: { ownerId: currentUserId },
+                select: { id: true },
+              }
+            : false,
         },
-        userTheme: {
-          include: {
-            aesthetic: true,
-          },
-        },
-        bookmarkedBy: currentUserId
+        orderBy,
+        skip: query.skip,
+        take: query.take,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      items: users.map((user) => ({
+        id: user.id,
+        username: user.username,
+        bio: user.bio,
+        avatarUrl: user.avatarUrl,
+        userTheme: user.userTheme
           ? {
-              where: { ownerId: currentUserId },
-              select: { id: true },
+              id: user.userTheme.id,
+              aestheticId: user.userTheme.aestheticId,
+              palette: user.userTheme.palette,
+              aesthetic: user.userTheme.aesthetic,
             }
+          : null,
+        role: user.role,
+        createdAt: user.createdAt,
+        reviewCount: user._count.reviews,
+        bookmarkCount: user._count.bookmarkedBy,
+        tabs: user.tabs,
+        isBookmarked: currentUserId
+          ? (user.bookmarkedBy as { id: string }[])?.length > 0
           : false,
+      })),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy,
-      skip: query.skip,
-      take: query.take,
-    });
-
-    return users.map((user) => ({
-      id: user.id,
-      username: user.username,
-      bio: user.bio,
-      avatarUrl: user.avatarUrl,
-      userTheme: user.userTheme
-        ? {
-            id: user.userTheme.id,
-            aestheticId: user.userTheme.aestheticId,
-            palette: user.userTheme.palette,
-            aesthetic: user.userTheme.aesthetic,
-          }
-        : null,
-      role: user.role,
-      createdAt: user.createdAt,
-      reviewCount: user._count.reviews,
-      bookmarkCount: user._count.bookmarkedBy,
-      tabs: user.tabs,
-      isBookmarked: currentUserId
-        ? (user.bookmarkedBy as { id: string }[])?.length > 0
-        : false,
-    }));
+    };
   }
 
   async findByUsername(

@@ -10,16 +10,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  ApiStandardArrayResponse,
-  ApiStandardResponse,
-  StandardResponse,
-} from '../dto';
+import { ApiStandardResponse, StandardResponse } from '../dto';
 import { OptionalAuthGuard, SupabaseAuthGuard } from '../supabase';
 import type { AuthenticatedRequest } from '../supabase';
 import {
   CreateUserDto,
   GetUsersQueryDto,
+  PaginatedUsersDto,
   UpdateThemeDto,
   UpdateUserDto,
   UserResponseDto,
@@ -35,13 +32,13 @@ export class UsersController {
   @UseGuards(OptionalAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users (for explore page)' })
-  @ApiStandardArrayResponse(UserResponseDto)
+  @ApiStandardResponse(PaginatedUsersDto)
   async findAll(
     @Query() query: GetUsersQueryDto,
     @Req() req: AuthenticatedRequest,
-  ): Promise<StandardResponse<UserResponseDto[]>> {
-    const users = await this.usersService.findAll(query, req.user?.id);
-    return StandardResponse.ok(users);
+  ): Promise<StandardResponse<PaginatedUsersDto>> {
+    const result = await this.usersService.findAll(query, req.user?.id);
+    return StandardResponse.ok(result);
   }
 
   @Get('me')

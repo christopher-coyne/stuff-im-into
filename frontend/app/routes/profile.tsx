@@ -25,19 +25,30 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw redirect("/");
   }
 
-  // Fetch both user and review bookmarks in parallel
+  // Fetch both user and review bookmarks in parallel with pagination
   const [usersRes, reviewsRes] = await Promise.all([
     loaderFetch(() =>
-      api.bookmarks.bookmarksControllerGetUserBookmarks({ headers: authHeaders })
-    ).catch(() => null),
+      api.bookmarks.bookmarksControllerGetUserBookmarks(
+        { page: 1, limit: 10 },
+        { headers: authHeaders }
+      )
+    ),
     loaderFetch(() =>
-      api.bookmarks.bookmarksControllerGetReviewBookmarks({ headers: authHeaders })
-    ).catch(() => null),
+      api.bookmarks.bookmarksControllerGetReviewBookmarks(
+        { page: 1, limit: 10 },
+        { headers: authHeaders }
+      )
+    )
   ]);
 
+  const usersData = usersRes?.data?.data;
+  const reviewsData = reviewsRes?.data?.data;
+
   return {
-    bookmarkedUsers: (usersRes?.data?.data || []) as BookmarkedUser[],
-    bookmarkedReviews: (reviewsRes?.data?.data || []) as BookmarkedReview[],
+    bookmarkedUsers: (usersData?.items),
+    bookmarkedReviews: (reviewsData?.items),
+    usersMeta: usersData?.meta,
+    reviewsMeta: reviewsData?.meta,
   };
 }
 
@@ -66,8 +77,20 @@ interface BookmarkedReview {
 
 type BookmarkTab = "users" | "reviews";
 
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export default function ProfilePage() {
-  const { bookmarkedUsers, bookmarkedReviews } = useLoaderData<typeof loader>();
+  const { bookmarkedUsers, bookmarkedReviews, usersMeta, reviewsMeta } = useLoaderData<typeof loader>() as {
+    bookmarkedUsers: BookmarkedUser[];
+    bookmarkedReviews: BookmarkedReview[];
+    usersMeta: PaginationMeta;
+    reviewsMeta: PaginationMeta;
+  };
   const { logout, user, session, refreshUser } = useAuth();
   const navigate = useNavigate();
 
@@ -289,7 +312,7 @@ export default function ProfilePage() {
                       : "bg-background text-muted-foreground"
                   }`}
                 >
-                  {bookmarkedUsers.length}
+                  {usersMeta.total}
                 </span>
               </button>
               <button
@@ -308,7 +331,7 @@ export default function ProfilePage() {
                       : "bg-background text-muted-foreground"
                   }`}
                 >
-                  {bookmarkedReviews.length}
+                  {reviewsMeta.total}
                 </span>
               </button>
             </div>

@@ -16,25 +16,23 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  ApiStandardArrayResponse,
-  ApiStandardResponse,
-  StandardResponse,
-} from '../dto';
+import { ApiStandardResponse, StandardResponse } from '../dto';
 import {
   OptionalAuthGuard,
   SupabaseAuthGuard,
   type AuthenticatedRequest,
 } from '../supabase';
 import {
-  CategoryDto,
   CreateCategoryDto,
   CreateTabDto,
   GetReviewsQueryDto,
+  PaginatedCategoriesDto,
   PaginatedReviewsDto,
+  PaginatedTabsDto,
   ReorderTabsDto,
   TabResponseDto,
   UpdateTabDto,
+  CategoryDto,
 } from './dtos';
 import { TabsService } from './tabs.service';
 
@@ -63,26 +61,26 @@ export class TabsController {
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Reorder tabs' })
-  @ApiStandardArrayResponse(TabResponseDto)
+  @ApiStandardResponse(PaginatedTabsDto)
   async reorderTabs(
     @Req() req: AuthenticatedRequest,
     @Body() dto: ReorderTabsDto,
-  ): Promise<StandardResponse<TabResponseDto[]>> {
+  ): Promise<StandardResponse<PaginatedTabsDto>> {
     if (!req.user) {
       throw new Error('User profile not found');
     }
-    const tabs = await this.tabsService.reorderTabs(req.user, dto);
-    return StandardResponse.ok(tabs);
+    const result = await this.tabsService.reorderTabs(req.user, dto);
+    return StandardResponse.ok(result);
   }
 
   @Get(':tabId/categories')
   @ApiOperation({ summary: 'Get categories for a specific tab' })
-  @ApiStandardArrayResponse(CategoryDto)
+  @ApiStandardResponse(PaginatedCategoriesDto)
   async findCategoriesForTab(
     @Param('tabId') tabId: string,
-  ): Promise<StandardResponse<CategoryDto[]>> {
-    const categories = await this.tabsService.findCategoriesForTab(tabId);
-    return StandardResponse.ok(categories);
+  ): Promise<StandardResponse<PaginatedCategoriesDto>> {
+    const result = await this.tabsService.findCategoriesForTab(tabId);
+    return StandardResponse.ok(result);
   }
 
   @Post(':tabId/categories')

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsOptional, IsPositive, Min } from 'class-validator';
+import { Type as TransformType } from 'class-transformer';
+import { IsOptional, IsPositive, Max, Min } from 'class-validator';
+import { Type } from '@nestjs/common';
 
 export class PaginationDto {
   @ApiProperty({
@@ -10,7 +11,7 @@ export class PaginationDto {
     required: false,
   })
   @IsOptional()
-  @Type(() => Number)
+  @TransformType(() => Number)
   @IsPositive()
   page?: number = 1;
 
@@ -19,12 +20,14 @@ export class PaginationDto {
     example: 10,
     default: 10,
     minimum: 1,
+    maximum: 35,
     required: false,
   })
   @IsOptional()
-  @Type(() => Number)
+  @TransformType(() => Number)
   @IsPositive()
   @Min(1)
+  @Max(35)
   limit?: number = 10;
 
   get skip(): number {
@@ -34,4 +37,33 @@ export class PaginationDto {
   get take(): number {
     return this.limit ?? 10;
   }
+}
+
+export class PaginationMetaDto {
+  @ApiProperty({ description: 'Current page number' })
+  page: number;
+
+  @ApiProperty({ description: 'Number of items per page' })
+  limit: number;
+
+  @ApiProperty({ description: 'Total number of items' })
+  total: number;
+
+  @ApiProperty({ description: 'Total number of pages' })
+  totalPages: number;
+}
+
+/**
+ * Mixin that creates a paginated response DTO class for the given item type.
+ * Usage: `export class PaginatedUsersDto extends PaginatedResponseDto(UserDto) {}`
+ */
+export function PaginatedResponseDto<T>(ItemClass: Type<T>) {
+  class PaginatedResponseClass {
+    @ApiProperty({ type: [ItemClass] })
+    items: T[];
+
+    @ApiProperty({ type: PaginationMetaDto })
+    meta: PaginationMetaDto;
+  }
+  return PaginatedResponseClass;
 }

@@ -21,23 +21,3 @@ export function ApiStandardResponse(dataType: Constructor, status = 200) {
     }),
   );
 }
-
-// For array responses
-export function ApiStandardArrayResponse(dataType: Constructor, status = 200) {
-  return applyDecorators(
-    ApiExtraModels(StandardResponse, dataType),
-    ApiResponse({
-      status,
-      description: 'Successful response',
-      schema: {
-        properties: {
-          status: { type: 'number', example: status },
-          data: {
-            type: 'array',
-            items: { $ref: getSchemaPath(dataType) },
-          },
-        },
-      },
-    }),
-  );
-}

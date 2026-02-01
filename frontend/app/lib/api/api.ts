@@ -85,6 +85,22 @@ export interface UserResponseDto {
   isBookmarked: boolean;
 }
 
+export interface PaginationMetaDto {
+  /** Current page number */
+  page: number;
+  /** Number of items per page */
+  limit: number;
+  /** Total number of items */
+  total: number;
+  /** Total number of pages */
+  totalPages: number;
+}
+
+export interface PaginatedUsersDto {
+  items: UserResponseDto[];
+  meta: PaginationMetaDto;
+}
+
 export interface CreateUserDto {
   /** Unique username (letters, numbers, underscores only) */
   username: string;
@@ -126,6 +142,11 @@ export interface CreateTabDto {
   description?: string;
 }
 
+export interface PaginatedTabsDto {
+  items: TabResponseDto[];
+  meta: PaginationMetaDto;
+}
+
 export interface ReorderTabsDto {
   /**
    * Array of tab IDs in the desired order
@@ -138,6 +159,11 @@ export interface CategoryDto {
   id: string;
   name: string;
   slug: string;
+}
+
+export interface PaginatedCategoriesDto {
+  items: CategoryDto[];
+  meta: PaginationMetaDto;
 }
 
 export interface CreateCategoryDto {
@@ -160,13 +186,6 @@ export interface ReviewListItemDto {
   categories: CategoryDto[];
   /** Whether the current user has bookmarked this review */
   isBookmarked: boolean;
-}
-
-export interface PaginationMetaDto {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
 }
 
 export interface PaginatedReviewsDto {
@@ -327,6 +346,11 @@ export interface BookmarkedReviewDto {
   user: BookmarkedReviewUserDto;
 }
 
+export interface PaginatedBookmarkedReviewsDto {
+  items: BookmarkedReviewDto[];
+  meta: PaginationMetaDto;
+}
+
 export interface BookmarkedUserDto {
   id: string;
   username: string;
@@ -335,6 +359,11 @@ export interface BookmarkedUserDto {
   reviewCount: number;
   /** @format date-time */
   bookmarkedAt: string;
+}
+
+export interface PaginatedBookmarkedUsersDto {
+  items: BookmarkedUserDto[];
+  meta: PaginationMetaDto;
 }
 
 import type {
@@ -631,6 +660,7 @@ export class Api<
         /**
          * Number of items per page
          * @min 1
+         * @max 35
          * @default 10
          * @example 10
          */
@@ -646,7 +676,7 @@ export class Api<
         {
           /** @example 200 */
           status?: number;
-          data?: UserResponseDto[];
+          data?: PaginatedUsersDto;
         },
         any
       >({
@@ -846,7 +876,7 @@ export class Api<
         {
           /** @example 200 */
           status?: number;
-          data?: TabResponseDto[];
+          data?: PaginatedTabsDto;
         },
         any
       >({
@@ -875,7 +905,7 @@ export class Api<
         {
           /** @example 200 */
           status?: number;
-          data?: CategoryDto[];
+          data?: PaginatedCategoriesDto;
         },
         any
       >({
@@ -937,6 +967,7 @@ export class Api<
         /**
          * Number of items per page
          * @min 1
+         * @max 35
          * @default 10
          * @example 10
          */
@@ -1126,17 +1157,36 @@ export class Api<
      * @request GET:/bookmarks/reviews
      * @secure
      */
-    bookmarksControllerGetReviewBookmarks: (params: RequestParams = {}) =>
+    bookmarksControllerGetReviewBookmarks: (
+      query?: {
+        /**
+         * Page number
+         * @default 1
+         * @example 1
+         */
+        page?: number;
+        /**
+         * Number of items per page
+         * @min 1
+         * @max 35
+         * @default 10
+         * @example 10
+         */
+        limit?: number;
+      },
+      params: RequestParams = {},
+    ) =>
       this.request<
         {
           /** @example 200 */
           status?: number;
-          data?: BookmarkedReviewDto[];
+          data?: PaginatedBookmarkedReviewsDto;
         },
         any
       >({
         path: `/bookmarks/reviews`,
         method: "GET",
+        query: query,
         secure: true,
         format: "json",
         ...params,
@@ -1151,17 +1201,36 @@ export class Api<
      * @request GET:/bookmarks/users
      * @secure
      */
-    bookmarksControllerGetUserBookmarks: (params: RequestParams = {}) =>
+    bookmarksControllerGetUserBookmarks: (
+      query?: {
+        /**
+         * Page number
+         * @default 1
+         * @example 1
+         */
+        page?: number;
+        /**
+         * Number of items per page
+         * @min 1
+         * @max 35
+         * @default 10
+         * @example 10
+         */
+        limit?: number;
+      },
+      params: RequestParams = {},
+    ) =>
       this.request<
         {
           /** @example 200 */
           status?: number;
-          data?: BookmarkedUserDto[];
+          data?: PaginatedBookmarkedUsersDto;
         },
         any
       >({
         path: `/bookmarks/users`,
         method: "GET",
+        query: query,
         secure: true,
         format: "json",
         ...params,

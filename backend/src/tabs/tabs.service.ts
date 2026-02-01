@@ -11,7 +11,9 @@ import {
   CreateCategoryDto,
   CreateTabDto,
   GetReviewsQueryDto,
+  PaginatedCategoriesDto,
   PaginatedReviewsDto,
+  PaginatedTabsDto,
   ReorderTabsDto,
   TabResponseDto,
   UpdateTabDto,
@@ -68,7 +70,7 @@ export class TabsService {
   async reorderTabs(
     user: User,
     dto: ReorderTabsDto,
-  ): Promise<TabResponseDto[]> {
+  ): Promise<PaginatedTabsDto> {
     // Verify all tabs belong to the user
     const userTabs = await this.prisma.tab.findMany({
       where: { userId: user.id },
@@ -92,16 +94,26 @@ export class TabsService {
       ),
     );
 
-    return updatedTabs.map((tab) => ({
+    const items = updatedTabs.map((tab) => ({
       id: tab.id,
       name: tab.name,
       slug: tab.slug,
       description: tab.description,
       sortOrder: tab.sortOrder,
     }));
+
+    return {
+      items,
+      meta: {
+        page: 1,
+        limit: items.length,
+        total: items.length,
+        totalPages: 1,
+      },
+    };
   }
 
-  async findCategoriesForTab(tabId: string): Promise<CategoryDto[]> {
+  async findCategoriesForTab(tabId: string): Promise<PaginatedCategoriesDto> {
     // Verify tab exists
     const tab = await this.prisma.tab.findUnique({
       where: { id: tabId },
@@ -119,7 +131,15 @@ export class TabsService {
       orderBy: { name: 'asc' },
     });
 
-    return categories;
+    return {
+      items: categories,
+      meta: {
+        page: 1,
+        limit: categories.length,
+        total: categories.length,
+        totalPages: 1,
+      },
+    };
   }
 
   async createCategory(
