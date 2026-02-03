@@ -1,9 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 
 export class StandardResponse<T> {
+  @Expose()
   @ApiProperty({ example: 200 })
   status: number;
 
+  @Expose()
   @ApiProperty()
   data: T;
 

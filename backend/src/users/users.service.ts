@@ -17,9 +17,93 @@ import {
   UserSortBy,
 } from './users.dto';
 
+// Common include for user queries with all related data
+const USER_INCLUDE = {
+  _count: {
+    select: {
+      reviews: { where: { publishedAt: { not: null } } },
+      bookmarkedBy: true,
+    },
+  },
+  tabs: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      sortOrder: true,
+    },
+    orderBy: { sortOrder: 'asc' as const },
+  },
+  userTheme: {
+    include: {
+      aesthetic: true,
+    },
+  },
+} as const;
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Map raw Prisma user data to UserResponseDto shape.
+   * The global ClassSerializerInterceptor will filter to only @Expose() fields.
+   */
+  private mapToUserResponse(
+    user: {
+      id: string;
+      username: string;
+      bio: string | null;
+      avatarUrl: string | null;
+      isPrivate: boolean;
+      createdAt: Date;
+      _count: { reviews: number; bookmarkedBy: number };
+      tabs: {
+        id: string;
+        name: string;
+        slug: string;
+        description: string | null;
+        sortOrder: number;
+      }[];
+      userTheme: {
+        id: string;
+        aestheticId: string;
+        palette: string;
+        aesthetic: {
+          id: string;
+          slug: string;
+          name: string;
+          description: string | null;
+        };
+      } | null;
+      bookmarkedBy?: { id: string }[];
+    },
+    currentUserId?: string,
+  ): UserResponseDto {
+    return {
+      id: user.id,
+      username: user.username,
+      bio: user.bio,
+      avatarUrl: user.avatarUrl,
+      isPrivate: user.isPrivate,
+      userTheme: user.userTheme
+        ? {
+            id: user.userTheme.id,
+            aestheticId: user.userTheme.aestheticId,
+            palette: user.userTheme.palette,
+            aesthetic: user.userTheme.aesthetic,
+          }
+        : null,
+      createdAt: user.createdAt,
+      reviewCount: user._count.reviews,
+      bookmarkCount: user._count.bookmarkedBy,
+      tabs: user.tabs,
+      isBookmarked: currentUserId
+        ? (user.bookmarkedBy?.length ?? 0) > 0
+        : false,
+    };
+  }
 
   async findAll(
     query: GetUsersQueryDto,
@@ -47,34 +131,9 @@ export class UsersService {
       this.prisma.user.findMany({
         where,
         include: {
-          _count: {
-            select: {
-              reviews: {
-                where: { publishedAt: { not: null } },
-              },
-              bookmarkedBy: true,
-            },
-          },
-          tabs: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              description: true,
-              sortOrder: true,
-            },
-            orderBy: { sortOrder: 'asc' },
-          },
-          userTheme: {
-            include: {
-              aesthetic: true,
-            },
-          },
+          ...USER_INCLUDE,
           bookmarkedBy: currentUserId
-            ? {
-                where: { ownerId: currentUserId },
-                select: { id: true },
-              }
+            ? { where: { ownerId: currentUserId }, select: { id: true } }
             : false,
         },
         orderBy,
@@ -85,28 +144,15 @@ export class UsersService {
     ]);
 
     return {
-      items: users.map((user) => ({
-        id: user.id,
-        username: user.username,
-        bio: user.bio,
-        avatarUrl: user.avatarUrl,
-        isPrivate: user.isPrivate,
-        userTheme: user.userTheme
-          ? {
-              id: user.userTheme.id,
-              aestheticId: user.userTheme.aestheticId,
-              palette: user.userTheme.palette,
-              aesthetic: user.userTheme.aesthetic,
-            }
-          : null,
-        createdAt: user.createdAt,
-        reviewCount: user._count.reviews,
-        bookmarkCount: user._count.bookmarkedBy,
-        tabs: user.tabs,
-        isBookmarked: currentUserId
-          ? (user.bookmarkedBy as { id: string }[])?.length > 0
-          : false,
-      })),
+      items: users.map((user) =>
+        this.mapToUserResponse(
+          {
+            ...user,
+            bookmarkedBy: user.bookmarkedBy as { id: string }[] | undefined,
+          },
+          currentUserId,
+        ),
+      ),
       meta: {
         page,
         limit,
@@ -123,34 +169,9 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: { username },
       include: {
-        _count: {
-          select: {
-            reviews: {
-              where: { publishedAt: { not: null } },
-            },
-            bookmarkedBy: true,
-          },
-        },
-        tabs: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            description: true,
-            sortOrder: true,
-          },
-          orderBy: { sortOrder: 'asc' },
-        },
-        userTheme: {
-          include: {
-            aesthetic: true,
-          },
-        },
+        ...USER_INCLUDE,
         bookmarkedBy: currentUserId
-          ? {
-              where: { ownerId: currentUserId },
-              select: { id: true },
-            }
+          ? { where: { ownerId: currentUserId }, select: { id: true } }
           : false,
       },
     });
@@ -159,28 +180,13 @@ export class UsersService {
       throw new NotFoundException(`User @${username} not found`);
     }
 
-    return {
-      id: user.id,
-      username: user.username,
-      bio: user.bio,
-      avatarUrl: user.avatarUrl,
-      isPrivate: user.isPrivate,
-      userTheme: user.userTheme
-        ? {
-            id: user.userTheme.id,
-            aestheticId: user.userTheme.aestheticId,
-            palette: user.userTheme.palette,
-            aesthetic: user.userTheme.aesthetic,
-          }
-        : null,
-      createdAt: user.createdAt,
-      reviewCount: user._count.reviews,
-      bookmarkCount: user._count.bookmarkedBy,
-      tabs: user.tabs,
-      isBookmarked: currentUserId
-        ? (user.bookmarkedBy as { id: string }[])?.length > 0
-        : false,
-    };
+    return this.mapToUserResponse(
+      {
+        ...user,
+        bookmarkedBy: user.bookmarkedBy as { id: string }[] | undefined,
+      },
+      currentUserId,
+    );
   }
 
   async getCurrentUser(user: User | null): Promise<UserSensitiveDataDto> {
@@ -189,7 +195,7 @@ export class UsersService {
         'Profile not set up - complete onboarding first',
       );
     }
-    const userData = await this.findById(user.id);
+    const userData = await this.findByIdInternal(user.id);
     return { ...userData, role: user.role };
   }
 
@@ -202,7 +208,7 @@ export class UsersService {
         'Profile not set up - use PUT to create profile first',
       );
     }
-    const userData = await this.update(user.id, dto);
+    const userData = await this.updateInternal(user.id, dto);
     return { ...userData, role: user.role };
   }
 
@@ -232,163 +238,47 @@ export class UsersService {
         bio: dto.bio,
         avatarUrl: dto.avatarUrl,
       },
-      include: {
-        _count: {
-          select: {
-            reviews: {
-              where: { publishedAt: { not: null } },
-            },
-            bookmarkedBy: true,
-          },
-        },
-        tabs: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            description: true,
-            sortOrder: true,
-          },
-          orderBy: { sortOrder: 'asc' },
-        },
-        userTheme: {
-          include: {
-            aesthetic: true,
-          },
-        },
-      },
+      include: USER_INCLUDE,
     });
 
     return {
-      id: user.id,
-      username: user.username,
-      bio: user.bio,
-      avatarUrl: user.avatarUrl,
-      isPrivate: user.isPrivate,
-      userTheme: user.userTheme
-        ? {
-            id: user.userTheme.id,
-            aestheticId: user.userTheme.aestheticId,
-            palette: user.userTheme.palette,
-            aesthetic: user.userTheme.aesthetic,
-          }
-        : null,
-      createdAt: user.createdAt,
-      reviewCount: user._count.reviews,
-      bookmarkCount: user._count.bookmarkedBy,
-      tabs: user.tabs,
-      isBookmarked: false,
+      ...this.mapToUserResponse(user),
       role: user.role,
     };
   }
 
   async findById(id: string): Promise<UserResponseDto> {
+    return this.findByIdInternal(id);
+  }
+
+  private async findByIdInternal(id: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: {
-        _count: {
-          select: {
-            reviews: {
-              where: { publishedAt: { not: null } },
-            },
-            bookmarkedBy: true,
-          },
-        },
-        tabs: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            description: true,
-            sortOrder: true,
-          },
-          orderBy: { sortOrder: 'asc' },
-        },
-        userTheme: {
-          include: {
-            aesthetic: true,
-          },
-        },
-      },
+      include: USER_INCLUDE,
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return {
-      id: user.id,
-      username: user.username,
-      bio: user.bio,
-      avatarUrl: user.avatarUrl,
-      isPrivate: user.isPrivate,
-      userTheme: user.userTheme
-        ? {
-            id: user.userTheme.id,
-            aestheticId: user.userTheme.aestheticId,
-            palette: user.userTheme.palette,
-            aesthetic: user.userTheme.aesthetic,
-          }
-        : null,
-      createdAt: user.createdAt,
-      reviewCount: user._count.reviews,
-      bookmarkCount: user._count.bookmarkedBy,
-      tabs: user.tabs,
-      isBookmarked: false,
-    };
+    return this.mapToUserResponse(user);
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<UserResponseDto> {
+    return this.updateInternal(id, dto);
+  }
+
+  private async updateInternal(
+    id: string,
+    dto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
     const user = await this.prisma.user.update({
       where: { id },
       data: dto,
-      include: {
-        _count: {
-          select: {
-            reviews: {
-              where: { publishedAt: { not: null } },
-            },
-            bookmarkedBy: true,
-          },
-        },
-        tabs: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            description: true,
-            sortOrder: true,
-          },
-          orderBy: { sortOrder: 'asc' },
-        },
-        userTheme: {
-          include: {
-            aesthetic: true,
-          },
-        },
-      },
+      include: USER_INCLUDE,
     });
 
-    return {
-      id: user.id,
-      username: user.username,
-      bio: user.bio,
-      avatarUrl: user.avatarUrl,
-      isPrivate: user.isPrivate,
-      userTheme: user.userTheme
-        ? {
-            id: user.userTheme.id,
-            aestheticId: user.userTheme.aestheticId,
-            palette: user.userTheme.palette,
-            aesthetic: user.userTheme.aesthetic,
-          }
-        : null,
-      createdAt: user.createdAt,
-      reviewCount: user._count.reviews,
-      bookmarkCount: user._count.bookmarkedBy,
-      tabs: user.tabs,
-      isBookmarked: false,
-    };
+    return this.mapToUserResponse(user);
   }
 
   async updateTheme(
@@ -423,7 +313,7 @@ export class UsersService {
     });
 
     // Return the updated user with sensitive data
-    const userData = await this.findById(user.id);
+    const userData = await this.findByIdInternal(user.id);
     return { ...userData, role: user.role };
   }
 

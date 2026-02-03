@@ -31,7 +31,9 @@ export class UpdateUserDto {
   @MaxLength(500)
   avatarUrl?: string;
 
-  @ApiPropertyOptional({ description: 'Whether the profile is private (hidden from explore/search)' })
+  @ApiPropertyOptional({
+    description: 'Whether the profile is private (hidden from explore/search)',
+  })
   @IsOptional()
   @IsBoolean()
   isPrivate?: boolean;

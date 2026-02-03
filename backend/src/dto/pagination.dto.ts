@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type as TransformType } from 'class-transformer';
+import { Expose, Type as TransformType } from 'class-transformer';
 import { IsOptional, IsPositive, Max, Min } from 'class-validator';
 import { Type } from '@nestjs/common';
 
@@ -40,15 +40,19 @@ export class PaginationDto {
 }
 
 export class PaginationMetaDto {
+  @Expose()
   @ApiProperty({ description: 'Current page number' })
   page: number;
 
+  @Expose()
   @ApiProperty({ description: 'Number of items per page' })
   limit: number;
 
+  @Expose()
   @ApiProperty({ description: 'Total number of items' })
   total: number;
 
+  @Expose()
   @ApiProperty({ description: 'Total number of pages' })
   totalPages: number;
 }
@@ -59,9 +63,13 @@ export class PaginationMetaDto {
  */
 export function PaginatedResponseDto<T>(ItemClass: Type<T>) {
   class PaginatedResponseClass {
+    @Expose()
+    @TransformType(() => ItemClass)
     @ApiProperty({ type: [ItemClass] })
     items: T[];
 
+    @Expose()
+    @TransformType(() => PaginationMetaDto)
     @ApiProperty({ type: PaginationMetaDto })
     meta: PaginationMetaDto;
   }
