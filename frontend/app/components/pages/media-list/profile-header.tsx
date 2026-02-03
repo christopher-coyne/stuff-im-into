@@ -1,19 +1,18 @@
 import { useMutation } from "@tanstack/react-query";
-import { Bookmark, BookmarkCheck, Pencil } from "lucide-react";
+import { Bookmark, BookmarkCheck, Check, Link2, Pencil } from "lucide-react";
 import { useState } from "react";
-import { useRevalidator } from "react-router";
+import { useLocation, useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "~/lib/auth-context";
 import { api } from "~/lib/api/client";
 import type { UserResponseDto } from "~/lib/api/api";
-import { AESTHETICS, type AestheticSlug, type ResolvedTheme } from "~/lib/theme/themes";
+import type { ResolvedTheme } from "~/lib/theme/themes";
 
 interface ProfileHeaderProps {
   user: UserResponseDto;
   isOwnProfile: boolean;
   isEditMode: boolean;
   onEditModeChange: (editing: boolean) => void;
-  currentTheme?: { aesthetic: AestheticSlug; palette: string };
   theme: ResolvedTheme;
 }
 
@@ -22,24 +21,26 @@ export function ProfileHeader({
   isOwnProfile,
   isEditMode,
   onEditModeChange,
-  currentTheme,
   theme,
 }: ProfileHeaderProps) {
   const { session } = useAuth();
   const revalidator = useRevalidator();
+  const location = useLocation();
   const [showBio, setShowBio] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const { styles } = theme;
+
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}${location.pathname}`;
+    await navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
 
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
-
-  // Get theme display name
-  const themeName = currentTheme
-    ? AESTHETICS[currentTheme.aesthetic]?.name ?? "Unknown"
-    : null;
-  const paletteName = currentTheme?.palette ?? "default";
 
   const bookmarkUserMutation = useMutation({
     mutationFn: async (shouldBookmark: boolean) => {
@@ -96,16 +97,25 @@ export function ProfileHeader({
             <p className="text-sm" style={styles.headerTextMuted}>
               Joined {joinDate}
             </p>
-            {themeName && (
-              <p className="text-xs mt-1" style={{ ...styles.headerTextMuted, opacity: 0.6 }}>
-                {themeName} · <span className="capitalize">{paletteName}</span>
-              </p>
-            )}
           </div>
         </div>
 
         {/* Action buttons row */}
         <div className="flex items-center gap-2">
+          {/* Copy Link Button */}
+          <button
+            onClick={handleCopyLink}
+            className="p-2"
+            style={styles.buttonIcon}
+            title="Copy link"
+          >
+            {linkCopied ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Link2 className="h-4 w-4" />
+            )}
+          </button>
+
           {/* About Button */}
           {user.bio && (
             <button

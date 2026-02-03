@@ -282,7 +282,6 @@ export default function MediaListPage() {
           isOwnProfile={isOwnProfile}
           isEditMode={isEditMode}
           onEditModeChange={setIsEditMode}
-          currentTheme={currentTheme}
           theme={theme}
         />
 
