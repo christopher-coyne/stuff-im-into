@@ -45,7 +45,7 @@ export function MediaPreview({
         <img
           src={mediaUrl}
           alt={title || "Review image"}
-          className={imageContain ? `w-full ${className}` : `${containerClass} object-cover`}
+          className={imageContain ? `max-w-full h-auto ${className}` : `${containerClass} object-cover`}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}

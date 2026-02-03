@@ -1,10 +1,10 @@
 import { ImagePlus, Loader2, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { uploadReviewImage } from "~/lib/supabase/storage";
+import { uploadReviewImage } from "~/lib/cloudflare/upload";
+import { useAuth } from "~/lib/auth-context";
 
 interface ImageUploadProps {
-  userId: string;
   currentUrl?: string;
   onUpload: (url: string) => void;
   onRemove: () => void;
@@ -12,12 +12,12 @@ interface ImageUploadProps {
 }
 
 export function ImageUpload({
-  userId,
   currentUrl,
   onUpload,
   onRemove,
   disabled = false,
 }: ImageUploadProps) {
+  const { session } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -25,6 +25,11 @@ export function ImageUpload({
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!session?.access_token) {
+      setError("Not authenticated");
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
@@ -42,7 +47,7 @@ export function ImageUpload({
     setError(null);
 
     try {
-      const url = await uploadReviewImage(file, userId);
+      const url = await uploadReviewImage(file, session.access_token);
       onUpload(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");

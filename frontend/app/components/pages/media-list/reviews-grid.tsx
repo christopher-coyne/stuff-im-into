@@ -104,7 +104,7 @@ export function ReviewsGrid({ reviews, theme, isOwner, currentTabId }: ReviewsGr
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {reviews.map((review) => (
         <Link key={review.id} to={`/review/${review.id}`} className="group">
           {/* Image */}

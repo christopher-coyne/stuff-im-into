@@ -276,10 +276,10 @@ export default function ReviewDetailPage() {
         {/* Main content */}
         <main className="py-6">
         {/* Media embed */}
-        <div className={`rounded-xl overflow-hidden bg-muted mb-4 ${
-          review.mediaType === "TEXT" ? "min-h-[200px]" :
-          review.mediaType === "IMAGE" ? "" :
-          "aspect-video"
+        <div className={`rounded-xl overflow-hidden mb-4 ${
+          review.mediaType === "TEXT" ? "min-h-[200px] bg-muted" :
+          review.mediaType === "IMAGE" ? "inline-block" :
+          "aspect-video bg-muted"
         }`}>
           <MediaPreview
             mediaType={review.mediaType as "VIDEO" | "SPOTIFY" | "IMAGE" | "TEXT"}

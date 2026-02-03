@@ -278,7 +278,6 @@ export function ReviewForm({
                 </div>
               ) : watchedMediaType === "IMAGE" && !watchedMediaUrl ? (
                 <ImageUpload
-                  userId={user.id}
                   currentUrl={watchedMediaUrl}
                   onUpload={(url) => setValue("mediaUrl", url)}
                   onRemove={() => setValue("mediaUrl", "")}
