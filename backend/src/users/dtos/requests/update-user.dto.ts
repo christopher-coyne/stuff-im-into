@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsOptional,
   IsString,
   Matches,
@@ -29,4 +30,9 @@ export class UpdateUserDto {
   @IsString()
   @MaxLength(500)
   avatarUrl?: string;
+
+  @ApiPropertyOptional({ description: 'Whether the profile is private (hidden from explore/search)' })
+  @IsOptional()
+  @IsBoolean()
+  isPrivate?: boolean;
 }

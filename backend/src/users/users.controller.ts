@@ -20,6 +20,7 @@ import {
   UpdateThemeDto,
   UpdateUserDto,
   UserResponseDto,
+  UserSensitiveDataDto,
 } from './users.dto';
 import { UsersService } from './users.service';
 
@@ -45,10 +46,10 @@ export class UsersController {
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiStandardResponse(UserResponseDto)
+  @ApiStandardResponse(UserSensitiveDataDto)
   async getMe(
     @Req() req: AuthenticatedRequest,
-  ): Promise<StandardResponse<UserResponseDto>> {
+  ): Promise<StandardResponse<UserSensitiveDataDto>> {
     const user = await this.usersService.getCurrentUser(req.user);
     return StandardResponse.ok(user);
   }
@@ -57,11 +58,11 @@ export class UsersController {
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create or replace current user profile' })
-  @ApiStandardResponse(UserResponseDto)
+  @ApiStandardResponse(UserSensitiveDataDto)
   async upsertMe(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateUserDto,
-  ): Promise<StandardResponse<UserResponseDto>> {
+  ): Promise<StandardResponse<UserSensitiveDataDto>> {
     const user = await this.usersService.upsertCurrentUser(
       req.supabaseUser.id,
       dto,
@@ -73,11 +74,11 @@ export class UsersController {
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user profile' })
-  @ApiStandardResponse(UserResponseDto)
+  @ApiStandardResponse(UserSensitiveDataDto)
   async updateMe(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateUserDto,
-  ): Promise<StandardResponse<UserResponseDto>> {
+  ): Promise<StandardResponse<UserSensitiveDataDto>> {
     const user = await this.usersService.updateCurrentUser(req.user, dto);
     return StandardResponse.ok(user);
   }
@@ -86,11 +87,11 @@ export class UsersController {
   @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user theme' })
-  @ApiStandardResponse(UserResponseDto)
+  @ApiStandardResponse(UserSensitiveDataDto)
   async updateTheme(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateThemeDto,
-  ): Promise<StandardResponse<UserResponseDto>> {
+  ): Promise<StandardResponse<UserSensitiveDataDto>> {
     const user = await this.usersService.updateTheme(req.user, dto);
     return StandardResponse.ok(user);
   }

@@ -10,15 +10,7 @@ import { EditSidebar } from "~/components/pages/media-list/edit-sidebar";
 import { EditTabModal } from "~/components/pages/media-list/edit-tab-modal";
 import { ProfileHeader } from "~/components/pages/media-list/profile-header";
 import { ReviewsGrid } from "~/components/pages/media-list/reviews-grid";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "~/components/ui/pagination";
+import { ThemedPagination } from "~/components/pages/media-list/themed-pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { useAuth } from "~/lib/auth-context";
 import { useDebounce } from "~/hooks/use-debounce";
@@ -390,76 +382,12 @@ export default function MediaListPage() {
             />
 
             {/* Pagination */}
-            {reviews.meta.totalPages > 1 && (
-              <Pagination className="mt-8">
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => handlePageChange(reviews.meta.page - 1)}
-                      disabled={reviews.meta.page <= 1}
-                      style={styles.mutedText}
-                    />
-                  </PaginationItem>
-
-                  {/* Page numbers */}
-                  {(() => {
-                    const currentPage = reviews.meta.page;
-                    const totalPages = reviews.meta.totalPages;
-                    const pages: (number | "ellipsis")[] = [];
-
-                    if (totalPages <= 7) {
-                      // Show all pages if 7 or fewer
-                      for (let i = 1; i <= totalPages; i++) pages.push(i);
-                    } else {
-                      // Always show first page
-                      pages.push(1);
-
-                      if (currentPage > 3) {
-                        pages.push("ellipsis");
-                      }
-
-                      // Show pages around current
-                      const start = Math.max(2, currentPage - 1);
-                      const end = Math.min(totalPages - 1, currentPage + 1);
-                      for (let i = start; i <= end; i++) pages.push(i);
-
-                      if (currentPage < totalPages - 2) {
-                        pages.push("ellipsis");
-                      }
-
-                      // Always show last page
-                      pages.push(totalPages);
-                    }
-
-                    return pages.map((page, idx) =>
-                      page === "ellipsis" ? (
-                        <PaginationItem key={`ellipsis-${idx}`}>
-                          <PaginationEllipsis style={styles.mutedText} />
-                        </PaginationItem>
-                      ) : (
-                        <PaginationItem key={page}>
-                          <PaginationLink
-                            onClick={() => handlePageChange(page)}
-                            isActive={page === currentPage}
-                            style={page === currentPage ? styles.button : styles.mutedText}
-                          >
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      )
-                    );
-                  })()}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => handlePageChange(reviews.meta.page + 1)}
-                      disabled={reviews.meta.page >= reviews.meta.totalPages}
-                      style={styles.mutedText}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            )}
+            <ThemedPagination
+              currentPage={reviews.meta.page}
+              totalPages={reviews.meta.totalPages}
+              onPageChange={handlePageChange}
+              theme={theme}
+            />
           </div>
         ) : (
           <div className="p-8 text-center" style={styles.card}>
@@ -491,6 +419,7 @@ export default function MediaListPage() {
           onAddCategory={() => setShowAddCategoryModal(true)}
           currentTheme={currentTheme}
           onThemeChange={setCurrentTheme}
+          isPrivate={user.isPrivate}
         />
       )}
 

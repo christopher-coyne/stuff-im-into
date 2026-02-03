@@ -13,6 +13,7 @@ import {
   UpdateThemeDto,
   UpdateUserDto,
   UserResponseDto,
+  UserSensitiveDataDto,
   UserSortBy,
 } from './users.dto';
 
@@ -29,14 +30,18 @@ export class UsersService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
-    const where = search
-      ? {
-          username: {
-            contains: search,
-            mode: 'insensitive' as const,
-          },
-        }
-      : undefined;
+    const where = {
+      // Only show public profiles in explore/search
+      isPrivate: false,
+      ...(search
+        ? {
+            username: {
+              contains: search,
+              mode: 'insensitive' as const,
+            },
+          }
+        : {}),
+    };
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -85,6 +90,7 @@ export class UsersService {
         username: user.username,
         bio: user.bio,
         avatarUrl: user.avatarUrl,
+        isPrivate: user.isPrivate,
         userTheme: user.userTheme
           ? {
               id: user.userTheme.id,
@@ -93,7 +99,6 @@ export class UsersService {
               aesthetic: user.userTheme.aesthetic,
             }
           : null,
-        role: user.role,
         createdAt: user.createdAt,
         reviewCount: user._count.reviews,
         bookmarkCount: user._count.bookmarkedBy,
@@ -159,6 +164,7 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
+      isPrivate: user.isPrivate,
       userTheme: user.userTheme
         ? {
             id: user.userTheme.id,
@@ -167,7 +173,6 @@ export class UsersService {
             aesthetic: user.userTheme.aesthetic,
           }
         : null,
-      role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
@@ -178,31 +183,33 @@ export class UsersService {
     };
   }
 
-  async getCurrentUser(user: User | null): Promise<UserResponseDto> {
+  async getCurrentUser(user: User | null): Promise<UserSensitiveDataDto> {
     if (!user) {
       throw new ForbiddenException(
         'Profile not set up - complete onboarding first',
       );
     }
-    return this.findById(user.id);
+    const userData = await this.findById(user.id);
+    return { ...userData, role: user.role };
   }
 
   async updateCurrentUser(
     user: User | null,
     dto: UpdateUserDto,
-  ): Promise<UserResponseDto> {
+  ): Promise<UserSensitiveDataDto> {
     if (!user) {
       throw new ForbiddenException(
         'Profile not set up - use PUT to create profile first',
       );
     }
-    return this.update(user.id, dto);
+    const userData = await this.update(user.id, dto);
+    return { ...userData, role: user.role };
   }
 
   async upsertCurrentUser(
     supabaseUserId: string,
     dto: CreateUserDto,
-  ): Promise<UserResponseDto> {
+  ): Promise<UserSensitiveDataDto> {
     // Check if username is taken by another user
     const existingUsername = await this.prisma.user.findUnique({
       where: { username: dto.username },
@@ -257,6 +264,7 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
+      isPrivate: user.isPrivate,
       userTheme: user.userTheme
         ? {
             id: user.userTheme.id,
@@ -265,12 +273,12 @@ export class UsersService {
             aesthetic: user.userTheme.aesthetic,
           }
         : null,
-      role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
       tabs: user.tabs,
       isBookmarked: false,
+      role: user.role,
     };
   }
 
@@ -313,6 +321,7 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
+      isPrivate: user.isPrivate,
       userTheme: user.userTheme
         ? {
             id: user.userTheme.id,
@@ -321,7 +330,6 @@ export class UsersService {
             aesthetic: user.userTheme.aesthetic,
           }
         : null,
-      role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
@@ -366,6 +374,7 @@ export class UsersService {
       username: user.username,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
+      isPrivate: user.isPrivate,
       userTheme: user.userTheme
         ? {
             id: user.userTheme.id,
@@ -374,7 +383,6 @@ export class UsersService {
             aesthetic: user.userTheme.aesthetic,
           }
         : null,
-      role: user.role,
       createdAt: user.createdAt,
       reviewCount: user._count.reviews,
       bookmarkCount: user._count.bookmarkedBy,
@@ -386,7 +394,7 @@ export class UsersService {
   async updateTheme(
     user: User | null,
     dto: UpdateThemeDto,
-  ): Promise<UserResponseDto> {
+  ): Promise<UserSensitiveDataDto> {
     if (!user) {
       throw new ForbiddenException('Not authenticated');
     }
@@ -414,8 +422,9 @@ export class UsersService {
       },
     });
 
-    // Return the updated user
-    return this.findById(user.id);
+    // Return the updated user with sensitive data
+    const userData = await this.findById(user.id);
+    return { ...userData, role: user.role };
   }
 
   private getOrderBy(sortBy: UserSortBy) {

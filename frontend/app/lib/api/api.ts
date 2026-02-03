@@ -73,9 +73,10 @@ export interface UserResponseDto {
   username: string;
   bio?: object;
   avatarUrl?: object;
+  /** Whether the profile is private (hidden from explore/search) */
+  isPrivate: boolean;
   /** User theme settings (null if not set) */
   userTheme?: UserThemeDto;
-  role: "USER" | "ADMIN";
   /** @format date-time */
   createdAt: string;
   reviewCount: number;
@@ -101,6 +102,25 @@ export interface PaginatedUsersDto {
   meta: PaginationMetaDto;
 }
 
+export interface UserSensitiveDataDto {
+  id: string;
+  username: string;
+  bio?: object;
+  avatarUrl?: object;
+  /** Whether the profile is private (hidden from explore/search) */
+  isPrivate: boolean;
+  /** User theme settings (null if not set) */
+  userTheme?: UserThemeDto;
+  /** @format date-time */
+  createdAt: string;
+  reviewCount: number;
+  bookmarkCount: number;
+  tabs: TabDto[];
+  /** Whether the current user has bookmarked this user */
+  isBookmarked: boolean;
+  role: "USER" | "ADMIN";
+}
+
 export interface CreateUserDto {
   /** Unique username (letters, numbers, underscores only) */
   username: string;
@@ -112,6 +132,8 @@ export interface UpdateUserDto {
   username?: string;
   bio?: string;
   avatarUrl?: string;
+  /** Whether the profile is private (hidden from explore/search) */
+  isPrivate?: boolean;
 }
 
 export interface UpdateThemeDto {
@@ -729,7 +751,7 @@ export class Api<
         {
           /** @example 200 */
           status?: number;
-          data?: UserResponseDto;
+          data?: UserSensitiveDataDto;
         },
         any
       >({
@@ -757,7 +779,7 @@ export class Api<
         {
           /** @example 200 */
           status?: number;
-          data?: UserResponseDto;
+          data?: UserSensitiveDataDto;
         },
         any
       >({
@@ -787,7 +809,7 @@ export class Api<
         {
           /** @example 200 */
           status?: number;
-          data?: UserResponseDto;
+          data?: UserSensitiveDataDto;
         },
         any
       >({
@@ -817,7 +839,7 @@ export class Api<
         {
           /** @example 200 */
           status?: number;
-          data?: UserResponseDto;
+          data?: UserSensitiveDataDto;
         },
         any
       >({

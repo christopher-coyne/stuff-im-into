@@ -34,6 +34,7 @@ model User {
   username  String   @unique @db.VarChar(50)
   bio       String?  @db.VarChar(160)
   avatarUrl String?  @db.VarChar(500)
+  isPrivate Boolean  @default(false) // Private profiles don't appear in search/explore
   role      UserRole @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

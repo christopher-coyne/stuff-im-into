@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
-import { Check, ChevronDown, ChevronUp, Pencil, PencilLine, Plus, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, EyeOff, Pencil, PencilLine, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useRevalidator } from "react-router";
 import { toast } from "sonner";
 import { api } from "~/lib/api/client";
 import { useAuth } from "~/lib/auth-context";
@@ -26,9 +26,10 @@ interface EditSidebarProps {
   onAddCategory: () => void;
   currentTheme: ThemeSelection;
   onThemeChange: (theme: ThemeSelection) => void;
+  isPrivate: boolean;
 }
 
-type SidebarTab = "content" | "theme";
+type SidebarTab = "content" | "theme" | "settings";
 
 export function EditSidebar({
   currentTab,
@@ -39,8 +40,10 @@ export function EditSidebar({
   onAddCategory,
   currentTheme,
   onThemeChange,
+  isPrivate,
 }: EditSidebarProps) {
   const { session } = useAuth();
+  const revalidator = useRevalidator();
   const [isOpen, setIsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<SidebarTab>("content");
   const aestheticSlugs = getAestheticSlugs();
@@ -61,6 +64,26 @@ export function EditSidebar({
       const message =
         (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
         "Failed to save theme";
+      toast.error(message);
+    },
+  });
+
+  const updatePrivacyMutation = useMutation({
+    mutationFn: async (newIsPrivate: boolean) => {
+      if (!session) throw new Error("Not authenticated");
+      await api.users.usersControllerUpdateMe(
+        { isPrivate: newIsPrivate },
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+    },
+    onSuccess: () => {
+      revalidator.revalidate();
+      toast.success("Privacy settings updated");
+    },
+    onError: (error) => {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to update privacy settings";
       toast.error(message);
     },
   });
@@ -94,7 +117,7 @@ export function EditSidebar({
 
       {/* Edit Panel */}
       {isOpen && (
-        <div className="bg-background border border-border rounded-lg shadow-lg overflow-hidden w-72 max-h-[70vh] flex flex-col">
+        <div className="bg-background border border-border rounded-lg shadow-lg overflow-hidden w-80 max-h-[70vh] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <span className="text-sm font-semibold">Edit Mode</span>
@@ -110,7 +133,7 @@ export function EditSidebar({
           <div className="flex border-b border-border shrink-0">
             <button
               onClick={() => setActiveTab("content")}
-              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 activeTab === "content"
                   ? "border-b-2 border-primary text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -120,13 +143,23 @@ export function EditSidebar({
             </button>
             <button
               onClick={() => setActiveTab("theme")}
-              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 activeTab === "theme"
                   ? "border-b-2 border-primary text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Theme
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                activeTab === "settings"
+                  ? "border-b-2 border-primary text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Settings
             </button>
           </div>
 
@@ -288,6 +321,35 @@ export function EditSidebar({
                 >
                   {saveThemeMutation.isPending ? "Saving..." : "Save Theme"}
                 </button>
+              </div>
+            )}
+
+            {activeTab === "settings" && (
+              <div className="space-y-4">
+                {/* Privacy Setting */}
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                    Privacy
+                  </div>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isPrivate}
+                      onChange={(e) => updatePrivacyMutation.mutate(e.target.checked)}
+                      disabled={updatePrivacyMutation.isPending}
+                      className="mt-0.5 h-4 w-4 rounded border-input disabled:opacity-50"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 text-sm font-medium">
+                        <EyeOff className="h-3.5 w-3.5" />
+                        Private profile
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Your profile won&apos;t appear in search results or the explore page. People can still visit your profile directly via link.
+                      </p>
+                    </div>
+                  </label>
+                </div>
               </div>
             )}
           </div>
