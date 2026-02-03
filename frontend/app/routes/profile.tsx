@@ -146,7 +146,6 @@ export default function ProfilePage() {
                 {/* Avatar */}
                 {isEditing && user ? (
                   <AvatarUpload
-                    userId={user.id}
                     currentUrl={user.avatarUrl ? String(user.avatarUrl) : null}
                     username={user.username}
                     onUpload={(url) => updateAvatarMutation.mutate(url)}

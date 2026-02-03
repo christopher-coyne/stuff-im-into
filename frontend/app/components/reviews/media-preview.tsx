@@ -23,6 +23,8 @@ interface MediaPreviewProps {
   renderMarkdown?: boolean;
   /** Optional theme for styled rendering */
   theme?: ResolvedTheme;
+  /** Display image at natural aspect ratio instead of cropping */
+  imageContain?: boolean;
 }
 
 export function MediaPreview({
@@ -33,6 +35,7 @@ export function MediaPreview({
   className = "",
   renderMarkdown = false,
   theme,
+  imageContain = false,
 }: MediaPreviewProps) {
   const containerClass = `w-full h-full ${className}`;
 
@@ -42,7 +45,7 @@ export function MediaPreview({
         <img
           src={mediaUrl}
           alt={title || "Review image"}
-          className={`${containerClass} object-cover`}
+          className={imageContain ? `w-full ${className}` : `${containerClass} object-cover`}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}

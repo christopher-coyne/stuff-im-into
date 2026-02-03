@@ -1,9 +1,9 @@
 import { Camera, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
-import { uploadAvatar } from "~/lib/supabase/storage";
+import { uploadAvatar } from "~/lib/cloudflare/upload";
+import { useAuth } from "~/lib/auth-context";
 
 interface AvatarUploadProps {
-  userId: string;
   currentUrl?: string | null;
   username: string;
   onUpload: (url: string) => void;
@@ -18,13 +18,13 @@ const sizeClasses = {
 };
 
 export function AvatarUpload({
-  userId,
   currentUrl,
   username,
   onUpload,
   disabled = false,
   size = "md",
 }: AvatarUploadProps) {
+  const { session } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +32,11 @@ export function AvatarUpload({
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!session?.access_token) {
+      setError("Not authenticated");
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
@@ -49,7 +54,7 @@ export function AvatarUpload({
     setError(null);
 
     try {
-      const url = await uploadAvatar(file, userId);
+      const url = await uploadAvatar(file, session.access_token);
       onUpload(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -82,8 +87,10 @@ export function AvatarUpload({
           </div>
         )}
 
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Overlay - always visible when uploading, otherwise on hover */}
+        <div className={`absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity ${
+          isUploading ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}>
           {isUploading ? (
             <Loader2 className="h-6 w-6 text-white animate-spin" />
           ) : (

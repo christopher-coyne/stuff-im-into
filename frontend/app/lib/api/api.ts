@@ -380,6 +380,19 @@ export interface PaginatedBookmarkedUsersDto {
   meta: PaginationMetaDto;
 }
 
+export interface DirectUploadResponseDto {
+  /**
+   * One-time upload URL to POST the image to
+   * @example "https://upload.imagedelivery.net/..."
+   */
+  uploadUrl: string;
+  /**
+   * The image ID that will be used in the final URL
+   * @example "abc123-def456"
+   */
+  imageId: string;
+}
+
 import type {
   AxiosInstance,
   AxiosRequestConfig,
@@ -1327,6 +1340,32 @@ export class Api<
         path: `/bookmarks/users/${userId}`,
         method: "DELETE",
         secure: true,
+        ...params,
+      }),
+  };
+  uploads = {
+    /**
+     * @description Returns a one-time upload URL. POST the image file directly to this URL.
+     *
+     * @tags Uploads
+     * @name UploadsControllerGetDirectUploadUrl
+     * @summary Get a direct upload URL for Cloudflare Images
+     * @request POST:/uploads/direct-upload-url
+     * @secure
+     */
+    uploadsControllerGetDirectUploadUrl: (params: RequestParams = {}) =>
+      this.request<
+        {
+          /** @example 200 */
+          status?: number;
+          data?: DirectUploadResponseDto;
+        },
+        any
+      >({
+        path: `/uploads/direct-upload-url`,
+        method: "POST",
+        secure: true,
+        format: "json",
         ...params,
       }),
   };

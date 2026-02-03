@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma';
 import { ReviewsModule } from './reviews';
 import { SupabaseModule } from './supabase';
 import { TabsModule } from './tabs';
+import { UploadsModule } from './uploads';
 import { UsersModule } from './users';
 
 @Module({
@@ -18,6 +19,7 @@ import { UsersModule } from './users';
     TabsModule,
     ReviewsModule,
     BookmarksModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
