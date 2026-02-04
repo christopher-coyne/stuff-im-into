@@ -25,4 +25,22 @@ export class BookmarkedUserDto {
   @Expose()
   @ApiProperty()
   bookmarkedAt: Date;
+
+  constructor(data?: {
+    id: string;
+    username: string;
+    bio: string | null;
+    avatarUrl: string | null;
+    reviewCount: number;
+    bookmarkedAt: Date;
+  }) {
+    if (data) {
+      this.id = data.id;
+      this.username = data.username;
+      this.bio = data.bio;
+      this.avatarUrl = data.avatarUrl;
+      this.reviewCount = data.reviewCount;
+      this.bookmarkedAt = data.bookmarkedAt;
+    }
+  }
 }

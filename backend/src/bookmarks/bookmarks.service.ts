@@ -4,9 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { User } from '@prisma/client';
-import { PaginationDto } from '../dto';
+import { PaginationDto, PaginationMetaDto } from '../dto';
 import { PrismaService } from '../prisma';
 import {
+  BookmarkedReviewDto,
+  BookmarkedReviewUserDto,
+  BookmarkedUserDto,
   PaginatedBookmarkedReviewsDto,
   PaginatedBookmarkedUsersDto,
 } from './dtos';
@@ -50,27 +53,32 @@ export class BookmarksService {
       this.prisma.reviewBookmark.count({ where }),
     ]);
 
-    return {
-      items: bookmarks.map((b) => ({
-        id: b.review.id,
-        title: b.review.title,
-        description: b.review.description,
-        mediaType: b.review.mediaType,
-        mediaUrl: b.review.mediaUrl,
-        bookmarkedAt: b.createdAt,
-        user: {
-          id: b.review.user.id,
-          username: b.review.user.username,
-          avatarUrl: b.review.user.avatarUrl,
-        },
-      })),
-      meta: {
+    const items = bookmarks.map(
+      (b) =>
+        new BookmarkedReviewDto({
+          id: b.review.id,
+          title: b.review.title,
+          description: b.review.description,
+          mediaType: b.review.mediaType,
+          mediaUrl: b.review.mediaUrl,
+          bookmarkedAt: b.createdAt,
+          user: new BookmarkedReviewUserDto({
+            id: b.review.user.id,
+            username: b.review.user.username,
+            avatarUrl: b.review.user.avatarUrl,
+          }),
+        }),
+    );
+
+    return new PaginatedBookmarkedReviewsDto({
+      items,
+      meta: new PaginationMetaDto({
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
-      },
-    };
+      }),
+    });
   }
 
   async getUserBookmarks(
@@ -109,22 +117,27 @@ export class BookmarksService {
       this.prisma.userBookmark.count({ where }),
     ]);
 
-    return {
-      items: bookmarks.map((b) => ({
-        id: b.bookmarkedUser.id,
-        username: b.bookmarkedUser.username,
-        bio: b.bookmarkedUser.bio,
-        avatarUrl: b.bookmarkedUser.avatarUrl,
-        reviewCount: b.bookmarkedUser._count.reviews,
-        bookmarkedAt: b.createdAt,
-      })),
-      meta: {
+    const items = bookmarks.map(
+      (b) =>
+        new BookmarkedUserDto({
+          id: b.bookmarkedUser.id,
+          username: b.bookmarkedUser.username,
+          bio: b.bookmarkedUser.bio,
+          avatarUrl: b.bookmarkedUser.avatarUrl,
+          reviewCount: b.bookmarkedUser._count.reviews,
+          bookmarkedAt: b.createdAt,
+        }),
+    );
+
+    return new PaginatedBookmarkedUsersDto({
+      items,
+      meta: new PaginationMetaDto({
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
-      },
-    };
+      }),
+    });
   }
 
   async bookmarkReview(user: User | null, reviewId: string): Promise<void> {

@@ -14,6 +14,18 @@ export class BookmarkedReviewUserDto {
   @Expose()
   @ApiPropertyOptional()
   avatarUrl: string | null;
+
+  constructor(data?: {
+    id: string;
+    username: string;
+    avatarUrl: string | null;
+  }) {
+    if (data) {
+      this.id = data.id;
+      this.username = data.username;
+      this.avatarUrl = data.avatarUrl;
+    }
+  }
 }
 
 export class BookmarkedReviewDto {
@@ -45,4 +57,24 @@ export class BookmarkedReviewDto {
   @Type(() => BookmarkedReviewUserDto)
   @ApiProperty({ type: BookmarkedReviewUserDto })
   user: BookmarkedReviewUserDto;
+
+  constructor(data?: {
+    id: string;
+    title: string;
+    description: string | null;
+    mediaType: MediaType;
+    mediaUrl: string | null;
+    bookmarkedAt: Date;
+    user: BookmarkedReviewUserDto;
+  }) {
+    if (data) {
+      this.id = data.id;
+      this.title = data.title;
+      this.description = data.description;
+      this.mediaType = data.mediaType;
+      this.mediaUrl = data.mediaUrl;
+      this.bookmarkedAt = data.bookmarkedAt;
+      this.user = data.user;
+    }
+  }
 }

@@ -14,6 +14,18 @@ export class ReviewUserDto {
   @Expose()
   @ApiPropertyOptional()
   avatarUrl: string | null;
+
+  constructor(data?: {
+    id: string;
+    username: string;
+    avatarUrl: string | null;
+  }) {
+    if (data) {
+      this.id = data.id;
+      this.username = data.username;
+      this.avatarUrl = data.avatarUrl;
+    }
+  }
 }
 
 export class ReviewTabDto {
@@ -28,6 +40,14 @@ export class ReviewTabDto {
   @Expose()
   @ApiProperty()
   slug: string;
+
+  constructor(data?: { id: string; name: string; slug: string }) {
+    if (data) {
+      this.id = data.id;
+      this.name = data.name;
+      this.slug = data.slug;
+    }
+  }
 }
 
 export class ReviewCategoryDto {
@@ -42,6 +62,14 @@ export class ReviewCategoryDto {
   @Expose()
   @ApiProperty()
   slug: string;
+
+  constructor(data?: { id: string; name: string; slug: string }) {
+    if (data) {
+      this.id = data.id;
+      this.name = data.name;
+      this.slug = data.slug;
+    }
+  }
 }
 
 export class RelatedReviewDto {
@@ -56,6 +84,14 @@ export class RelatedReviewDto {
   @Expose()
   @ApiPropertyOptional()
   mediaUrl: string | null;
+
+  constructor(data?: { id: string; title: string; mediaUrl: string | null }) {
+    if (data) {
+      this.id = data.id;
+      this.title = data.title;
+      this.mediaUrl = data.mediaUrl;
+    }
+  }
 }
 
 export class MetaFieldDto {
@@ -66,6 +102,13 @@ export class MetaFieldDto {
   @Expose()
   @ApiProperty()
   value: string;
+
+  constructor(data?: { label: string; value: string }) {
+    if (data) {
+      this.label = data.label;
+      this.value = data.value;
+    }
+  }
 }
 
 export class ReviewDetailDto {
@@ -145,40 +188,47 @@ export class ReviewDetailDto {
     },
     isBookmarked: boolean = false,
   ) {
-    Object.assign(this, {
-      id: review.id,
-      title: review.title,
-      description: review.description,
-      author: review.author,
-      mediaType: review.mediaType,
-      mediaUrl: review.mediaUrl,
-      mediaConfig: review.mediaConfig,
-      link: review.link,
-      metaFields: review.metaFields,
-      publishedAt: review.publishedAt,
-      user: {
-        id: review.user.id,
-        username: review.user.username,
-        avatarUrl: review.user.avatarUrl,
-      },
-      tab: {
-        id: review.tab.id,
-        name: review.tab.name,
-        slug: review.tab.slug,
-      },
-      categories: review.categories.map(({ category }) => ({
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-      })),
-      relatedReviews: review.relatedReviews
-        .filter(({ target }) => target.publishedAt !== null)
-        .map(({ target }) => ({
-          id: target.id,
-          title: target.title,
-          mediaUrl: target.mediaUrl,
-        })),
-      isBookmarked,
+    this.id = review.id;
+    this.title = review.title;
+    this.description = review.description;
+    this.author = review.author;
+    this.mediaType = review.mediaType;
+    this.mediaUrl = review.mediaUrl;
+    this.mediaConfig = review.mediaConfig as object | null;
+    this.link = review.link;
+    this.metaFields =
+      (review.metaFields as MetaFieldDto[] | null)?.map(
+        (field) => new MetaFieldDto({ label: field.label, value: field.value }),
+      ) ?? null;
+    this.publishedAt = review.publishedAt!;
+    this.user = new ReviewUserDto({
+      id: review.user.id,
+      username: review.user.username,
+      avatarUrl: review.user.avatarUrl,
     });
+    this.tab = new ReviewTabDto({
+      id: review.tab.id,
+      name: review.tab.name,
+      slug: review.tab.slug,
+    });
+    this.categories = review.categories.map(
+      ({ category }) =>
+        new ReviewCategoryDto({
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+        }),
+    );
+    this.relatedReviews = review.relatedReviews
+      .filter(({ target }) => target.publishedAt !== null)
+      .map(
+        ({ target }) =>
+          new RelatedReviewDto({
+            id: target.id,
+            title: target.title,
+            mediaUrl: target.mediaUrl,
+          }),
+      );
+    this.isBookmarked = isBookmarked;
   }
 }
