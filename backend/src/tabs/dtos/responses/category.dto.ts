@@ -13,4 +13,12 @@ export class CategoryDto {
   @Expose()
   @ApiProperty()
   slug: string;
+
+  constructor(data?: { id: string; name: string; slug: string }) {
+    if (data) {
+      this.id = data.id;
+      this.name = data.name;
+      this.slug = data.slug;
+    }
+  }
 }

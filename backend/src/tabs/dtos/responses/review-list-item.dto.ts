@@ -46,4 +46,30 @@ export class ReviewListItemDto {
     description: 'Whether the current user has bookmarked this review',
   })
   isBookmarked: boolean;
+
+  constructor(data?: {
+    id: string;
+    title: string;
+    author: string | null;
+    mediaType: MediaType;
+    mediaUrl: string | null;
+    mediaConfig: object | null;
+    link: string | null;
+    publishedAt: Date;
+    categories: CategoryDto[];
+    isBookmarked: boolean;
+  }) {
+    if (data) {
+      this.id = data.id;
+      this.title = data.title;
+      this.author = data.author;
+      this.mediaType = data.mediaType;
+      this.mediaUrl = data.mediaUrl;
+      this.mediaConfig = data.mediaConfig;
+      this.link = data.link;
+      this.publishedAt = data.publishedAt;
+      this.categories = data.categories;
+      this.isBookmarked = data.isBookmarked;
+    }
+  }
 }

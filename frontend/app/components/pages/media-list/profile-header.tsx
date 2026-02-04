@@ -23,7 +23,7 @@ export function ProfileHeader({
   onEditModeChange,
   theme,
 }: ProfileHeaderProps) {
-  const { session } = useAuth();
+  const { session, user: loggedInUser } = useAuth();
   const revalidator = useRevalidator();
   const location = useLocation();
   const [showBio, setShowBio] = useState(false);
@@ -91,9 +91,22 @@ export function ProfileHeader({
 
           {/* Username and Join Date */}
           <div className="flex-1">
-            <h1 className="text-xl sm:text-2xl" style={styles.headerText}>
-              @{user.username}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl" style={styles.headerText}>
+                @{user.username}
+              </h1>
+              {isOwnProfile && loggedInUser?.role === "ADMIN" && (
+                <span
+                  className="px-2 py-0.5 text-xs font-medium rounded"
+                  style={{
+                    backgroundColor: theme.colors.accent,
+                    color: theme.colors.background,
+                  }}
+                >
+                  Admin
+                </span>
+              )}
+            </div>
             <p className="text-sm" style={styles.headerTextMuted}>
               Joined {joinDate}
             </p>

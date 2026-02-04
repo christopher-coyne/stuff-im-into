@@ -61,6 +61,8 @@ export default function ProfilePage() {
   const { logout, user, session, refreshUser } = useAuth();
   const navigate = useNavigate();
 
+  console.log('user ', user)
+
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
   const [editBio, setEditBio] = useState("");

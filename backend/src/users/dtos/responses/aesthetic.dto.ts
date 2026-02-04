@@ -17,4 +17,18 @@ export class AestheticDto {
   @Expose()
   @ApiPropertyOptional()
   description: string | null;
+
+  constructor(data?: {
+    id: string;
+    slug: string;
+    name: string;
+    description: string | null;
+  }) {
+    if (data) {
+      this.id = data.id;
+      this.slug = data.slug;
+      this.name = data.name;
+      this.description = data.description;
+    }
+  }
 }

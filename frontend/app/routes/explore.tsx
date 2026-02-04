@@ -143,6 +143,8 @@ export default function ExplorePage() {
   const { users, meta, search: initialSearch, sortBy } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  console.log('users ', users)
+
   // Local state for search input (for debouncing)
   const [searchInput, setSearchInput] = useState(initialSearch);
   const debouncedSearch = useDebounce(searchInput, 300);

@@ -107,6 +107,8 @@ export default function MediaListPage() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const debouncedSearch = useDebounce(search, 300);
 
+  console.log('user return ', user)
+
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
   const [showAddTabModal, setShowAddTabModal] = useState(false);

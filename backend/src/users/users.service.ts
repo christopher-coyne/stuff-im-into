@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma';
+import { PaginationMetaDto } from '../dto';
 import {
   CreateUserDto,
   GetUsersQueryDto,
@@ -46,65 +47,6 @@ const USER_INCLUDE = {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Map raw Prisma user data to UserResponseDto shape.
-   * The global ClassSerializerInterceptor will filter to only @Expose() fields.
-   */
-  private mapToUserResponse(
-    user: {
-      id: string;
-      username: string;
-      bio: string | null;
-      avatarUrl: string | null;
-      isPrivate: boolean;
-      createdAt: Date;
-      _count: { reviews: number; bookmarkedBy: number };
-      tabs: {
-        id: string;
-        name: string;
-        slug: string;
-        description: string | null;
-        sortOrder: number;
-      }[];
-      userTheme: {
-        id: string;
-        aestheticId: string;
-        palette: string;
-        aesthetic: {
-          id: string;
-          slug: string;
-          name: string;
-          description: string | null;
-        };
-      } | null;
-      bookmarkedBy?: { id: string }[];
-    },
-    currentUserId?: string,
-  ): UserResponseDto {
-    return {
-      id: user.id,
-      username: user.username,
-      bio: user.bio,
-      avatarUrl: user.avatarUrl,
-      isPrivate: user.isPrivate,
-      userTheme: user.userTheme
-        ? {
-            id: user.userTheme.id,
-            aestheticId: user.userTheme.aestheticId,
-            palette: user.userTheme.palette,
-            aesthetic: user.userTheme.aesthetic,
-          }
-        : null,
-      createdAt: user.createdAt,
-      reviewCount: user._count.reviews,
-      bookmarkCount: user._count.bookmarkedBy,
-      tabs: user.tabs,
-      isBookmarked: currentUserId
-        ? (user.bookmarkedBy?.length ?? 0) > 0
-        : false,
-    };
-  }
-
   async findAll(
     query: GetUsersQueryDto,
     currentUserId?: string,
@@ -143,23 +85,26 @@ export class UsersService {
       this.prisma.user.count({ where }),
     ]);
 
-    return {
-      items: users.map((user) =>
-        this.mapToUserResponse(
+    const result = new PaginatedUsersDto();
+    result.items = users.map(
+      (user) =>
+        new UserResponseDto(
           {
             ...user,
             bookmarkedBy: user.bookmarkedBy as { id: string }[] | undefined,
           },
           currentUserId,
         ),
-      ),
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    );
+
+    const meta = new PaginationMetaDto();
+    meta.page = page;
+    meta.limit = limit;
+    meta.total = total;
+    meta.totalPages = Math.ceil(total / limit);
+    result.meta = meta;
+
+    return result;
   }
 
   async findByUsername(
@@ -180,7 +125,7 @@ export class UsersService {
       throw new NotFoundException(`User @${username} not found`);
     }
 
-    return this.mapToUserResponse(
+    return new UserResponseDto(
       {
         ...user,
         bookmarkedBy: user.bookmarkedBy as { id: string }[] | undefined,
@@ -195,8 +140,16 @@ export class UsersService {
         'Profile not set up - complete onboarding first',
       );
     }
-    const userData = await this.findByIdInternal(user.id);
-    return { ...userData, role: user.role };
+    const prismaUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: USER_INCLUDE,
+    });
+
+    if (!prismaUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    return new UserSensitiveDataDto({ ...prismaUser, role: user.role });
   }
 
   async updateCurrentUser(
@@ -208,8 +161,14 @@ export class UsersService {
         'Profile not set up - use PUT to create profile first',
       );
     }
-    const userData = await this.updateInternal(user.id, dto);
-    return { ...userData, role: user.role };
+
+    const prismaUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: dto,
+      include: USER_INCLUDE,
+    });
+
+    return new UserSensitiveDataDto({ ...prismaUser, role: user.role });
   }
 
   async upsertCurrentUser(
@@ -241,44 +200,7 @@ export class UsersService {
       include: USER_INCLUDE,
     });
 
-    return {
-      ...this.mapToUserResponse(user),
-      role: user.role,
-    };
-  }
-
-  async findById(id: string): Promise<UserResponseDto> {
-    return this.findByIdInternal(id);
-  }
-
-  private async findByIdInternal(id: string): Promise<UserResponseDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      include: USER_INCLUDE,
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return this.mapToUserResponse(user);
-  }
-
-  async update(id: string, dto: UpdateUserDto): Promise<UserResponseDto> {
-    return this.updateInternal(id, dto);
-  }
-
-  private async updateInternal(
-    id: string,
-    dto: UpdateUserDto,
-  ): Promise<UserResponseDto> {
-    const user = await this.prisma.user.update({
-      where: { id },
-      data: dto,
-      include: USER_INCLUDE,
-    });
-
-    return this.mapToUserResponse(user);
+    return new UserSensitiveDataDto({ ...user, role: user.role });
   }
 
   async updateTheme(
@@ -312,9 +234,17 @@ export class UsersService {
       },
     });
 
-    // Return the updated user with sensitive data
-    const userData = await this.findByIdInternal(user.id);
-    return { ...userData, role: user.role };
+    // Fetch updated user
+    const prismaUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: USER_INCLUDE,
+    });
+
+    if (!prismaUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    return new UserSensitiveDataDto({ ...prismaUser, role: user.role });
   }
 
   private getOrderBy(sortBy: UserSortBy) {

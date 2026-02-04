@@ -21,4 +21,20 @@ export class TabResponseDto {
   @Expose()
   @ApiProperty()
   sortOrder: number;
+
+  constructor(data?: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    sortOrder: number;
+  }) {
+    if (data) {
+      this.id = data.id;
+      this.name = data.name;
+      this.slug = data.slug;
+      this.description = data.description;
+      this.sortOrder = data.sortOrder;
+    }
+  }
 }

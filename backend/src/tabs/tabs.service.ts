@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { Prisma, User } from '@prisma/client';
+import { PaginationMetaDto } from '../dto';
 import { PrismaService } from '../prisma';
 import {
   CategoryDto,
@@ -15,6 +16,7 @@ import {
   PaginatedReviewsDto,
   PaginatedTabsDto,
   ReorderTabsDto,
+  ReviewListItemDto,
   TabResponseDto,
   UpdateTabDto,
 } from './dtos';
@@ -58,13 +60,13 @@ export class TabsService {
       },
     });
 
-    return {
+    return new TabResponseDto({
       id: tab.id,
       name: tab.name,
       slug: tab.slug,
       description: tab.description,
       sortOrder: tab.sortOrder,
-    };
+    });
   }
 
   async reorderTabs(
@@ -94,23 +96,26 @@ export class TabsService {
       ),
     );
 
-    const items = updatedTabs.map((tab) => ({
-      id: tab.id,
-      name: tab.name,
-      slug: tab.slug,
-      description: tab.description,
-      sortOrder: tab.sortOrder,
-    }));
+    const items = updatedTabs.map(
+      (tab) =>
+        new TabResponseDto({
+          id: tab.id,
+          name: tab.name,
+          slug: tab.slug,
+          description: tab.description,
+          sortOrder: tab.sortOrder,
+        }),
+    );
 
-    return {
+    return new PaginatedTabsDto({
       items,
-      meta: {
+      meta: new PaginationMetaDto({
         page: 1,
         limit: items.length,
         total: items.length,
         totalPages: 1,
-      },
-    };
+      }),
+    });
   }
 
   async findCategoriesForTab(tabId: string): Promise<PaginatedCategoriesDto> {
@@ -131,15 +136,24 @@ export class TabsService {
       orderBy: { name: 'asc' },
     });
 
-    return {
-      items: categories,
-      meta: {
+    const items = categories.map(
+      (category) =>
+        new CategoryDto({
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+        }),
+    );
+
+    return new PaginatedCategoriesDto({
+      items,
+      meta: new PaginationMetaDto({
         page: 1,
         limit: categories.length,
         total: categories.length,
         totalPages: 1,
-      },
-    };
+      }),
+    });
   }
 
   async createCategory(
@@ -188,11 +202,11 @@ export class TabsService {
       },
     });
 
-    return {
+    return new CategoryDto({
       id: category.id,
       name: category.name,
       slug: category.slug,
-    };
+    });
   }
 
   async findReviewsForTab(
@@ -255,36 +269,44 @@ export class TabsService {
       }),
     ]);
 
-    return {
-      items: reviews.map((review) => ({
-        id: review.id,
-        title: review.title,
-        author: review.author,
-        mediaType: review.mediaType,
-        mediaUrl: review.mediaUrl,
-        mediaConfig: review.mediaConfig as object | null,
-        link: review.link,
-        publishedAt: review.publishedAt!,
-        categories: (
-          review.categories as Array<{
-            category: { id: string; name: string; slug: string };
-          }>
-        ).map(({ category }) => ({
-          id: category.id,
-          name: category.name,
-          slug: category.slug,
-        })),
-        isBookmarked: userId
-          ? (review.bookmarkedBy as Array<{ id: string }>)?.length > 0
-          : false,
-      })),
-      meta: {
+    const items = reviews.map(
+      (review) =>
+        new ReviewListItemDto({
+          id: review.id,
+          title: review.title,
+          author: review.author,
+          mediaType: review.mediaType,
+          mediaUrl: review.mediaUrl,
+          mediaConfig: review.mediaConfig as object | null,
+          link: review.link,
+          publishedAt: review.publishedAt!,
+          categories: (
+            review.categories as Array<{
+              category: { id: string; name: string; slug: string };
+            }>
+          ).map(
+            ({ category }) =>
+              new CategoryDto({
+                id: category.id,
+                name: category.name,
+                slug: category.slug,
+              }),
+          ),
+          isBookmarked: userId
+            ? (review.bookmarkedBy as Array<{ id: string }>)?.length > 0
+            : false,
+        }),
+    );
+
+    return new PaginatedReviewsDto({
+      items,
+      meta: new PaginationMetaDto({
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
-      },
-    };
+      }),
+    });
   }
 
   async updateTab(
@@ -349,13 +371,13 @@ export class TabsService {
       data: updateData,
     });
 
-    return {
+    return new TabResponseDto({
       id: updatedTab.id,
       name: updatedTab.name,
       slug: updatedTab.slug,
       description: updatedTab.description,
       sortOrder: updatedTab.sortOrder,
-    };
+    });
   }
 
   async deleteTab(user: User, tabId: string): Promise<void> {
