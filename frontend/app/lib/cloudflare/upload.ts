@@ -46,16 +46,18 @@ export async function uploadImage(
   }
 
   // 3. Return the public URL
-  // Cloudflare returns variants, we use 'public' as default
+  // Cloudflare returns an array of variant URLs, find the 'public' one
   const variants = result.result?.variants as string[] | undefined;
   if (variants && variants.length > 0) {
-    // Return the first variant (usually 'public')
-    return variants[0];
+    // Find the variant URL ending with '/public'
+    const publicVariant = variants.find((v) => v.endsWith('/public'));
+    if (publicVariant) {
+      return publicVariant;
+    }
+    // Fallback: take first variant and replace the variant name with 'public'
+    return variants[0].replace(/\/[^/]+$/, '/public');
   }
 
-  // Fallback: construct URL manually
-  // This requires knowing the account hash, which we'd need to expose
-  // For now, throw if no variants returned
   throw new Error("No image URL returned from Cloudflare");
 }
 
