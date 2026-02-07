@@ -3,6 +3,9 @@ import { createServerClient, parseCookieHeader } from "@supabase/ssr";
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!;
 
+// Debug: log on startup
+console.log("[SSR Supabase] URL:", supabaseUrl?.substring(0, 30), "Key:", supabaseAnonKey?.substring(0, 20));
+
 /**
  * Creates a Supabase client for server-side use (in loaders).
  * Reads the session from cookies in the incoming request.
