@@ -25,8 +25,15 @@ export function createSupabaseServerClient(request: Request) {
  * Returns the headers object to pass to API calls.
  */
 export async function getAuthHeaders(request: Request): Promise<{ Authorization: string } | {}> {
+  // Debug: log raw cookies
+  const rawCookies = request.headers.get("Cookie");
+  console.log("[SSR Auth] Raw cookies:", rawCookies?.substring(0, 100));
+
   const supabase = createSupabaseServerClient(request);
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  // Debug: log session result
+  console.log("[SSR Auth] Session exists:", !!session, "Error:", error?.message);
 
   if (session?.access_token) {
     return { Authorization: `Bearer ${session.access_token}` };
