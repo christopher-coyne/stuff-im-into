@@ -106,10 +106,6 @@ export class ReviewsService {
         categories: {
           include: { category: true },
         },
-        relatedReviews: {
-          include: { target: true },
-          orderBy: { sortOrder: 'asc' },
-        },
       },
     });
 
@@ -209,10 +205,6 @@ export class ReviewsService {
         tab: true,
         categories: {
           include: { category: true },
-        },
-        relatedReviews: {
-          include: { target: true },
-          orderBy: { sortOrder: 'asc' },
         },
       },
     });
@@ -317,10 +309,6 @@ export class ReviewsService {
         tab: true,
         categories: {
           include: { category: true },
-        },
-        relatedReviews: {
-          include: { target: true },
-          orderBy: { sortOrder: 'asc' },
         },
       },
     });

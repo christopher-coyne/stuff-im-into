@@ -2,6 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Category, MediaType, Review, Tab, User } from '@prisma/client';
 import { Expose, Type } from 'class-transformer';
 
+/** Review data shape from Prisma with relations */
+export interface ReviewWithRelations extends Review {
+  user: User;
+  tab: Tab;
+  categories: { category: Category }[];
+}
+
 export class ReviewUserDto {
   @Expose()
   @ApiProperty()
@@ -68,28 +75,6 @@ export class ReviewCategoryDto {
       this.id = data.id;
       this.name = data.name;
       this.slug = data.slug;
-    }
-  }
-}
-
-export class RelatedReviewDto {
-  @Expose()
-  @ApiProperty()
-  id: string;
-
-  @Expose()
-  @ApiProperty()
-  title: string;
-
-  @Expose()
-  @ApiPropertyOptional()
-  mediaUrl: string | null;
-
-  constructor(data?: { id: string; title: string; mediaUrl: string | null }) {
-    if (data) {
-      this.id = data.id;
-      this.title = data.title;
-      this.mediaUrl = data.mediaUrl;
     }
   }
 }
@@ -169,25 +154,12 @@ export class ReviewDetailDto {
   categories: ReviewCategoryDto[];
 
   @Expose()
-  @Type(() => RelatedReviewDto)
-  @ApiProperty({ type: [RelatedReviewDto] })
-  relatedReviews: RelatedReviewDto[];
-
-  @Expose()
   @ApiProperty({
     description: 'Whether the current user has bookmarked this review',
   })
   isBookmarked: boolean;
 
-  constructor(
-    review: Review & {
-      user: User;
-      tab: Tab;
-      categories: { category: Category }[];
-      relatedReviews: { target: Review }[];
-    },
-    isBookmarked: boolean = false,
-  ) {
+  constructor(review: ReviewWithRelations, isBookmarked: boolean = false) {
     this.id = review.id;
     this.title = review.title;
     this.description = review.description;
@@ -219,16 +191,6 @@ export class ReviewDetailDto {
           slug: category.slug,
         }),
     );
-    this.relatedReviews = review.relatedReviews
-      .filter(({ target }) => target.publishedAt !== null)
-      .map(
-        ({ target }) =>
-          new RelatedReviewDto({
-            id: target.id,
-            title: target.title,
-            mediaUrl: target.mediaUrl,
-          }),
-      );
     this.isBookmarked = isBookmarked;
   }
 }

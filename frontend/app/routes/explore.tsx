@@ -15,7 +15,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "~/components/ui/select";
 import { useDebounce } from "~/hooks/use-debounce";
 import { api } from "~/lib/api/client";
@@ -62,7 +61,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     )
   );
 
-  const data = response.data.data as unknown as PaginatedUsers | undefined;
+  const data = response.data.data
 
   return {
     users: data?.items || [],
@@ -143,8 +142,6 @@ export default function ExplorePage() {
   const { users, meta, search: initialSearch, sortBy } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  console.log('users ', users)
-
   // Local state for search input (for debouncing)
   const [searchInput, setSearchInput] = useState(initialSearch);
   const debouncedSearch = useDebounce(searchInput, 300);
@@ -182,6 +179,7 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-background">
+
       <div className="max-w-2xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-8">
@@ -205,7 +203,7 @@ export default function ExplorePage() {
             {/* Sort */}
             <Select value={sortBy} onValueChange={handleSortChange}>
               <SelectTrigger className="w-auto px-4 py-2 text-base rounded-lg">
-                <SelectValue />
+                {sortOptions.find(o => o.value === sortBy)?.label}
               </SelectTrigger>
               <SelectContent>
                 {sortOptions.map((option) => (

@@ -2,6 +2,20 @@ import { PrismaClient, MediaType, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Helper to batch async operations to avoid Supabase connection pool exhaustion
+async function batchedCreate<T>(
+  creators: (() => Promise<T>)[],
+  batchSize: number = 5
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < creators.length; i += batchSize) {
+    const batch = creators.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(fn => fn()));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 // Generate URL-friendly slug from name
 function slugify(name: string): string {
   return name
@@ -57,7 +71,6 @@ async function main() {
 
   // Clean existing data
   await prisma.reviewCategory.deleteMany();
-  await prisma.relatedReview.deleteMany();
   await prisma.reviewBookmark.deleteMany();
   await prisma.userBookmark.deleteMany();
   await prisma.review.deleteMany();
@@ -260,8 +273,8 @@ async function main() {
   const filmfanaticMoviesCategories = getTabCategories(filmfanaticTabs[0].id);
   const filmfanaticTVCategories = getTabCategories(filmfanaticTabs[1].id);
 
-  const filmfanaticReviews = await Promise.all([
-    prisma.review.create({
+  const filmfanaticReviews = await batchedCreate([
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -292,7 +305,7 @@ Denis Villeneuve crafts a masterpiece of sci-fi cinema. The cinematography by Ro
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -316,7 +329,7 @@ The concept of dreams within dreams is executed flawlessly. The rotating hallway
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[1].id, // TV Shows
@@ -333,7 +346,7 @@ Walter White's transformation from mild-mannered chemistry teacher to drug kingp
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -357,7 +370,7 @@ The Wachowskis created a world that still resonates today. The bullet-time effec
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -381,7 +394,7 @@ Amy Adams delivers a powerhouse performance. The twist recontextualizes everythi
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -406,7 +419,7 @@ The docking scene set to "No Time for Diligence" is peak cinema. Hans Zimmer's o
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -431,7 +444,7 @@ Equal parts thriller, comedy, and social commentary. The way it shifts tones is 
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -454,7 +467,7 @@ Nolan at his puzzle-box best. The final reveal rewards repeat viewings. Both Jac
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -478,7 +491,7 @@ Oscar Isaac is magnetic as the eccentric billionaire. The film's claustrophobic 
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -503,7 +516,7 @@ The scale is immense but never loses sight of the characters. The sandworm revea
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -527,7 +540,7 @@ Charlie Kaufman's script is genius. Jim Carrey proves he can do dramatic work wi
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -550,7 +563,7 @@ George Miller returned to his franchise and showed everyone how action movies sh
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -578,7 +591,7 @@ Scarlett Johansson's voice-only performance as Samantha is remarkable - she crea
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[0].id, // Movies
@@ -602,7 +615,7 @@ Hugh Jackman and Jake Gyllenhaal deliver career-best performances. Villeneuve kn
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[2].id, // Documentaries
@@ -620,7 +633,7 @@ My palms were sweating the entire final act. A testament to human determination 
         publishedAt: new Date(),
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[0].id,
         tabId: filmfanaticTabs[2].id, // Documentaries
@@ -644,8 +657,8 @@ Jiro's 85+ years of making sushi is humbling. It makes you question: what would 
   const bookwormFictionCategories = getTabCategories(bookwormTabs[0].id);
   const bookwormComicsCategories = getTabCategories(bookwormTabs[2].id);
 
-  const bookwormReviews = await Promise.all([
-    prisma.review.create({
+  const bookwormReviews = await batchedCreate([
+    () => prisma.review.create({
       data: {
         userId: users[1].id,
         tabId: bookwormTabs[0].id, // Fiction
@@ -672,7 +685,7 @@ Kvothe's story is told with such lyrical prose that you forget you're reading fa
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[1].id,
         tabId: bookwormTabs[0].id, // Fiction
@@ -696,7 +709,7 @@ The friendship that develops is unexpected and heartwarming. The science feels r
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[1].id,
         tabId: bookwormTabs[2].id, // Comics
@@ -726,8 +739,8 @@ Brian K. Vaughan and Fiona Staples created something truly special. It's romanti
   const musicAlbumsCategories = getTabCategories(musicTabs[0].id);
   const musicArtistsCategories = getTabCategories(musicTabs[2].id);
 
-  const musicReviews = await Promise.all([
-    prisma.review.create({
+  const musicReviews = await batchedCreate([
+    () => prisma.review.create({
       data: {
         userId: users[2].id,
         tabId: musicTabs[0].id, // Albums
@@ -752,7 +765,7 @@ Every track is meticulously crafted. "Touch" is an emotional journey, and "Giorg
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[2].id,
         tabId: musicTabs[0].id, // Albums
@@ -777,7 +790,7 @@ Miles Davis assembled the perfect group and they created something timeless. "So
         },
       },
     }),
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[2].id,
         tabId: musicTabs[2].id, // Artists
@@ -801,7 +814,7 @@ Their blend of global influences - Thai funk, dub, psychedelia - creates somethi
       },
     }),
     // Draft review (not published)
-    prisma.review.create({
+    () => prisma.review.create({
       data: {
         userId: users[2].id,
         tabId: musicTabs[1].id, // Playlists

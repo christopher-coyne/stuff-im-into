@@ -58,10 +58,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function ProfilePage() {
   const { bookmarkedUsers, bookmarkedReviews, usersMeta, reviewsMeta } = useLoaderData<typeof loader>();
-  const { logout, user, session, refreshUser } = useAuth();
+  const { logout, user, session, refreshUser, supabaseUser } = useAuth();
   const navigate = useNavigate();
-
-  console.log('user ', user)
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -175,6 +173,9 @@ export default function ProfilePage() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h3 className="text-xl font-semibold">@{user?.username}</h3>
+                      {supabaseUser?.email && (
+                        <p className="text-muted-foreground text-sm">{supabaseUser.email}</p>
+                      )}
                       <p className="text-muted-foreground text-sm">
                         Joined {user?.createdAt ? formatJoinDate(user.createdAt) : ""}
                       </p>

@@ -146,10 +146,6 @@ model Review {
   // Categories (many-to-many)
   categories ReviewCategory[]
 
-  // Related reviews (one-directional, user's own reviews only)
-  relatedReviews RelatedReview[] @relation("SourceReview")
-  relatedFrom    RelatedReview[] @relation("TargetReview")
-
   // Bookmarks
   bookmarkedBy ReviewBookmark[]
 
@@ -185,26 +181,6 @@ model ReviewCategory {
 
   @@id([reviewId, categoryId])
   @@map("review_categories")
-}
-
-// =============================================================================
-// RELATED REVIEWS (One-directional links between user's own reviews)
-// =============================================================================
-
-model RelatedReview {
-  id        String @id @default(uuid())
-  sortOrder Int    @default(0)
-
-  // Source review (the one displaying the "related" section)
-  source   Review @relation("SourceReview", fields: [sourceId], references: [id], onDelete: Cascade)
-  sourceId String
-
-  // Target review (the one being linked to)
-  target   Review @relation("TargetReview", fields: [targetId], references: [id], onDelete: Cascade)
-  targetId String
-
-  @@unique([sourceId, targetId]) // Can't link same review twice
-  @@map("related_reviews")
 }
 
 // =============================================================================
