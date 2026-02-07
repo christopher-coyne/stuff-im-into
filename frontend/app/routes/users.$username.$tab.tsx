@@ -28,6 +28,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const search = url.searchParams.get("search") || undefined;
   const categorySlug = url.searchParams.get("category") || undefined;
+  const hasDescription = url.searchParams.get("hasDescription") === "true" || undefined;
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
 
   if (!username) {
@@ -65,7 +66,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (currentTab) {
     const [categoriesResponse, reviewsResponse] = await Promise.all([
       loaderFetch(() => api.tabs.tabsControllerFindCategoriesForTab(currentTab.id)),
-      loaderFetch(() => api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, page, limit: REVIEWS_PER_PAGE }, { headers: authHeaders })),
+      loaderFetch(() => api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, hasDescription, page, limit: REVIEWS_PER_PAGE }, { headers: authHeaders })),
     ]);
     categories = categoriesResponse.data.data?.items || [];
 
@@ -77,7 +78,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     // Re-fetch reviews with category filter if needed
     if (categoryId) {
       const filteredResponse = await loaderFetch(() =>
-        api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId, page, limit: REVIEWS_PER_PAGE }, { headers: authHeaders })
+        api.tabs.tabsControllerFindReviewsForTab(currentTab.id, { search, categoryId, hasDescription, page, limit: REVIEWS_PER_PAGE }, { headers: authHeaders })
       );
       reviews = filteredResponse.data.data || reviews;
     } else {
@@ -328,7 +329,7 @@ export default function MediaListPage() {
             )}
 
             {/* Search and Filter */}
-            <div className="flex gap-3 mb-4">
+            <div className="flex gap-3 mb-2">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={styles.mutedText} />
                 <input
@@ -365,6 +366,28 @@ export default function MediaListPage() {
                   </SelectContent>
                 </Select>
               )}
+            </div>
+
+            {/* Filter options */}
+            <div className="mb-4">
+              <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer" style={styles.mutedText}>
+                <input
+                  type="checkbox"
+                  checked={searchParams.get("hasDescription") === "true"}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      searchParams.set("hasDescription", "true");
+                    } else {
+                      searchParams.delete("hasDescription");
+                    }
+                    searchParams.delete("page");
+                    setSearchParams(searchParams);
+                  }}
+                  className="h-3 w-3"
+                  style={{ accentColor: theme.colors.primary }}
+                />
+                <span>Only items with notes</span>
+              </label>
             </div>
 
             {/* Tab Description */}

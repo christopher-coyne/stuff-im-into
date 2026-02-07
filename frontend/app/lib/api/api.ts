@@ -210,6 +210,8 @@ export interface ReviewListItemDto {
   categories: CategoryDto[];
   /** Whether the current user has bookmarked this review */
   isBookmarked: boolean;
+  /** Whether this review has a description */
+  hasDescription: boolean;
 }
 
 export interface PaginatedReviewsDto {
@@ -253,12 +255,6 @@ export interface ReviewCategoryDto {
   slug: string;
 }
 
-export interface RelatedReviewDto {
-  id: string;
-  title: string;
-  mediaUrl?: object;
-}
-
 export interface ReviewDetailDto {
   id: string;
   title: string;
@@ -275,7 +271,6 @@ export interface ReviewDetailDto {
   user: ReviewUserDto;
   tab: ReviewTabDto;
   categories: ReviewCategoryDto[];
-  relatedReviews: RelatedReviewDto[];
   /** Whether the current user has bookmarked this review */
   isBookmarked: boolean;
 }
@@ -1025,6 +1020,8 @@ export class Api<
         search?: string;
         /** Filter by category ID */
         categoryId?: string;
+        /** Filter to only show reviews with descriptions */
+        hasDescription?: boolean;
       },
       params: RequestParams = {},
     ) =>

@@ -47,6 +47,12 @@ export class ReviewListItemDto {
   })
   isBookmarked: boolean;
 
+  @Expose()
+  @ApiProperty({
+    description: 'Whether this review has a description',
+  })
+  hasDescription: boolean;
+
   constructor(data?: {
     id: string;
     title: string;
@@ -58,6 +64,7 @@ export class ReviewListItemDto {
     publishedAt: Date;
     categories: CategoryDto[];
     isBookmarked: boolean;
+    hasDescription: boolean;
   }) {
     if (data) {
       this.id = data.id;
@@ -70,6 +77,7 @@ export class ReviewListItemDto {
       this.publishedAt = data.publishedAt;
       this.categories = data.categories;
       this.isBookmarked = data.isBookmarked;
+      this.hasDescription = data.hasDescription;
     }
   }
 }

@@ -214,7 +214,7 @@ export class TabsService {
     query: GetReviewsQueryDto,
     userId?: string,
   ): Promise<PaginatedReviewsDto> {
-    const { search, categoryId, page = 1, limit = 10 } = query;
+    const { search, categoryId, hasDescription, page = 1, limit = 10 } = query;
 
     // Verify tab exists
     const tab = await this.prisma.tab.findUnique({
@@ -240,6 +240,9 @@ export class TabsService {
         categories: {
           some: { categoryId },
         },
+      }),
+      ...(hasDescription && {
+        description: { not: null },
       }),
     };
 
@@ -295,6 +298,7 @@ export class TabsService {
           isBookmarked: userId
             ? (review.bookmarkedBy as Array<{ id: string }>)?.length > 0
             : false,
+          hasDescription: !!review.description,
         }),
     );
 

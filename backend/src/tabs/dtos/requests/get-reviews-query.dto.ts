@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PaginationDto } from '../../../dto';
 
 export class GetReviewsQueryDto extends PaginationDto {
@@ -12,4 +13,10 @@ export class GetReviewsQueryDto extends PaginationDto {
   @IsOptional()
   @IsUUID()
   categoryId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter to only show reviews with descriptions' })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  hasDescription?: boolean;
 }

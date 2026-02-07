@@ -1,4 +1,4 @@
-import { BookmarkCheck, Music, Plus, Type, Video } from "lucide-react";
+import { BookmarkCheck, Music, Pencil, Plus, Type, Video } from "lucide-react";
 import { Link } from "react-router";
 import type { ReviewListItemDto } from "~/lib/api/api";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
@@ -115,6 +115,19 @@ export function ReviewsGrid({ reviews, theme, isOwner, currentTabId }: ReviewsGr
             style={styles.cardMuted}
           >
             <MediaThumbnail review={review} theme={theme} />
+            {/* Description indicator */}
+            {review.hasDescription && (
+              <div
+                className="absolute top-2 left-2 p-1.5"
+                style={{
+                  backgroundColor: theme.colors.muted,
+                  borderRadius: theme.borderRadius,
+                  color: theme.colors.mutedForeground,
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </div>
+            )}
             {/* Bookmark indicator */}
             {review.isBookmarked && (
               <div
