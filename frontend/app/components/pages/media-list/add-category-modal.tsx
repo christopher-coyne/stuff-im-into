@@ -40,6 +40,7 @@ export function AddCategoryModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories", tabId] });
+      queryClient.invalidateQueries({ queryKey: ["tabCategories", tabId] });
       handleClose();
     },
     onError: (err: unknown) => {

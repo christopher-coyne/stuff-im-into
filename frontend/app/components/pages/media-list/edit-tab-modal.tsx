@@ -99,7 +99,7 @@ export function EditTabModal({
     setError("");
     updateTabMutation.mutate({
       name: nameChanged ? tabName.trim() : undefined,
-      description: descriptionChanged ? (description.trim() || undefined) : undefined,
+      description: descriptionChanged ? description.trim() : undefined,
     });
   };
 

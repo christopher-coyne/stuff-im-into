@@ -17,9 +17,11 @@ function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme: R
 
   // Show actual image for IMAGE type
   if (review.mediaType === "IMAGE" && mediaUrl) {
+    // Use thumbnail variant for grid view (smaller file size)
+    const thumbnailUrl = mediaUrl.replace(/\/public$/, '/mediathumbnail');
     return (
       <img
-        src={mediaUrl}
+        src={thumbnailUrl}
         alt={review.title}
         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
       />
