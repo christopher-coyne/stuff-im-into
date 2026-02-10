@@ -70,7 +70,6 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
 
     setIsLoading(true);
 
-    // Step 1: Create Supabase auth user
     const signupResult = await signup(email, password);
     if (signupResult.error) {
       setError(signupResult.error);
@@ -78,7 +77,8 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
       return;
     }
 
-    // Step 2: Create user profile in our database
+    // Set the chosen username (backend auto-creates user with random name,
+    // this updates it to the user's choice)
     const profileResult = await createProfile(username);
     if (profileResult.error) {
       setError(profileResult.error);

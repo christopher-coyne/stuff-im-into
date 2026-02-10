@@ -10,8 +10,7 @@ import {
 
 import type { Route } from "./+types/root";
 import { Navbar } from "./components/navbar";
-import { OnboardingModal } from "./components/auth/onboarding-modal";
-import { AuthProvider, useAuth } from "./lib/auth-context";
+import { AuthProvider } from "./lib/auth-context";
 import { QueryProvider } from "./lib/query-provider";
 import { api } from "./lib/api/client";
 import { getAuthHeaders } from "./lib/supabase/server";
@@ -81,14 +80,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { needsOnboarding, isLoading } = useAuth();
-
   return (
     <>
       <Navbar />
       <Outlet />
       <Toaster />
-      {!isLoading && needsOnboarding && <OnboardingModal />}
     </>
   );
 }

@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma';
 import { SupabaseService } from './supabase.service';
 import type { AuthenticatedRequest } from './supabase-auth.guard';
+import { findOrCreateUser } from './user-auto-create';
 
 @Injectable()
 export class OptionalAuthGuard implements CanActivate {
@@ -27,9 +28,7 @@ export class OptionalAuthGuard implements CanActivate {
 
       if (supabaseUser) {
         request.supabaseUser = supabaseUser;
-        request.user = await this.prisma.user.findUnique({
-          where: { id: supabaseUser.id },
-        });
+        request.user = await findOrCreateUser(this.prisma, supabaseUser.id);
       } else {
         request.user = null;
       }

@@ -53,15 +53,24 @@ function MediaThumbnail({ review, theme }: { review: ReviewListItemDto; theme: R
   // Show truncated text for TEXT type
   if (review.mediaType === "TEXT" && mediaConfig?.content) {
     return (
-      <div className="w-full h-full p-3 overflow-hidden line-clamp-6">
-        <MarkdownRenderer
-          content={String(mediaConfig.content)}
-          className="text-sm leading-relaxed **:text-lg [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm"
+      <div className="relative w-full h-full overflow-hidden">
+        <div className="p-3">
+          <MarkdownRenderer
+            content={String(mediaConfig.content)}
+            className="text-sm leading-relaxed [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm"
+            style={{
+              "--tw-prose-body": theme.colors.foreground,
+              "--tw-prose-headings": theme.colors.foreground,
+              "--tw-prose-bold": theme.colors.foreground,
+            } as React.CSSProperties}
+          />
+        </div>
+        {/* Fade out gradient at bottom */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
           style={{
-            "--tw-prose-body": theme.colors.foreground,
-            "--tw-prose-headings": theme.colors.foreground,
-            "--tw-prose-bold": theme.colors.foreground,
-          } as React.CSSProperties}
+            background: `linear-gradient(to bottom, transparent, ${theme.colors.muted})`,
+          }}
         />
       </div>
     );

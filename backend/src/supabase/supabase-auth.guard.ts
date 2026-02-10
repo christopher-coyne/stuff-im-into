@@ -9,6 +9,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Request } from 'express';
 import { PrismaService } from '../prisma';
 import { SupabaseService } from './supabase.service';
+import { findOrCreateUser } from './user-auto-create';
 
 export interface AuthenticatedRequest extends Request {
   supabaseUser: SupabaseUser;
@@ -42,9 +43,7 @@ export class SupabaseAuthGuard implements CanActivate {
       }
 
       request.supabaseUser = supabaseUser;
-      request.user = await this.prisma.user.findUnique({
-        where: { id: supabaseUser.id },
-      });
+      request.user = await findOrCreateUser(this.prisma, supabaseUser.id);
 
       return true;
     } catch {

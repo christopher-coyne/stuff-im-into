@@ -63,6 +63,7 @@ export default function ProfilePage() {
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
+  const [editUsername, setEditUsername] = useState("");
   const [editBio, setEditBio] = useState("");
 
   // Avatar upload mutation
@@ -85,22 +86,28 @@ export default function ProfilePage() {
     },
   });
 
-  // Bio update mutation
-  const updateBioMutation = useMutation({
-    mutationFn: async (bio: string) => {
+  // Profile update mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async ({ username, bio }: { username: string; bio: string }) => {
       if (!session) throw new Error("Not authenticated");
-      await api.users.usersControllerUpdateMe(
-        { bio },
+      const response = await api.users.usersControllerUpdateMe(
+        { username, bio },
         { headers: { Authorization: `Bearer ${session.access_token}` } }
       );
+      return response.data.data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
       refreshUser();
       setIsEditing(false);
       toast.success("Profile updated");
+      // Navigate to new username URL if it changed
+      if (updatedUser && updatedUser.username !== user?.username) {
+        navigate(`/profile`, { replace: true });
+      }
     },
   });
 
+  const USERNAME_MAX_LENGTH = 30;
   const BIO_MAX_LENGTH = 160;
 
   const handleLogout = async () => {
@@ -109,15 +116,26 @@ export default function ProfilePage() {
   };
 
   const handleStartEdit = () => {
+    setEditUsername(user?.username || "");
     setEditBio(String(user?.bio || ""));
-    updateBioMutation.reset();
+    updateProfileMutation.reset();
     setIsEditing(true);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setEditUsername("");
     setEditBio("");
-    updateBioMutation.reset();
+    updateProfileMutation.reset();
+  };
+
+  const handleSaveProfile = () => {
+    const trimmedUsername = editUsername.trim();
+    if (!trimmedUsername) {
+      toast.error("Username is required");
+      return;
+    }
+    updateProfileMutation.mutate({ username: trimmedUsername, bio: editBio });
   };
 
   const formatJoinDate = (dateString: string) => {
@@ -194,6 +212,22 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <div className="mt-3 space-y-3">
                       <div className="space-y-2">
+                        <label htmlFor="username" className="text-sm font-medium">
+                          Username
+                        </label>
+                        <input
+                          id="username"
+                          type="text"
+                          value={editUsername}
+                          onChange={(e) => setEditUsername(e.target.value.slice(0, USERNAME_MAX_LENGTH))}
+                          placeholder="Username"
+                          className="placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Your profile URL: stuffiminto.com/users/{editUsername || "..."}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
                         <label htmlFor="bio" className="text-sm font-medium">
                           Bio
                         </label>
@@ -209,23 +243,23 @@ export default function ProfilePage() {
                           {editBio.length} / {BIO_MAX_LENGTH}
                         </p>
                       </div>
-                      {updateBioMutation.error && (
+                      {updateProfileMutation.error && (
                         <p className="text-sm text-destructive">
-                          {(updateBioMutation.error as { response?: { data?: { message?: string } } })
+                          {(updateProfileMutation.error as { response?: { data?: { message?: string } } })
                             ?.response?.data?.message || "Failed to save changes"}
                         </p>
                       )}
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => updateBioMutation.mutate(editBio)}
-                          disabled={updateBioMutation.isPending}
+                          onClick={handleSaveProfile}
+                          disabled={updateProfileMutation.isPending || !editUsername.trim()}
                           className="px-4 py-1.5 rounded-full bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {updateBioMutation.isPending ? "Saving..." : "Save"}
+                          {updateProfileMutation.isPending ? "Saving..." : "Save"}
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          disabled={updateBioMutation.isPending}
+                          disabled={updateProfileMutation.isPending}
                           className="px-4 py-1.5 rounded-full text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Cancel

@@ -286,8 +286,8 @@ export default function MediaListPage() {
           <div>
             {/* Tabs */}
             {localTabs.length > 0 && (
-              <nav className="mb-6" style={styles.tabBar}>
-                <div className="flex gap-1">
+              <nav className="mb-6 overflow-x-auto" style={styles.tabBar}>
+                <div className="flex gap-1 whitespace-nowrap">
                   {localTabs.map((tab) => {
                     const isActive = currentTab?.id === tab.id;
                     return (

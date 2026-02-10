@@ -21,7 +21,6 @@ interface AuthContextType {
   isLoading: boolean;
   // Helper booleans
   isAuthenticated: boolean;
-  needsOnboarding: boolean;
   // Auth methods
   login: (email: string, password: string) => Promise<{ error?: string }>;
   signup: (email: string, password: string) => Promise<{ error?: string }>;
@@ -45,8 +44,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   const isAuthenticated = !!session;
-  // user was created in supabase, but failed to create in our db
-  const needsOnboarding = isAuthenticated && !user;
 
   // Fetch app user profile from our backend (used on initial load)
   const fetchUserProfile = async (accessToken: string) => {
@@ -187,7 +184,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         session,
         isLoading,
         isAuthenticated,
-        needsOnboarding,
         login,
         signup,
         logout,
